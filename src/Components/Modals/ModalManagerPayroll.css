@@ -1,0 +1,204 @@
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+
+}
+
+
+
+.containerGestionPersonal{
+    width: 100%;
+    height: 90%; 
+
+    .cuerpoModalPayroll{
+        padding: 2rem;
+        height: 100%;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .column1{
+           
+            width: 35%;
+            height: 100%;
+            padding: 1rem;
+
+        }
+
+        .column2{
+            
+            width: 35%;
+            height: 100%;
+            padding: 1rem;
+
+        }
+
+        .column3{
+            width: 30%;
+            height: 100%;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            
+            align-items: center;
+        }
+    }
+
+    .sbTitle{
+        display: flex;
+        align-items: center;
+        height: auto;
+        width: 95%;
+        color: #EB464B;
+        font-weight: 600;
+    }
+
+    .img-sbTitle{
+        width: 2rem;
+        margin-right: 02%;
+
+    }
+
+    .row{
+        width: 100%;
+        display: flex;
+        align-items: center;
+        
+    }
+
+    .row2{
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 2.5%;
+        
+    }
+
+    .columA{
+        height: 10%;
+        width: 45%;
+        padding-top: 3%;
+        padding-left: 2.5rem;
+    }
+
+    .columB{
+        position: relative;
+        width: 55%;
+        padding-top: 3%;
+        display: flex;
+        align-content: space-between;
+    }
+
+    .input-normal{
+        float: left;
+        width: 100%;
+        background: #545454;
+        border: none;
+        color: #DADADA;
+        padding:.4rem;
+    }
+
+    .input-normal2{
+        width: 100%;
+        background: #545454;
+        border: none;
+        color: #DADADA;
+        padding:.4rem;
+        text-align: center;
+    }
+
+    .input-especial{
+        float: left;
+        width: 100%;
+        background: #545454;
+        border: none;
+        color: #DADADA;
+        padding:.4rem;
+        text-align: center;
+    }
+
+    .input-normal-texbloc{
+        float: left;
+        width: 100%;
+        height: 5rem;
+        background: #545454;
+        border: none;
+        color: #DADADA;
+        padding:.4rem;
+    }
+
+
+
+    .img-Calendar{
+        width: 2rem;
+        color: #DADADA;
+        margin-left: 1rem;
+    }
+
+
+    .img-user{
+        width: 12rem;
+        height: 12rem;
+        border-radius: 50%;
+        border: 3px solid #EB464B;
+        
+    }
+
+    .img-editPhoto{
+        width: 2rem;
+        padding-top: .6rem;
+        padding-bottom: .6rem;
+    }
+
+    .img-editPhoto:hover{
+        cursor: pointer;
+        transform: scale(1.1);
+    }
+
+    .estadoUp{
+        color: #7ED957;
+        font-weight: 700;
+    }
+
+    .estadoDown{
+        color: #EB464B;
+        font-weight: 700;
+    }
+
+    .img-butom-save{
+        height: 4rem;
+        width: 4rem;
+    }
+
+    .img-butom-save:hover{
+        cursor: pointer;
+        transform: scale(1.1);
+    }
+
+    .seccionButons2{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        width: auto;
+        height: auto;
+        position: absolute;
+        background:#547725;
+        bottom: 10%;
+        border-radius: .5rem;
+    }
+
+    .etiqueta{
+        margin-top: 2rem;
+    }
+   
+}

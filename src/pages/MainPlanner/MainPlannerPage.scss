@@ -1,0 +1,85 @@
+/* Colores y estilos (Default) */
+
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+  
+  
+    /* Fuentes y tipografia */
+  
+    --Big: 2.5rem;
+    --h1FontSize: 1.5rem;
+    --h2FontSize: 1.25rem;
+    --h3-FontSize: 1rem;
+    --normalFontSize: .938rem;
+    --smallFontSize: 813rem;
+    --smallestFonSize: .75rem;
+  }
+  
+
+.mainContent
+{
+   
+    
+    background:#00094B;
+    border-radius: 10px;
+    position: relative;
+    width:3250px;
+    height: auto;
+
+    .mainPlanner{
+        height: auto;
+        margin-left: 1rem;
+        padding-top: 9%;
+        position: relative;
+        /*background: #000000;*/
+        width: auto;
+        z-index: 200;
+        
+
+        /*---------*/
+        display: flex;
+        justify-content: flex-start;
+        align-items:flex-start;
+       
+    }
+
+    
+
+    .imgCargos:hover{
+        transform: scale(1.1);
+    }
+
+    
+    .cuadro{
+      position: absolute;
+      height: auto;
+      width: auto;
+    }
+   
+    .cuadro1{
+      position: sticky;
+      left: 3px;
+      width: 17rem;
+      height: auto;
+      margin-left: 7.5rem;
+      z-index:300; // siempre 200 //
+      margin-top: -10.2rem;
+    }
+    
+    .cuadro2{
+      width: 2880px;
+      height: 100%;
+    }
+   
+}
+
+
+

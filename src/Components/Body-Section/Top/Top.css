@@ -1,0 +1,103 @@
+/* Colores y estilos (Default) */
+
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+  
+  
+    /* Fuentes y tipografia */
+  
+    --Big: 2.5rem;
+    --h1FontSize: 1.5rem;
+    --h2FontSize: 1.25rem;
+    --h3-FontSize: 1rem;
+    --normalFontSize: .938rem;
+    --smallFontSize: 813rem;
+    --smallestFonSize: .75rem;
+  }
+
+.container{
+    background: var(--Base);
+    position: absolute;
+    width: 86%;
+    top: 3.4%;
+    right: 0;
+    height: 80px;
+    border-radius: 5px 0 0 5px;
+    box-shadow: 4px 2px 15px var(--Base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;  /* 300 */
+
+    .content-avatar{
+        position: absolute;
+        right: 2rem;
+        height: 110px;
+        width:  110px;
+        margin-top: -12px;
+    }
+
+    .avatar{
+        border-radius: 100%;
+        border: .4rem solid var(--Secondary);
+        box-shadow: 2px 2px 10px var(--Black);;
+    }
+
+    .avatar:hover{
+        transform: scale(1.1);
+        cursor: pointer;
+    }
+
+    .content-menu{
+        position: absolute;
+        left: 1rem;
+    }
+
+    .menu{
+        height: 2.5rem;
+    }
+
+    .menu:hover{
+        transform: scale(1.1);
+        cursor: pointer;
+    }
+
+    .nombre{
+        position: absolute;
+        left: 4rem;
+        color: var(--Base2);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .roll{
+        font-size: .8rem;
+    }
+
+    .fecha{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: var(--Base2);
+        font-weight:900;
+        font-size: 1.1rem;
+        gap: 3px;
+        
+    }
+
+    .fecha h5{
+        font-size: 1rem;
+    }
+
+    
+    
+}

@@ -1,0 +1,157 @@
+/* Barra de cargos lateral */
+
+/* Colores y estilos (Default) */
+
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+  }
+  
+.barra{
+    position: relative;
+    height: calc(100vh + auto); /*Provisional - siempre es auto*/
+    width: 100%;
+    background: #FFFFFF;
+    margin-top: 0;
+    border-radius: 10px;
+    padding-top: 7px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    box-shadow: 1px 1px 16px #545454;
+    z-index: 800;
+    margin: auto;
+
+
+    .imgTropa{
+        height: 10rem;
+        width: 10rem;
+    }
+
+    .imgTropa:hover{
+       transform: scale(0.97);
+       cursor: pointer;
+    }
+
+
+    /* Listado de nombres*/
+    .content-listado{
+        position: relative;
+        margin-top: 3.2rem;
+        font-size: 1rem;
+        padding: 2rem  0  2rem  0;
+        text-align: center;
+        width: 100%;
+
+        .ulMain{
+            list-style-type: none; 
+            overflow: hidden;
+            width: 100%;
+            padding: 0;
+            margin-top: 0.50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .liMain{
+            width: 100%;
+            border-bottom: 1px solid #545454;
+            font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            height: 1.61rem;
+            padding-top: 4.5px;
+            
+        }
+        .liMain:hover{
+            cursor: pointer;
+            background:#701CF5;
+            color: #DADADA;
+            font-weight: 700;
+        }
+
+        /* estilos para personal en descanso */
+
+        .liMain-var1{
+            color: #55dd1b;
+            width: 100%;
+            border-bottom: 1px solid #545454;
+            font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            height: 1.61rem;
+            padding-top: 4.5px;
+            
+        }
+
+        .liMain-var1:hover{
+            cursor: pointer;
+            color: #000000;
+            background:#55dd1b;
+            font-weight: 700;
+            
+        }
+
+        /* ----------------------------------------------------------------------------------------------------------------- */
+
+
+        /* estilos para personal incapacitado */
+
+        .liMain-var2{
+            color: red;
+            width: 100%;
+            border-bottom: 1px solid #545454;
+            font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            height: 1.61rem;
+            padding-top: 4.5px;
+            
+        }
+
+        .liMain-var2:hover{
+            cursor: pointer;
+            color: #DADADA;
+            background:red;
+            font-weight: 700;
+            
+        }
+
+        /* ----------------------------------------------------------------------------------------------------------------- */
+
+
+        
+        /* estilos para personal en vacaciones */
+
+        .liMain-var3{
+            color: #00094B;
+            width: 100%;
+            border-bottom: 1px solid #545454;
+            font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            height: 1.61rem;
+            padding-top: 4.5px;
+            
+        }
+
+        .liMain-var3:hover{
+            cursor: pointer;
+            color: #DADADA;
+            background:#00094B;
+            font-weight: 700;
+            
+        }
+
+        /* ----------------------------------------------------------------------------------------------------------------- */
+
+
+        .separador{
+            height: 4.1rem;
+        }
+    }
+    
+}
+

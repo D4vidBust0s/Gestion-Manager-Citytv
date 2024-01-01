@@ -1,0 +1,109 @@
+/* Colores y estilos (Default) */
+
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+  
+  
+    /* Fuentes y tipografia */
+  
+    --Big: 2.5rem;
+    --h1FontSize: 1.5rem;
+    --h2FontSize: 1.25rem;
+    --h3-FontSize: 1rem;
+    --normalFontSize: .938rem;
+    --smallFontSize: 813rem;
+    --smallestFonSize: .75rem;
+  }
+
+.container-menu{
+    background: var(--Base);
+    position: absolute;
+    bottom: 2.5%;
+    width: 86%;
+    right: 0;
+    height: 110px;
+    border-radius: 5px 0 0 5px;
+    box-shadow: 4px 2px 15px var(--Base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+
+}
+
+
+.main-content-aux1{
+  position: absolute;
+  background: #00094B;
+  height: 15%;
+  width: 80%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+}
+
+
+.content-menu-aux{
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+
+  .base-cuadro{
+    position: relative;
+    height: 5rem;
+    width: 5rem;
+    background:#DADADA;
+    padding: 1rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .notification{
+      background: red;
+      position: absolute;
+      color: #DADADA;
+      padding: .5rem;
+      height: 20px;
+      width: 20px;
+      text-align: center;
+      padding: 0;
+      border-radius: 50%;
+      left: 0px;
+      top: 0;
+      font-weight: 600;
+      margin: 2px;
+      z-index: 100;
+      
+    }
+
+    .basecuadro-img{
+      background: #000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      border-radius: 50%;
+      box-shadow: .2rem .2rem .7rem #545454;
+      height: 4.4rem;
+      width: 4.4rem;
+    }
+
+    .basecuadro-img:hover{
+      transform: scale(1.1);
+      cursor: pointer;
+    }
+  }  
+}
+
+

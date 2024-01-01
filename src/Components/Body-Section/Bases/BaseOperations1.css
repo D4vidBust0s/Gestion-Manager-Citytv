@@ -1,0 +1,78 @@
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+
+}
+
+.containerBase{
+    position: relative;
+    height: 75vh;
+    width: 90%;
+    background: #ffffff;
+    box-shadow: -.5rem .5rem 1rem #8a8787;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .title{
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: #EB464B;
+        color: #DADADA;
+        height: 3rem;
+        width: 16rem;
+        font-family: Impact;
+        font-size: 1.5rem;
+        padding: .8rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: -20px;
+        margin-left: -5px;
+    }
+
+    .poster{
+        position: absolute;
+        top: 0;
+        right: 0;
+        clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 50% 100%);
+        z-index: 100;
+        
+
+        .img-poster{
+            height: 40rem;
+            width: 30rem;
+            position: relative;
+            
+        }
+
+        .aux{
+            position: relative;
+            z-index: 200;
+            right: 0;
+            margin-top: -1rem;
+        }
+
+        .logo{
+            width: 15rem;
+            float: right;   
+        }
+    }
+
+    .content{
+        position: relative;
+        height: 90%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+

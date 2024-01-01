@@ -1,0 +1,100 @@
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+
+}
+
+
+.filaContentRules{
+    display: flex;
+    justify-content:flex-start;
+    align-items: center;
+    margin-left: -20%;
+    
+
+    .fila_img{
+
+        height: 4rem;
+        width: 4rem;
+        padding: .5rem;
+        display: flex;
+    }
+
+    .texto{
+        width: 15rem;
+    }
+
+   
+
+    .controls{
+        position: relative;
+        width: 25rem;
+        display: flex;
+
+
+        .selectedBox{
+            background: #545454;
+            padding: .7rem;
+            text-align: center;
+            color: #DADADA;
+            width: 10rem;
+            margin-left: 1rem;
+            
+        }
+
+        .selectedBTN{
+            background: #545454;
+            padding: .7rem;
+            text-align: center;
+            color: #DADADA;
+            width: 10rem;
+            margin-left: 1rem;
+            border: none;
+            
+        }
+
+        .selectedBTN:hover{
+            transform: scale(1.05);
+            cursor: pointer;
+            
+        }
+
+        .selecteItem{
+            padding: .7rem;
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--WhiteColor);
+        }
+
+    }
+}
+
+.contentActions{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    height: 45%;
+    width: 10%;
+    background:#701CF5;
+    color: #DADADA;
+    text-align: center;
+    font-family: Impact;
+    font-size: 1rem;
+    padding: 1rem;
+    margin-left: -10%;
+
+    .contentIMG__save{
+        width: 4.2rem;
+    }
+
+    .contentIMG__save:hover{
+        transform: scale(1.1);
+        cursor: pointer;
+    }
+}

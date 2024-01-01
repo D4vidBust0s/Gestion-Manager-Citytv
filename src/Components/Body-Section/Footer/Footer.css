@@ -1,0 +1,41 @@
+/* Colores y estilos (Default) */
+
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+  
+  
+    /* Fuentes y tipografia */
+  
+    --Big: 2.5rem;
+    --h1FontSize: 1.5rem;
+    --h2FontSize: 1.25rem;
+    --h3-FontSize: 1rem;
+    --normalFontSize: .938rem;
+    --smallFontSize: 813rem;
+    --smallestFonSize: .75rem;
+  }
+
+.container-menu{
+    background: var(--Base);
+    position: absolute;
+    bottom: 2.5%;
+    width: 86%;
+    right: 0;
+    height: 110px;
+    border-radius: 5px 0 0 5px;
+    box-shadow: 4px 2px 15px var(--Base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+    
+    transition: .9s ease;
+}

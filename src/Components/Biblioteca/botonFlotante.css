@@ -1,0 +1,27 @@
+.floatBtn{
+    background-color: #EB464B;
+    position: absolute;
+    top: 87.9%;
+    left: 12%;
+    height: 5rem;
+    width: 5rem;
+    box-shadow: .4rem .3rem .8rem #363636;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 400;
+    border-radius: .5rem;
+  
+    
+  }
+  .floatBtn:hover{
+    cursor: pointer;
+    transform: scale(1.1);
+  }
+  
+  .numFull{
+    color: #FFFFFF;
+    position: absolute;
+    margin-left: -.7rem;
+    font-weight: 700;
+  }

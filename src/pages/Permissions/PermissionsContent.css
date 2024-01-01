@@ -1,0 +1,143 @@
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+
+}
+
+.sectionDetails{
+    background: #545454;
+    width: 75%;
+    margin-top: .5rem;
+    padding: 1rem;
+}
+
+.cajaPermissions{
+    background: #701CF5;
+    height: 10rem;
+    color: #DADADA;
+    padding: 1rem;
+    overflow: auto;
+}
+
+.titleDetail{
+    color: #DADADA;
+}
+
+.titleCaducidad{
+    color: #DADADA;
+    margin-top: .3rem;
+    margin-bottom: .3rem;
+}
+
+.inputObservaciones{
+    height: 5rem;
+    width: 100%;
+    padding: .3rem;
+}
+.inputname{
+    margin-top: .2rem;
+    width: 100%;
+    padding: .2rem;
+}
+
+.inputIn {
+    margin-top:.1rem;
+    height: 1.9rem;
+}
+
+.inputOut{
+    margin-top:.1rem;
+    height: 1.9rem;
+}   
+
+.imgCalendar{
+    height: 2rem;
+}
+
+.contentControls{
+    display: flex;
+    width: 100%;
+    margin-top: .5rem;
+    position: relative;
+    
+   
+}
+
+.mainFloat{
+    position: absolute;
+    top: 39%;
+    right: 2.5%;
+    z-index: 200;
+    background:#00094B;
+    height: 280px;
+    width: 270px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: .5rem .5rem 2rem #000000;
+}
+.mainCajas2{
+    display: flex;
+    
+}
+
+.cajaControls{
+    width: 55%;
+    margin: .2rem .2rem .2rem .5rem;
+    padding: .3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.containerDeleteButtom2{
+    background: #EB464B;
+    margin-top: 0rem;
+    padding: .2rem;
+    border-radius: .5rem;
+    box-shadow: .2rem .2rem .8rem #545454;
+    height: 3.5rem;
+
+    .img-butons{
+        height: 3rem;
+        width: 3.5rem;
+        
+    }
+}
+
+.containerDeleteButtom2:hover{
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+.clean{
+    background: #7ED957;
+    height: 2rem;
+}
+
+.imgAvatar{
+    height: 5rem;
+    width: 5rem;
+    position: absolute;
+    top: 7.5rem;
+    box-shadow: #000000 .2rem .2rem .5rem;
+}
+.yearSelect{
+    margin-bottom: .5rem;
+}
+
+.itemHover{
+    font-weight: 800;
+    cursor:pointer;
+}
+
+.itemHover:hover{
+    transform: scale(1.03);
+}

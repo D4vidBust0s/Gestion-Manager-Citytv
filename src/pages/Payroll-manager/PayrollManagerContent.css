@@ -1,0 +1,163 @@
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+
+}
+
+.contenPAYROLL{
+    height: 80%;
+    width: 95%;
+    display: flex;
+    margin-top: 0%;
+
+    .subTitulo1{
+        position: absolute;
+        margin-top: -2%;
+        color: #EB464B;
+        margin-left: 2%;
+    }
+
+    .subTitulo2{
+        position: absolute;
+        margin-top: -3.6%;
+        color: #EB464B;
+    }
+    
+
+    .sectionAdd{
+        height: 90%;
+        width: 40%;
+        overflow: auto;
+        padding-left: 5%;
+        
+    }
+
+    .contentForma{
+        background: #545454;
+        display: flex;
+        width: 82%;
+        color: #DADADA;
+        align-items: center;
+        margin-top: 2.5rem;
+        height: 1.7rem;
+        border-radius: 0 .5rem .5rem 0 ;
+        margin-left: 1rem ;
+        
+    }
+
+    .contentForma:hover{
+        transform: scale(1.05);
+        cursor: pointer;
+        background: #EB464B;
+    }
+
+    .contentForma:active{
+        transform: scale(1.05);
+        cursor: pointer;
+        background: #547725;;
+    }
+
+    .img-cam{
+        height: 4rem;
+        width: 4rem;
+        position: relative;
+        background: #545454;
+        border-radius: 50%;
+        margin-left: -1rem;
+    }
+
+    .nameGroup{
+        padding-left: 1rem;
+        font-weight: 800;
+    }
+
+
+
+    .area{
+        background: #545454;
+        width: 60%;
+        height: 4.5rem;
+        color: #DADADA;
+        padding: .5rem;
+    }
+
+    .seccionButons{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        width: 66%;
+        height: 5%;
+        position: absolute;
+        background: #545454;
+        bottom: 5%;
+    
+    
+       
+        
+        .containerSingleButtom{
+            background: #547725;
+            padding: .2rem;
+            border-radius: .5rem;
+            box-shadow: .2rem .2rem .8rem #545454;
+
+           
+            .img-butons{
+                height: 3rem;
+                width: 3.5rem;
+                
+            }
+     
+        }
+
+        .containerSingleButtom:hover{
+            cursor: pointer;
+            transform: scale(1.1);
+        }
+    }
+}
+
+
+
+.sectionListPayroll{
+    height: 90%;
+    width: 35%;
+    padding: 1.5rem;
+    border-left: 1px solid #545454;
+    padding: 1.5rem 2rem;
+    overflow: auto;
+    margin-left: 0%;
+
+    .ListLI{
+        border-bottom: 1px solid #701CF5;
+        padding: .18rem 0 .18rem 0;
+    }
+
+    .ListLI:hover{
+        transform: scale(1.05);
+        cursor: pointer;
+    }
+
+    .ListLI:active{
+        background: #547725;
+    }
+
+    .ListLI:target{
+        background: #b5e27b;
+    }
+
+}
+
+.person{
+    position: absolute;
+    top: -3rem;
+    width: 60%;
+    text-align: center;
+}

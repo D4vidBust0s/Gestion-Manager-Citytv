@@ -1,0 +1,149 @@
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+
+}
+
+.contenPGM{
+    height: 80%;
+    width: 95%;
+    display: flex;
+    
+   
+    .inputName{
+        background: #545454;
+        height: 2rem;
+        width: 60%;
+        color: #DADADA;
+        padding-left: 1.1rem;
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .inputHour{
+        background: #545454;
+        height: 2rem;
+        width: 95%;
+        color: #DADADA;
+        padding-left: 1.1rem;
+        font-size: 1.1rem;
+        text-align: center;
+        
+    }
+
+    .imgTime{
+        width: 3rem;
+        margin-right: .7rem;
+    }
+
+
+    .contentSectionTime{
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 60%;
+        margin-bottom: 1.5rem;
+    }
+
+    .area{
+        background: #545454;
+        width: 60%;
+        height: 4.5rem;
+        color: #DADADA;
+        padding: .5rem;
+    }
+
+    .seccionButons{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        width: 60%;
+        margin-top: 5%;
+    
+       
+        
+        .containerSingleButtom{
+            background: #547725;
+            padding: .2rem;
+            border-radius: .5rem;
+            box-shadow: .2rem .2rem .8rem #545454;
+
+          
+
+            .img-butons{
+                height: 3rem;
+                width: 3.5rem;
+                
+            }
+     
+        }
+
+        .containerSingleButtom:hover{
+            cursor: pointer;
+            transform: scale(1.1);
+        }
+
+
+        .containerSingleButtomDelete{
+            background: #EB464B;
+            padding: .2rem;
+            border-radius: .5rem;
+            box-shadow: .2rem .2rem .8rem #545454;
+
+          
+
+            .img-butons{
+                height: 3rem;
+                width: 3.5rem;
+                
+            }
+     
+        }
+
+        .containerSingleButtomDelete:hover{
+            cursor: pointer;
+            transform: scale(1.1);
+        }
+    }
+
+    .ulHorarios{
+        width: 60%;
+        padding: 0rem .5rem 2rem .5rem
+    }
+}
+
+
+
+.sectionList{
+    height: 90%;
+    width: 35%;
+    padding: 1.5rem;
+    border-left: 1px solid #545454;
+    padding: 1.5rem 2rem;
+    overflow: auto;
+    margin-left: -10%;
+
+    .ListLI{
+        border-bottom: 1px solid #701CF5;
+        padding: .18rem 0 .18rem 0;
+    }
+
+    .ListLI:hover{
+        transform: scale(1.05);
+        cursor: pointer;
+    }
+
+    .ListLI:active{
+        background: #547725;
+    }
+
+}

@@ -1,0 +1,452 @@
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+
+}
+
+.contentRotations{
+    height: 100%;
+    width: 100%;
+    padding-top: 2rem;
+}
+
+.inputDir{
+    background: #545454;
+    height: 2rem;
+    width: 30%;
+    color: #DADADA;
+    padding-left: 1.1rem;
+    font-size: 1.1rem;
+    display: flex;
+    margin-top: .5rem;
+}
+
+.sectionDaily{
+    background-color: var(--Base2);
+    width: 75%;
+    height: auto;
+    margin-top: 7rem;
+    display: flex;
+    justify-content: space-between;
+    
+
+    .imgDaily{
+       width: 5rem;
+       position: absolute;
+       top: 8rem;
+       left: 0
+    }
+
+    .mainCajas{
+        height: 100%;
+        padding: 1.2rem;
+        width: 100%;
+        position: relative;
+    }
+
+    .mainCajas2{
+        height: 100%;
+        padding: 1.2rem;
+        width: 40%;
+        position: relative;
+    }
+
+    .caja1{
+        background-color: var(--Base);
+        width: 100%;
+        color: #FFFFFF;
+        padding: .5rem;
+        height: 100%;;
+
+        .item:hover{
+            background-color: #701CF5;
+            cursor: pointer;
+        }
+    }
+
+    .caja2{
+        background-color: var(--HoverColor);
+        width: 100%;
+        color: #FFFFFF;
+        padding: .9rem;
+        overflow: auto;
+        height: 7.2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .horaIn{
+        padding: .2rem;
+        text-align: center;
+        display: flex;
+        flex-direction:column;
+       
+    }
+
+    .input{
+        text-align: center;
+        color: #FFFFFF;
+        background-color: #545454;
+        border: 0;
+        margin-bottom: .5rem;
+        padding: .2rem;
+    }
+
+    .input:hover{
+        cursor: pointer;
+    }
+
+    .caja3{
+        width: 95%;
+        height: 7.2rem;
+        overflow: auto;
+    }
+
+    .caja4{
+        width: 100%;
+        height: 5rem;
+        overflow: auto;
+        display: flex;
+    }
+
+    .caja44{
+        width: 100%;
+        height: 5rem;
+        overflow: auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .inputDir2{
+        background: #545454;
+        height: 1.2rem;
+        width: 90%;
+        color: #DADADA;
+        font-size: .8rem;
+        
+    }
+
+    .inputDir3{
+        background: #545454;
+        height: 2rem;
+        width: 100%;
+        color: #DADADA;
+        font-size: .8rem;
+        margin-top: .1rem;
+        padding: .2rem;
+        
+        
+    }
+
+    .programas{
+        color: #EB464B;
+        margin-bottom: 1.2rem;
+        font-weight: 700;
+    }
+
+    .containerSingleButtom{
+        margin-top: .5rem;
+        background: #547725;
+        padding: .2rem;
+        border-radius: .5rem;
+        box-shadow: .2rem .2rem .8rem #545454;
+        height: 3.5rem;
+        margin-left: .2rem;
+ 
+        .img-butons{
+            height: 3rem;
+            width: 3.5rem;
+            
+        }
+ 
+    }
+
+    .containerSingleButtom2{
+        margin-top: .5rem;
+        background: #547725;
+        padding: .2rem;
+        border-radius: .5rem;
+        box-shadow: .2rem .2rem .8rem #545454;
+        height: 3rem;
+        margin-left: .2rem;
+        display: flex;
+ 
+        .img-butons{
+            height: 3rem;
+            width: 3.5rem;
+            
+        }
+ 
+    }
+    
+    
+
+    .containerDeleteButtom{
+        background: #EB464B;
+        margin-top: .5rem;
+        padding: .2rem;
+        border-radius: .5rem;
+        box-shadow: .2rem .2rem .8rem #545454;
+        height: 3.5rem;
+        margin-left: .2rem;
+
+        .img-butons{
+            height: 3rem;
+            width: 3.5rem;
+            
+        }
+    }
+
+    .containerDeleteButtom2{
+        background: #EB464B;
+        margin-top: .5rem;
+        padding: .2rem;
+        border-radius: .5rem;
+        box-shadow: .2rem .2rem .8rem #545454;
+        height: 3rem;
+        margin-left: .2rem;
+        display: flex;
+
+        .img-butons{
+            height: 3rem;
+            width: 3.5rem;
+            
+        }
+    }
+
+    .seccionButons{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        width: 60%;
+        margin-top: 5%;
+        
+    }
+
+    .containerSingleButtom:hover{
+        cursor: pointer;
+        transform: scale(1.1);
+    }
+
+    .containerDeleteButtom:hover{
+        cursor: pointer;
+        transform: scale(1.1);
+    }
+
+     .containerSingleButtom2:hover{
+        cursor: pointer;
+        transform: scale(1.1);
+    }
+
+    .containerDeleteButtom2:hover{
+        cursor: pointer;
+        transform: scale(1.1);
+    }
+
+    .seleccionadoDaily{
+        position: absolute;
+        top:10.5rem;
+        left: 7rem;
+    }
+
+   .ProgramActions{
+        position: absolute;
+        top:-2%;
+        right: -80%;
+        width: 85%;
+        height: 12rem;
+        background: #545454;
+        padding: 1rem;
+        z-index: 200;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction:column;
+        box-shadow: #000000 5px 5px 20px;
+    }
+
+
+}
+
+ 
+
+
+.sectionSunday{
+    background-color: var(--Base2);
+    width: 75%;
+    height: auto;
+    margin-top: 7rem;
+    display: flex;
+    justify-content: space-between;
+
+    .imgSunday{
+       width: 7rem;
+       position: absolute;
+       top: 25.5rem;
+       left: -1.1rem
+    }
+
+    .mainCajas{
+        height: 100%;
+        padding: 1.2rem;
+        width: 100%;
+    }
+
+    .caja1{
+        background-color: var(--Base);
+        width: 100%;
+        color: #FFFFFF;
+        padding: .5rem;
+        overflow: auto;
+        
+
+        .item:hover{
+            background-color: #701CF5;
+            cursor: pointer;
+        }
+
+    }
+
+    .caja2{
+        background-color: var(--HoverColor);
+        width: 100%;
+        color: #FFFFFF;
+        padding: .9rem;
+        overflow: auto;
+        height: 7.2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .horaIn{
+        padding: .2rem;
+        text-align: center;
+        display: flex;
+        flex-direction:column;
+       
+    }
+
+    .input{
+        text-align: center;
+        color: #FFFFFF;
+        background-color: #545454;
+        border: 0;
+        margin-bottom: .5rem;
+        padding: .2rem;
+        position: relative;
+        top: 0;
+    }
+
+    .input:hover{
+        cursor: pointer;
+    }
+
+    .caja3{
+        width: 110%;
+        height: 7.2rem;
+        overflow: auto;
+    }
+
+    .caja4{
+        width: 100%;
+        height: 5rem;
+        overflow: auto;
+        display: flex;
+    }
+
+    .inputDir2{
+        background: #545454;
+        height: 1.2rem;
+        width: 90%;
+        color: #DADADA;
+        font-size: .8rem;
+        
+    }
+
+    .inputDir3{
+        background: #545454;
+        height: 2rem;
+        width: 100%;
+        color: #DADADA;
+        font-size: .8rem;
+        margin-top: .1rem;
+        padding: .2rem;
+        
+        
+    }
+
+    .containerSingleButtom{
+        margin-top: .5rem;
+        background: #547725;
+        padding: .2rem;
+        border-radius: .5rem;
+        box-shadow: .2rem .2rem .8rem #545454;
+        height: 3.5rem;
+        margin-left: .2rem;
+ 
+        .img-butons{
+            height: 3rem;
+            width: 3.5rem;
+            
+        }
+ 
+    }
+
+    .containerDeleteButtom{
+        background: #EB464B;
+        margin-top: .5rem;
+        padding: .2rem;
+        border-radius: .5rem;
+        box-shadow: .2rem .2rem .8rem #545454;
+        height: 3.5rem;
+        margin-left: .2rem;
+
+        .img-butons{
+            height: 3rem;
+            width: 3.5rem;
+            
+        }
+    }
+
+    .seccionButons{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        width: 60%;
+        margin-top: 5%;
+        
+    }
+
+    .containerSingleButtom:hover{
+        cursor: pointer;
+        transform: scale(1.1);
+    }
+
+    .containerDeleteButtom:hover{
+        cursor: pointer;
+        transform: scale(1.1);
+    }
+
+    .seleccionadoSunday{
+        position: absolute;
+        top:28.5rem;
+        left: 7rem;
+    }
+
+}
+
+.item{
+    font-size: .8rem;
+}

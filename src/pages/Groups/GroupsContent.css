@@ -1,0 +1,154 @@
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+
+}
+
+.contenPGM{
+    height: 80%;
+    width: 95%;
+    display: flex;
+    margin-top: 10%;
+    
+
+    .sectionAdd{
+        height: 90%;
+        width: 50%;
+        margin-top: 2%;
+    }
+
+    .inputDir{
+        background: #545454;
+        height: 2rem;
+        width: 82%;
+        color: #DADADA;
+        padding-left: 1.1rem;
+        font-size: 1.1rem;
+        
+    }
+
+    .cajaLogo{
+        background: #000000;
+        width: 4rem;
+        height: 4rem;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+       
+    }
+
+    .cajaLogo:hover{
+        transform: scale(1.1);
+        cursor: pointer;
+    }
+   
+    .LogoGrupo{
+        width: 4rem;
+        height: 4rem;
+    }
+   
+
+    .contentSectionLogo{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 60%;
+        
+    }
+
+    .area{
+        background: #545454;
+        width: 60%;
+        height: 4.5rem;
+        color: #DADADA;
+        padding: .5rem;
+    }
+
+    .seccionButons{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        width: 60%;
+        margin-top: 5%;
+    
+       
+        
+        .containerSingleButtom{
+            background: #547725;
+            padding: .2rem;
+            border-radius: .5rem;
+            box-shadow: .2rem .2rem .8rem #545454;
+     
+            .img-butons{
+                height: 3rem;
+                width: 3.5rem;
+                
+            }
+     
+        }
+
+        .containerDeleteButtom{
+            background: #EB464B;
+            padding: .2rem;
+            border-radius: .5rem;
+            box-shadow: .2rem .2rem .8rem #545454;
+
+            .img-butons{
+                height: 3rem;
+                width: 3.5rem;
+                
+            }
+        }
+
+        .containerSingleButtom:hover{
+            cursor: pointer;
+            transform: scale(1.1);
+        }
+
+        .containerDeleteButtom:hover{
+            cursor: pointer;
+            transform: scale(1.1);
+        }
+    }
+}
+
+
+
+.sectionList{
+    height: 90%;
+    width: 35%;
+    padding: 1.5rem;
+    border-left: 1px solid #545454;
+    padding: 1.5rem 2rem;
+    overflow: auto;
+    margin-left: -10%;
+
+    .ListLI{
+        border-bottom: 1px solid #701CF5;
+        padding: .18rem 0 .18rem 0;
+    }
+
+    .ListLI:hover{
+        transform: scale(1.05);
+        cursor: pointer;
+    }
+
+    .ListLI:active{
+        background: #547725;
+        padding: .18rem;
+        color: #DADADA;
+    }
+
+
+
+
+}
