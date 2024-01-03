@@ -32,6 +32,9 @@ const [nameUser, setNameUser] = useState("-----------------------");
 const [avatarUser, setAvatarUser] = useState(Avatar);
 const [idUser, setIdUser] = useState();
 
+/* VARIABLES */
+let idUsuario;
+
 /* REFERENCIAS */
 const starInRef = useRef();
 const starOutRef = useRef();
@@ -63,8 +66,13 @@ const obtenerListadoGroups = async () => {
   }
 
   const traerPermisosTrabajador = async ()=>{
-
+    return await axios
+    .get("http://localhost:3000/api/permissions/"+idUsuario)
+    .then((response) => setData2(response.data));
     
+  }
+
+  const traerPermisosTrabajador2 = async ()=>{
     return await axios
     .get("http://localhost:3000/api/permissions/"+idUser)
     .then((response) => setData2(response.data));
@@ -72,15 +80,22 @@ const obtenerListadoGroups = async () => {
   }
 
   const clickUser = (id, nombre, apellido)=>{
+    idUsuario = id;
     setNameUser(nombre +" "+ apellido);
     setIdUser(id);
-    toast(id);
     traerPermisosTrabajador();
   }
 
 const limpiar = ()=>{
 
+  //Dejamos limpios los campos del formulario
+  namePermissionRef.current.value="";
   namePermissionRef.current.focus();
+
+  setStarIn(new Date());
+  setStarOut(new Date());
+
+  observacionesRef.current.value="";
 }
 
 const agregar = async ()=>{
@@ -128,6 +143,7 @@ const agregar = async ()=>{
       setStarIn(new Date());
       setStarOut(new Date());
       observacionesRef.current.value="";
+      traerPermisosTrabajador2();
 
       toast.success("Registro agregado correctamente");
   }
@@ -159,16 +175,27 @@ const EliminarPermiso = ()=>{
 
 }
 
+const llenarFormulario = (nombre,fechaIn,fechaOut,observacion,estado)=>{
 
-  
+  namePermissionRef.current.value=nombre;
+  setStarIn(new Date(fechaIn));
+  setStarOut( new Date(fechaOut));
+  observacionesRef.current.value=observacion;
+}
+
 
 
 /* REFERENCIAS*/
  const groupsRef = useRef();
 
+/* EFECTOS*/
  useEffect(() => {
     obtenerListadoGroups();
   }, []);
+
+  
+ 
+
 
 
   return (
@@ -223,7 +250,8 @@ const EliminarPermiso = ()=>{
                {
                   
                   data2?.map((permisos)=>(
-                    <li className='itemHover' key={permisos._id} onClick={traerPermisosTrabajador()}>- {permisos.Nombre}</li>
+                    <li className='itemHover' key={permisos._id} onClick={()=>llenarFormulario(permisos.Nombre,permisos.FechaInicio,permisos.FechaFinal,permisos.Observacion,permisos.Estado)}
+                    >- {permisos.Nombre}</li>
                   ))
                   
                }
