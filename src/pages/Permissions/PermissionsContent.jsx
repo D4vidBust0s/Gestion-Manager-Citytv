@@ -16,6 +16,9 @@ import Edit from '../../assets/pencil.svg';
 import Delete from '../../assets/trash.svg';
 import Brush from '../../assets/brush.svg';
 
+/* VARIABLES */
+let idUsuario;
+let auxAño;
 
 //---------------------------------------------------------------------------------------------------
 
@@ -29,11 +32,8 @@ const [startDate, setStartDate] = useState(new Date());
 const [starIn, setStarIn] = useState(new Date());
 const [starOut, setStarOut] = useState(new Date());
 const [nameUser, setNameUser] = useState("-----------------------");
-const [avatarUser, setAvatarUser] = useState(Avatar);
+const [avatarUser, /*setAvatarUser*/] = useState(Avatar);
 const [idUser, setIdUser] = useState();
-
-/* VARIABLES */
-let idUsuario;
 
 /* REFERENCIAS */
 const starInRef = useRef();
@@ -42,6 +42,7 @@ const namePermissionRef = useRef();
 const fechaInicialRef = useRef();
 const fechaFinalRef = useRef();
 const observacionesRef = useRef();
+const groupsRef = useRef();
 
 //FUNCIONES
 const groupChange = () =>
@@ -49,6 +50,7 @@ const groupChange = () =>
     
     getPeopleOfGroup();
     setNameUser("-----------------------");
+    limpiar();
     
   }
 
@@ -67,11 +69,17 @@ const obtenerListadoGroups = async () => {
 
   const traerPermisosTrabajador = async ()=>{
     return await axios
-    .get("http://localhost:3000/api/permissions/"+idUsuario)
+    .get("http://localhost:3000/api/permissions/"+idUsuario,
+    {
+      params:{
+        año: auxAño?.getFullYear(),
+      }
+    })
     .then((response) => setData2(response.data));
     
   }
 
+  /*
   const traerPermisosTrabajador2 = async ()=>{
     return await axios
     .get("http://localhost:3000/api/permissions/"+idUser)
@@ -79,8 +87,11 @@ const obtenerListadoGroups = async () => {
     
   }
 
+  */
+
   const clickUser = (id, nombre, apellido)=>{
     idUsuario = id;
+    auxAño=startDate;
     setNameUser(nombre +" "+ apellido);
     setIdUser(id);
     traerPermisosTrabajador();
@@ -94,8 +105,9 @@ const limpiar = ()=>{
 
   setStarIn(new Date());
   setStarOut(new Date());
-
+  setStartDate(new Date());
   observacionesRef.current.value="";
+  setData2([]);
 }
 
 const agregar = async ()=>{
@@ -130,6 +142,7 @@ const agregar = async ()=>{
   {
     await axios.post("http://localhost:3000/api/permissions/", {
       nombre: namePermissionRef.current.value,
+      año:starIn.getFullYear().toString(),
       fechainicio: starIn,
       fechafinal: starOut,
       observacion: observacionesRef.current.value,
@@ -143,7 +156,7 @@ const agregar = async ()=>{
       setStarIn(new Date());
       setStarOut(new Date());
       observacionesRef.current.value="";
-      traerPermisosTrabajador2();
+      traerPermisosTrabajador();
 
       toast.success("Registro agregado correctamente");
   }
@@ -175,7 +188,7 @@ const EliminarPermiso = ()=>{
 
 }
 
-const llenarFormulario = (nombre,fechaIn,fechaOut,observacion,estado)=>{
+const llenarFormulario = (nombre,fechaIn,fechaOut,observacion,/*estado*/)=>{
 
   namePermissionRef.current.value=nombre;
   setStarIn(new Date(fechaIn));
@@ -183,12 +196,17 @@ const llenarFormulario = (nombre,fechaIn,fechaOut,observacion,estado)=>{
   observacionesRef.current.value=observacion;
 }
 
+const traer2 = ()=>{
 
-
-/* REFERENCIAS*/
- const groupsRef = useRef();
+  setStarIn(new Date());
+  setStarOut(new Date());
+  observacionesRef.current.value="";
+  traerPermisosTrabajador();
+  
+}
 
 /* EFECTOS*/
+//---------------------------------------------------------------------------------------------------------------------------------------
  useEffect(() => {
     obtenerListadoGroups();
   }, []);
@@ -236,8 +254,7 @@ const llenarFormulario = (nombre,fechaIn,fechaOut,observacion,estado)=>{
           <div className="yearSelect">
               <DatePicker className='picker'
                 selected={startDate}
-                onChange={(date) => setStartDate(date)}
-                //renderYearContent={renderYearContent}
+                onChange={(date) => {setStartDate(date),auxAño=(date),traer2()}}
                 showYearPicker
                 dateFormat="yyyy"
                 ref={fechaInicialRef}
@@ -268,11 +285,13 @@ const llenarFormulario = (nombre,fechaIn,fechaOut,observacion,estado)=>{
           <div className="caja">
           <div className="contentCalendar">
           <DatePicker
-            selected={startDate}
+            selected={starIn}
             onChange={(date) => setStartDate(date)}
             inline
             showWeekNumbers
             showMonthDropdown
+            startDate={starIn}
+            endDate={starOut}
             ref={fechaFinalRef}
           />
         </div>
