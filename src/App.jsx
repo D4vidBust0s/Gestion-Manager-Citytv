@@ -1,29 +1,30 @@
-import {useState} from 'react'
-import {BrowserRouter,Routes,Route} from 'react-router-dom'
+import {useState} from 'react';
+import {BrowserRouter,Routes,Route} from 'react-router-dom';
 
 /*Componentes */
-import Sidebar from '/src/Components/Sidebar-Section/Sidebar'
-import Top from './Components/Body-Section/Top/Top'
-import Footer from './Components/Body-Section/Footer/Footer'
-import Modal1 from './Components/Modals/ModalPlanner1'
-import Rules from './Components/Body-Section/Operations/Rules/Rules'
-import Programs from './pages/Programs/Programs'
-import PayrollManger from './pages/Payroll-manager/PayrollManager'
-import Groups from './pages/Groups/Groups'
-import Rotations from './pages/Rotations/Rotations'
+import Sidebar from '/src/Components/Sidebar-Section/Sidebar';
+import Top from './Components/Body-Section/Top/Top';
+import Footer from './Components/Body-Section/Footer/Footer';
+import Modal1 from './Components/Modals/ModalPlanner1';
+import Rules from './Components/Body-Section/Operations/Rules/Rules';
+import Programs from './pages/Programs/Programs';
+import PayrollManger from './pages/Payroll-manager/PayrollManager';
+import Groups from './pages/Groups/Groups';
+import Rotations from './pages/Rotations/Rotations';
 
 
 /*Pages */
-import Chat from '/src/pages/Chat/ChatPage'
-import Tasks from '/src/pages/Tasks/TasksPage'
-import Dashboard from '/src/pages/Dasboard/DashboardPage'
-import Main from '/src/pages/Main/MainPage'
-import MainPlanner from '/src/pages/MainPlanner/MainPlannerPage'
-import NotFound from '/src/pages/NotFound/NotFoundPage'
-import Permissions from '/src/pages/Permissions/Permisions'
+import Chat from '/src/pages/Chat/ChatPage';
+import Tasks from '/src/pages/Tasks/TasksPage';
+import Dashboard from '/src/pages/Dasboard/DashboardPage';
+import Main from '/src/pages/Main/MainPage';
+import MainPlanner from '/src/pages/MainPlanner/MainPlannerPage';
+import NotFound from '/src/pages/NotFound/NotFoundPage';
+import Permissions from '/src/pages/Permissions/Permisions';
+import Incapacity from './pages/Incapacity/Incapacity';
 
 
-import './App.css'
+import './App.css';
 
 
 function App() {
@@ -51,6 +52,7 @@ const [modal1, setModal1] = useState(false);
             <Route path="/groups" element={<Groups />} />
             <Route path="/rotation" element={<Rotations />} />
             <Route path="/permissions" element={<Permissions />} />
+            <Route path="/incapacity" element={<Incapacity />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
@@ -58,9 +60,5 @@ const [modal1, setModal1] = useState(false);
     </BrowserRouter>
   );
 }
-
-
-
- 
 
 export default App
