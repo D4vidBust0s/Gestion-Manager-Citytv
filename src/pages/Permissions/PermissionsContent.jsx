@@ -19,6 +19,7 @@ import Brush from '../../assets/brush.svg';
 /* VARIABLES */
 let idUsuario;
 let auxAño;
+let idRegistro;
 
 //---------------------------------------------------------------------------------------------------
 
@@ -95,6 +96,16 @@ const obtenerListadoGroups = async () => {
     setNameUser(nombre +" "+ apellido);
     setIdUser(id);
     traerPermisosTrabajador();
+
+    //Dejamos limpios los campos del formulario
+    namePermissionRef.current.value="";
+    setStarIn(new Date());
+    setStarOut(new Date());
+    setStartDate(new Date());
+    observacionesRef.current.value="";
+    idRegistro="";
+    setData2([]);
+    
   }
 
 const limpiar = ()=>{
@@ -107,6 +118,7 @@ const limpiar = ()=>{
   setStarOut(new Date());
   setStartDate(new Date());
   observacionesRef.current.value="";
+  idRegistro="";
   setData2([]);
 }
 
@@ -163,37 +175,59 @@ const agregar = async ()=>{
 
 }
 
-const eliminar = ()=>{
-  Swal.fire({
-    title: "¿Realmente desea eliminar el permiso para...?",
-    showDenyButton: true,
-    showCancelButton: true,
-    confirmButtonText: "No",
-    denyButtonText: `Confirmar`,
-    footer: '<h6>Gestión Manager Citytv</h6>',
+const eliminar = ()=>
+{
+  if(idRegistro)
+  {
+    Swal.fire({
+      title: "¿Realmente desea eliminar el permiso para " + nameUser + "?",
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: "No",
+      denyButtonText: `Confirmar`,
+      footer: '<h6>Gestión Manager Citytv</h6>',
+      
+    }).then((result) => {
+      /* Read more about isConfirmed, isDenied below */
+      if (result.isConfirmed) {
+        //Swal.fire("Saved!", "", "success");
+      } else if (result.isDenied) 
+      {
+        EliminarPermiso();
+        //Swal.fire("Registro eliminado del sistema", "", "success");
+      }
+    });
+  }
+  else{
+    toast.error("No se ha seleccionado un registro para eliminar");
+  }
+  
+}
+
+const EliminarPermiso = async ()=>{
+  await axios.delete("http://localhost:3000/api/permissions/" + idRegistro);
+      
+      traerPermisosTrabajador();
+      
+      //Dejamos limpios los campos del formulario
+      namePermissionRef.current.value="";
+      setStarIn(new Date());
+      setStarOut(new Date());
+      observacionesRef.current.value="";
+      idRegistro="";
+
+      toast.success("Registro eliminado  correctamente");
     
-  }).then((result) => {
-    /* Read more about isConfirmed, isDenied below */
-    if (result.isConfirmed) {
-      //Swal.fire("Saved!", "", "success");
-    } else if (result.isDenied) 
-    {
-      EliminarPermiso();
-      //Swal.fire("Registro eliminado del sistema", "", "success");
-    }
-  });
 }
 
-const EliminarPermiso = ()=>{
-
-}
-
-const llenarFormulario = (nombre,fechaIn,fechaOut,observacion,/*estado*/)=>{
+const llenarFormulario = (nombre,fechaIn,fechaOut,observacion,idReg,/*estado*/)=>{
 
   namePermissionRef.current.value=nombre;
   setStarIn(new Date(fechaIn));
   setStarOut( new Date(fechaOut));
   observacionesRef.current.value=observacion;
+
+  idRegistro = idReg;
 }
 
 const traer2 = ()=>{
@@ -202,7 +236,62 @@ const traer2 = ()=>{
   setStarOut(new Date());
   observacionesRef.current.value="";
   traerPermisosTrabajador();
+
+  //Dejamos limpios los campos del formulario
+  namePermissionRef.current.value="";
+  setStarIn(new Date());
+  setStarOut(new Date());
+  observacionesRef.current.value="";
+  idRegistro="";
   
+  
+}
+
+const editar = async ()=>{
+
+ //Validaciones
+ if(nameUser=="-----------------------")
+ {
+   toast.error("Para actualizar la información un trabajador, primero seleccionelo de la lista");
+ }
+ else if(namePermissionRef.current.value=="")
+ {
+   namePermissionRef.current.focus();
+   toast.error("El campo nombre del permiso no puede estar vacio, seleccionelo de la lista de registros");
+ }
+ else if(fechaInicialRef.current.value=="")
+ {
+   fechaInicialRef.current.focus();
+   toast.error("Debe especificar una fecha de inicio para el permiso");
+ }
+ else if(fechaFinalRef.current.value=="")
+ {
+   fechaFinalRef.current.focus();
+   toast.error("Debe especificar una fecha de finalización del permiso");
+ }
+ else if(observacionesRef.current.value=="")
+ {
+   observacionesRef.current.focus();
+   toast.error("Debe especificar una obserbación o descripción del permiso");
+ }
+
+ else
+ {
+  
+   await axios.put("http://localhost:3000/api/permissions/"+ idRegistro, {
+     nombre: namePermissionRef.current.value,
+     año:starIn.getFullYear().toString(),
+     fechainicio: starIn,
+     fechafinal: starOut,
+     observacion: observacionesRef.current.value,
+     estado: true,
+     nombreempleado: nameUser,
+     id_empleado: idUser,
+     });
+
+     traerPermisosTrabajador();
+     toast.success("Registro actualizado correctamente");
+ }
 }
 
 /* EFECTOS*/
@@ -267,7 +356,7 @@ const traer2 = ()=>{
                {
                   
                   data2?.map((permisos)=>(
-                    <li className='itemHover' key={permisos._id} onClick={()=>llenarFormulario(permisos.Nombre,permisos.FechaInicio,permisos.FechaFinal,permisos.Observacion,permisos.Estado)}
+                    <li className='itemHover' key={permisos._id} onClick={()=>llenarFormulario(permisos.Nombre,permisos.FechaInicio,permisos.FechaFinal,permisos.Observacion,permisos._id,permisos.Estado)}
                     >- {permisos.Nombre}</li>
                   ))
                   
@@ -349,7 +438,7 @@ const traer2 = ()=>{
                   <img src={Plus} alt="pencil" className='img-butons' onClick={agregar}/>
                 </div>
                 <div className="containerSingleButtom">
-                 <img src={Edit} alt="plus" className='img-butons' />
+                 <img src={Edit} alt="plus" className='img-butons' onClick={editar}/>
                 </div>
                 <div className="containerDeleteButtom2">
                  <img src={Delete} alt="trash" className='img-butons' onClick={eliminar}/>

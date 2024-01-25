@@ -313,9 +313,16 @@ function Sidebar() {
 
               <li className="list__inside">
                 <a href="#" className="nav__link nav__link--inside">
+                 Routes
+                </a>
+              </li>
+
+              <li className="list__inside">
+                <a href="#" className="nav__link nav__link--inside">
                   Chat
                 </a>
               </li>
+
             </ul>
           </li>
 
