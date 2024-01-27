@@ -22,6 +22,7 @@ import MainPlanner from '/src/pages/MainPlanner/MainPlannerPage';
 import NotFound from '/src/pages/NotFound/NotFoundPage';
 import Permissions from '/src/pages/Permissions/Permisions';
 import Incapacity from './pages/Incapacity/Incapacity';
+import Recess from './pages/Recess/recess';
 
 
 import './App.css';
@@ -53,6 +54,7 @@ const [modal1, setModal1] = useState(false);
             <Route path="/rotation" element={<Rotations />} />
             <Route path="/permissions" element={<Permissions />} />
             <Route path="/incapacity" element={<Incapacity />} />
+            <Route path="/recess" element={<Recess />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
