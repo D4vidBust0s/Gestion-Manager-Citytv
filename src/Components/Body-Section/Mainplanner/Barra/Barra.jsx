@@ -3,7 +3,7 @@ import './Barra.css'
 
 /* IMAGENES */
 import tropa from '../../../../assets/tropa.png';
-import flecha from '../../../../assets/arrow.svg'
+//import flecha from '../../../../assets/arrow.svg'
 
 /* DEPENDENCIAS */
 import {useState} from 'react'
@@ -68,10 +68,20 @@ export default function Barra() {
           <div className="separador"></div>
 
           <ul className="ulMain">
-            <li className="liMain">Anna Brenda Contreras</li>
+            <li className="liMain-var1">Anna Brenda Contreras</li>
             <li className="liMain-var3">David Alexander Bustos</li>
             <li className="liMain">Carlos Arturo Vega</li>
             <li className="liMain">Miguel Alejandro Sanabria</li>
+            <li className="liMain">Yenny Alejandra Rodriguez</li>
+          </ul>
+
+          <div className="separador"></div>
+
+          <ul className="ulMain">
+            <li className="liMain">Anna Brenda Contreras</li>
+            <li className="liMain-var3">David Alexander Bustos</li>
+            <li className="liMain">Carlos Arturo Vega</li>
+            <li className="liMain-var4">Miguel Alejandro Sanabria</li>
             <li className="liMain">Yenny Alejandra Rodriguez</li>
           </ul>
 
@@ -91,6 +101,16 @@ export default function Barra() {
             <li className="liMain">Anna Brenda Contreras</li>
             <li className="liMain-var3">David Alexander Bustos</li>
             <li className="liMain">Carlos Arturo Vega</li>
+            <li className="liMain-var2">Miguel Alejandro Sanabria</li>
+            <li className="liMain">Yenny Alejandra Rodriguez</li>
+          </ul>
+
+          <div className="separador"></div>
+
+          <ul className="ulMain">
+            <li className="liMain">Anna Brenda Contreras</li>
+            <li className="liMain-var3">David Alexander Bustos</li>
+            <li className="liMain-var1">Carlos Arturo Vega</li>
             <li className="liMain">Miguel Alejandro Sanabria</li>
             <li className="liMain">Yenny Alejandra Rodriguez</li>
           </ul>
@@ -102,7 +122,7 @@ export default function Barra() {
             <li className="liMain-var3">David Alexander Bustos</li>
             <li className="liMain">Carlos Arturo Vega</li>
             <li className="liMain">Miguel Alejandro Sanabria</li>
-            <li className="liMain">Yenny Alejandra Rodriguez</li>
+            <li className="liMain-var4">Yenny Alejandra Rodriguez</li>
           </ul>
 
           <div className="separador"></div>
@@ -111,27 +131,7 @@ export default function Barra() {
             <li className="liMain">Anna Brenda Contreras</li>
             <li className="liMain-var3">David Alexander Bustos</li>
             <li className="liMain">Carlos Arturo Vega</li>
-            <li className="liMain">Miguel Alejandro Sanabria</li>
-            <li className="liMain">Yenny Alejandra Rodriguez</li>
-          </ul>
-
-          <div className="separador"></div>
-
-          <ul className="ulMain">
-            <li className="liMain">Anna Brenda Contreras</li>
-            <li className="liMain-var3">David Alexander Bustos</li>
-            <li className="liMain">Carlos Arturo Vega</li>
-            <li className="liMain">Miguel Alejandro Sanabria</li>
-            <li className="liMain">Yenny Alejandra Rodriguez</li>
-          </ul>
-
-          <div className="separador"></div>
-
-          <ul className="ulMain">
-            <li className="liMain">Anna Brenda Contreras</li>
-            <li className="liMain-var3">David Alexander Bustos</li>
-            <li className="liMain">Carlos Arturo Vega</li>
-            <li className="liMain">Miguel Alejandro Sanabria</li>
+            <li className="liMain-var4">Miguel Alejandro Sanabria</li>
             <li className="liMain">Yenny Alejandra Rodriguez</li>
           </ul>
 
