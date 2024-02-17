@@ -67,6 +67,30 @@ export default function Timeline() {
 
   return (
     <div className="lineTime">
+      <div className="vertical1"></div>
+      <div className="vertical2"></div>
+      <div className="vertical3"></div>
+      <div className="vertical4"></div>
+      <div className="vertical5"></div>
+      <div className="vertical6"></div>
+      <div className="vertical7"></div>
+      <div className="vertical8"></div>
+      <div className="vertical9"></div>
+      <div className="vertical10"></div>
+      <div className="vertical11"></div>
+      <div className="vertical12"></div>
+      <div className="vertical13"></div>
+      <div className="vertical14"></div>
+      <div className="vertical15"></div>
+      <div className="vertical16"></div>
+      <div className="vertical17"></div>
+      <div className="vertical18"></div>
+      <div className="vertical19"></div>
+      <div className="vertical20"></div>
+      <div className="vertical21"></div>
+      <div className="vertical22"></div>
+      <div className="vertical23"></div>
+
       <div className="cursor" style={{ left: desplazamiento }}>
         <img src={cursor} alt="cursor" className='img-cursor'/>
         <div className="line"></div>

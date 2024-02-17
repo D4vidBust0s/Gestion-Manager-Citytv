@@ -138,6 +138,7 @@
     .ListLI{
         border-bottom: 1px solid #701CF5;
         padding: .18rem 0 .18rem 0;
+        width: 100%;
     }
 
     .ListLI:hover{
@@ -160,4 +161,20 @@
     top: -3rem;
     width: 60%;
     text-align: center;
+}
+
+.sb{
+    display: flex;
+    
+}
+.subGrupo{
+    background: #00094B;
+    width: 4rem;
+    margin-right: 1rem;
+    color: #DADADA;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 900;
+    border-bottom: solid #FFFFFF 1px;
 }

@@ -179,8 +179,12 @@ const addPerson = () =>{
           <ul className='ListUL'>
 
             {
-               data2.map((payroll)=>(
-                <li className='ListLI' key={payroll._id} onClick={()=> operationPerson(payroll._id,payroll.nombres,payroll.apellidos)}>{payroll.nombres} {payroll.apellidos}</li>
+               data2.map((payroll,index)=>(
+                <div className="sb" key={index}>
+                  <div className="subGrupo">{payroll.subGrupo}</div>
+                   <li className='ListLI' key={payroll._id} onClick={()=> operationPerson(payroll._id,payroll.nombres,payroll.apellidos)}>{payroll.nombres} {payroll.apellidos}</li>
+                </div>
+                
                ))
             } 
           </ul>

@@ -68,6 +68,7 @@ export default function ModalManagerPayroll({id,op}) {
   const contactoSecundarioReF = useRef();
   const estadoReF = useRef();
   const mainplannerRef = useRef();
+  const sbRef = useRef();
 
   
 
@@ -186,6 +187,7 @@ export default function ModalManagerPayroll({id,op}) {
           ContactoAux: contactoSecundarioReF.current.value,
           Activo: estadoReF.current.value,
           Mainplanner: mainplannerRef.current.value,
+          SubGrupo:sbRef.current.value,
       });
 
       toast.success("Usuario agregado correctamente");
@@ -220,6 +222,7 @@ export default function ModalManagerPayroll({id,op}) {
           contactoAux: contactoSecundarioReF.current.value,
           activo: estadoReF.current.value,
           mainplanner: mainplannerRef.current.value,
+          subGrupo: sbRef.current.value,
 
         });
 
@@ -357,6 +360,7 @@ useEffect(()=>{
   estadoReF.current.value=dataDos["activo"];
   setEstado((estadoReF.current.value=dataDos["activo"])==true?"Activo":"Inactivo");
   mainplannerRef.current.value=dataDos["mainplanner"];
+  sbRef.current.value=dataDos["subGrupo"];
   aux = 0;
   aux2 = 0;
 
@@ -655,6 +659,26 @@ useEffect(()=>{
                   <select name="Estado" className='input-normal2' ref={mainplannerRef} onChange={modifyEstate} >
                       <option value={"Main planner 1"}>Main planner 1</option>
                       <option value={"Main planner 2"}>Main planner 2</option>
+                  </select>
+                  </div>
+                </div>
+                
+                <div className="etiqueta">
+                  Sub Grupo
+                </div>
+                <div className="row2">
+                  <div className="columB">
+                  <select name="subgrupo" className='input-normal2' ref={sbRef} onChange={modifyEstate} >
+                      <option value={1}> 1 </option>
+                      <option value={2}> 2 </option>
+                      <option value={3}> 3 </option>
+                      <option value={4}> 4 </option>
+                      <option value={5}> 5 </option>
+                      <option value={6}> 6 </option>
+                      <option value={7}> 7 </option>
+                      <option value={8}> 8 </option>
+                      <option value={9}> 9 </option>
+                      <option value={10}> 10 </option>
                   </select>
                   </div>
                 </div>

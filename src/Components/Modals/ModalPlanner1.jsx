@@ -12,13 +12,16 @@ import Trash from '../../assets/trash.svg'
 
 /* Import dependencies */
 import { useEffect, useState } from 'react';
-import DatePicker from 'react-datepicker'
+import DatePicker from 'react-datepicker';
+import axios from 'axios';
 
-function ModalPlanner1({estado,cambiarEstado}) {
+
+
+
+function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner}) {
 
   const [date, setDate] = useState()
-  const [horaejemplo]= useState("4:00")
-  const [valoremplo]= useState("Programa 1")
+  const [data, setData] = useState([]);
 
   /* estados para el datepicker */
   const [calendar, setCalendar] = useState(new Date());
@@ -45,6 +48,18 @@ function ModalPlanner1({estado,cambiarEstado}) {
   const [startHour, setStartHour] = useState(new Date());
   const [EndHour, setEndHour] = useState(new Date());
 
+  //FUNCIONES
+  //Funcion que obtiene la data de la api - listado de programs
+  const obtenerListadoPrograms = async () => {
+    return await axios
+      .get("http://localhost:3000/api/programs")
+      .then((response) => setData(response.data));
+  };
+
+  useEffect(() => {
+    obtenerListadoPrograms();
+  }, []);
+
   return (
     <>
       {estado && (
@@ -55,12 +70,12 @@ function ModalPlanner1({estado,cambiarEstado}) {
           <div className="cabecera">
             <img src={Anita} alt="anita" className="img-Profile" />
             <h3 className="nombre">
-              Anna Brenda Contreras
+              {nombres}
               <br />
-              <span className="roll">Actríz y cantante</span>
+              <span className="roll">{cargo}</span>
             </h3>
 
-            <h2 className="fecha">{date}</h2>
+            <h2 className="fecha">{fechaPlaner.toDateString()}</h2>
             <img src={Calendar} alt="calendar" className="img-calendar" onClick={showCalendar}/>
           </div>
 
@@ -104,9 +119,16 @@ function ModalPlanner1({estado,cambiarEstado}) {
               <div className="mainContainer">
                 <h3 className="subTitulo">Programa evento o requerimiento</h3>
                 <select name="turnoSeleccionado" className='selectedBox'>
-                  <option value={horaejemplo} className='selecteItem'>{valoremplo}</option>
-                  <option value={horaejemplo} className='selecteItem'>{valoremplo}</option>
-                  <option value={horaejemplo} className='selecteItem'>{valoremplo}</option>
+
+                  {
+                    data?.map((pgm)=>(
+                      <option key={pgm._id} value={pgm._id} className='selecteItem'>{pgm.nombre}</option>
+                    ))
+                  }
+                  
+                 
+
+
                 </select>
 
                 <h3 className="subTitulo">Horario</h3>
@@ -151,7 +173,7 @@ function ModalPlanner1({estado,cambiarEstado}) {
                 <div className="containerSingleButtom">
                  <img src={Plus} alt="plus" className='img-butons'/>
                 </div>
-                <div className="containerSingleButtom">
+                <div className="containerSingleButtomDel">
                  <img src={Trash} alt="trash" className='img-butons'/>
                 </div>
               </div>
