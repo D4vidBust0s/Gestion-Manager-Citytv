@@ -44,7 +44,7 @@ export default function ProgramsContent() {
   };
 
   //Funcion para traer y actualizar la informacion al dar click sobre el grupo
-  const grupoClick = async (id) => {
+  const grupoClick = async (id,e) => {
     await axios
       .get("http://localhost:3000/api/groups/" + id)
       .then(
@@ -55,6 +55,21 @@ export default function ProgramsContent() {
           setValueLogo(response.data.logo)
       );
     setId(id);
+
+
+     //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
+     if (e.target.classList=="ListLI") 
+     {
+ 
+       let aux = document.getElementsByClassName("activo");
+ 
+       for (let index = 0; index < aux.length; index++) 
+       {
+         aux[index].classList.remove("activo");
+       }
+ 
+       e.target.classList.add("activo");
+     }
   };
 
   //Agregar grupo
@@ -239,7 +254,7 @@ export default function ProgramsContent() {
               <li
                 key={group._id}
                 className="ListLI"
-                onClick={() => grupoClick(group._id)}
+                onClick={(e) => grupoClick(group._id,e)}
               >
                 {group.nombre}
               </li>

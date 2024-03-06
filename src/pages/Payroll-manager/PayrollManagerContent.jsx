@@ -69,9 +69,24 @@ export default function PayrollManagerContent() {
 
  //Funcion para actualizar el Usuario seleccionado en el label de la parte inferior
 
- const operationPerson = async (id,name, apellido) =>{
+ const operationPerson = async (id,name, apellido,e) =>{
    setSelectPerson(name + " " + apellido);
    setSelectPersonId(id);
+
+
+    //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
+    if (e.target.classList=="ListLI") 
+    {
+
+      let aux = document.getElementsByClassName("active2");
+
+      for (let index = 0; index < aux.length; index++) 
+      {
+        aux[index].classList.remove("active2");
+      }
+
+      e.target.classList.add("active2");
+    }
  };
 
 //funcion que se ejecuta cuando se da click en el boton de agreagar
@@ -133,10 +148,27 @@ const addPerson = () =>{
   }
 
   //Funcion que obtiene la data de la api - listado de grupos
-  const showUsersGroup = async (name_group) => {
+  const showUsersGroup = async (name_group,e) => {
+
+     //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
+     if (e.target.classList=="contentForma") 
+     {
+ 
+       let aux = document.getElementsByClassName("activo");
+ 
+       for (let index = 0; index < aux.length; index++) 
+       {
+         aux[index].classList.remove("activo");
+       }
+ 
+       e.target.classList.add("activo");
+     }
+
+
     return await axios
       .get("http://localhost:3000/api/payroll/show/"+name_group)
       .then((response) => setData2(response.data));
+      
   };
 
 
@@ -149,15 +181,20 @@ const addPerson = () =>{
       <div className="contenPAYROLL">
       <h3 className="subTitulo1">Grupos o Áreas </h3>
         <div className="sectionAdd">
+    
+          <ul className='ulListado'>
+              {
+                  data?.map((group)=>(
+                    <li key={group._id} className="contentForma" onClick={(e)=>showUsersGroup(group.nombre,e)}>
+                      <img src={group.logo} alt={group.nombre} className='img-cam'/>
+                      {group.nombre}
+                    </li>
+                  ))
+              }
 
-         {
-            data?.map((group)=>(
-               <div className="contentForma" key={group._id} onClick={()=>showUsersGroup(group.nombre)}>
-              <img src={group.logo} alt={group.nombre} className='img-cam'/>
-              <div className="nameGroup" key={group._id}>{group.nombre}</div>
-           </div>
-            ))
-         }
+          </ul>
+
+         
 
            
           <div className="seccionButons">
@@ -182,7 +219,7 @@ const addPerson = () =>{
                data2.map((payroll,index)=>(
                 <div className="sb" key={index}>
                   <div className="subGrupo">{payroll.subGrupo}</div>
-                   <li className='ListLI' key={payroll._id} onClick={()=> operationPerson(payroll._id,payroll.nombres,payroll.apellidos)}>{payroll.nombres} {payroll.apellidos}</li>
+                   <li className='ListLI' key={payroll._id} onClick={(e)=> operationPerson(payroll._id,payroll.nombres,payroll.apellidos,e)}>{payroll.nombres} {payroll.apellidos}</li>
                 </div>
                 
                ))

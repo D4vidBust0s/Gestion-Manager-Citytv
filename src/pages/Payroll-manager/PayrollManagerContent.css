@@ -49,20 +49,18 @@
         height: 1.7rem;
         border-radius: 0 .5rem .5rem 0 ;
         margin-left: 1rem ;
+        cursor: pointer;
+        
         
     }
 
-    .contentForma:hover{
+    .activo{
         transform: scale(1.05);
         cursor: pointer;
         background: #EB464B;
+        margin-left: 2rem;
     }
 
-    .contentForma:active{
-        transform: scale(1.05);
-        cursor: pointer;
-        background: #547725;;
-    }
 
     .img-cam{
         height: 4rem;
@@ -71,6 +69,7 @@
         background: #545454;
         border-radius: 50%;
         margin-left: -1rem;
+        margin-right: 1rem;
     }
 
     .nameGroup{
@@ -139,21 +138,13 @@
         border-bottom: 1px solid #701CF5;
         padding: .18rem 0 .18rem 0;
         width: 100%;
+        padding-left: .5rem;
     }
 
     .ListLI:hover{
         transform: scale(1.05);
         cursor: pointer;
     }
-
-    .ListLI:active{
-        background: #547725;
-    }
-
-    .ListLI:target{
-        background: #b5e27b;
-    }
-
 }
 
 .person{
@@ -177,4 +168,11 @@
     align-items: center;
     font-weight: 900;
     border-bottom: solid #FFFFFF 1px;
+}
+
+.active2{
+    position: relative;
+    background-color: #547725;
+    color: #DADADA;
+    
 }

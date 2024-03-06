@@ -111,7 +111,7 @@ export default function ProgramsContent() {
 
 
   //Funcion para traer y actualizar la informacion al dar click sobre el grupo
-  const grupoClick = async (id) => {
+  const grupoClick = async (id,e) => {
     await axios
       .get("http://localhost:3000/api/programs/" + id)
       .then(
@@ -134,6 +134,20 @@ export default function ProgramsContent() {
     setId(id);
     console.log("start:"+startDate);
     console.log("end:"+endDate);
+
+     //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
+     if (e.target.classList=="ListLI") 
+     {
+ 
+       let aux = document.getElementsByClassName("activo");
+ 
+       for (let index = 0; index < aux.length; index++) 
+       {
+         aux[index].classList.remove("activo");
+       }
+ 
+       e.target.classList.add("activo");
+     }
   };
 
 
@@ -352,7 +366,7 @@ export default function ProgramsContent() {
         <div className="sectionList">
           <ul className='ListUL'>
           {data?.map((prog) => (
-             <li key={prog._id} className='ListLI' onClick={() => grupoClick(prog._id)}>{prog.nombre}</li>
+             <li key={prog._id} className='ListLI' onClick={(e) => grupoClick(prog._id,e)}>{prog.nombre}</li>
             ))
           }
           </ul>

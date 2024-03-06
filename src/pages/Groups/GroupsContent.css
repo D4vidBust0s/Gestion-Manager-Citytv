@@ -142,7 +142,7 @@
         cursor: pointer;
     }
 
-    .ListLI:active{
+    .activo{
         background: #547725;
         padding: .18rem;
         color: #DADADA;

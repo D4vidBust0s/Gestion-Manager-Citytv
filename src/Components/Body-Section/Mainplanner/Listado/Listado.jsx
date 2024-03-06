@@ -104,9 +104,6 @@ export default function Listado() {
           
            }
             
-
-            
-
             <div className="separador2"></div>
           </div>
 
