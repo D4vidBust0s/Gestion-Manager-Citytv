@@ -1,0 +1,214 @@
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+
+}
+
+
+
+.container-modal1{
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 97%);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    
+
+    .cabecera{
+        position: relative;
+        height: 8%;
+        width: 80%;
+        display: flex;
+        align-items: center;
+        background: #D9D9D9;
+        border-radius: 1rem 2rem 2rem 1rem;
+        z-index: 100;
+        margin-bottom: 2rem;
+        
+
+        .img-Profile{
+            height: 7rem;
+            width: 7rem;
+            border-radius: 50%;
+            border: .3rem solid #EB464B;
+            margin-left: -.8rem;
+        }
+
+        .nombre{
+            position: absolute;
+            left: 8rem;
+            color: var(--Base2);
+            display: flex;
+            flex-direction: column;
+            color: #000000;
+        }
+
+        .roll{
+            font-size: .8rem;
+            color: #000000;
+        }
+
+        .img-calendar{
+            position: absolute;
+            height: 5rem;
+            width: 5rem;
+            right: 5rem;
+        }
+
+        .img-calendar:hover{
+            cursor: pointer;
+            transform: scale(1.05);
+        }
+
+        .fecha{
+            color:#000000;
+            font-size: 1.1rem;
+            position: relative;
+            text-align: right;
+            padding: .5rem;
+            padding-right: 15rem;
+            width: 100%;
+            font-weight: 600;
+        }
+    }
+   
+}
+
+
+.cuerpoModal{
+    position: relative;
+    padding: 2rem;
+    height: 80%;
+    width: 85%;
+    display: flex;
+
+    z-index: 1;
+}
+
+.indicador{
+    float:right;
+    margin-left: 2rem;
+    background-color: #000000;
+    height: 1.1rem;
+    width: 2.5rem;
+    color: #D9D9D9;
+    text-align: center;
+  
+}
+.periodo{
+    margin-top: .5rem;
+}
+
+.actividad{
+    background: #545454;
+    height: 15%;
+    width: 26%;
+    position: absolute;
+    top: 2%;
+    z-index: 500;
+    padding: .5rem;
+    border-radius: .5rem;
+    box-shadow: #545454 2px 2px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.actividad_title2{
+    position: absolute;
+    background: #000000;
+    width: 30%;
+    text-align: center;
+    margin-top: -.7rem;
+    border-radius: .5rem;
+    padding: .2rem;
+    
+}
+
+.actividad_container{
+ margin-top: 2.3rem;
+}
+
+.actividad_lista{
+       
+        font-weight: 500;
+        width: 25rem;
+    
+}
+
+.body_container{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    
+
+    .body-left{
+        width: 30%;
+        height: 100%;
+        background: #545454;
+        padding: 3rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .body_left_title{
+            text-align: center;
+            margin-bottom: 40%;
+            font-size: 1.4rem;
+        }
+
+        
+    }
+
+    .body-right{
+        width: 70%;
+        height: 100%;
+        padding: 3rem;
+
+        .body-right-title{
+            margin-bottom: 2rem;
+            font-size: 1.4rem;
+        }
+
+        .body-right-description{
+            color: #EB464B;
+            font-size: 1.2rem;
+        }
+
+        .body-right-parrafo{
+            margin-bottom: 1.2rem;
+        }
+
+        .ulListado{
+            background: #D9D9D9;
+            padding: .5rem;
+            margin-top: 1rem;
+            color: #000000;
+        }
+
+        .liListado{
+            padding: .5rem;
+            overflow: auto;
+        }
+    }
+}
+
+
+
+
+
+
+

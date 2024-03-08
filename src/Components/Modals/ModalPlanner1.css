@@ -31,7 +31,7 @@
     .cabecera{
         position: relative;
         height: 8%;
-        width: 66%;
+        width: 80%;
         display: flex;
         align-items: center;
         background: #D9D9D9;
@@ -432,9 +432,6 @@
     font-weight: 500;
 }
 
-.liLista{
-    
-}
 .progress{
     float: right;
 }
@@ -449,4 +446,44 @@
     text-align: center;
   
 }
+.periodo{
+    margin-top: .5rem;
+}
+
+.actividad{
+    background: #545454;
+    height: 15%;
+    width: 26%;
+    position: absolute;
+    top: 2%;
+    z-index: 500;
+    padding: .5rem;
+    border-radius: .5rem;
+    box-shadow: #545454 2px 2px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.actividad_title{
+    position: absolute;
+    background: #00094B;
+    width: 30%;
+    text-align: center;
+    margin-top: -.7rem;
+    border-radius: .5rem;
+    padding: .2rem;
+    
+}
+
+.actividad_container{
+ margin-top: 2.3rem;
+}
+
+.actividad_lista{
+       
+        font-weight: 500;
+        width: 25rem;
+    
+}
+
 

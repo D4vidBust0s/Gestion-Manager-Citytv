@@ -14,6 +14,7 @@ import DatePicker from 'react-datepicker';
 
 /* COMPONENTES MODALES*/
 import ModalPlanner1 from "../../../Modals/ModalPlanner1";
+import ModalPlanner3 from "../../../Modals/ModalPlanner3";
 
 //Variables Globales
 let descanso = 0;           //Permisos o descansos
@@ -22,11 +23,18 @@ let vacaciones = 0;         //Vacaciones o Recess
 let licensia = 0;           //Licensias
 
 
+let verifyDescanso = 0;           //Permisos o descansos
+let verifyIncapacitado = 0;       //Incapacidades
+let verifyVacaciones = 0;         //Vacaciones o Recess
+let verifyLicensia = 0;           //Licensias
+
+
 
 export default function Barra() {
   
 //estado para la ventana modal1 
  const [modal1, setModal1] = useState(false); 
+ const [modal2, setModal2] = useState(false); 
 
  //Estados para la Data de groups
  const [startDate, setStartDate] = useState(new Date());
@@ -42,6 +50,7 @@ export default function Barra() {
  const [idUser, setIduser] = useState("");
  const [subGrupo, setSubgrupo] = useState(0);
  const [color, ] = useState("#00094B");
+
 
 
 
@@ -86,12 +95,90 @@ export default function Barra() {
     .get("http://localhost:3000/api/licenses")
     .then((response) => setData5(response.data));
   }
+
+  const verificar = (pid,pn,pa,subgrupo,cargo)=>{
+
+    
+    data2?.map((idReg)=>(
+        idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() ? verifyDescanso=1 : null
+        
+    ))
+
+    data3?.map((idReg)=>(
+      idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() ? verifyIncapacitado=1 : null
+      
+    ))
+
+    data4?.map((idReg)=>(
+      idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() ? verifyVacaciones=1 : null
+      
+    ))
+
+    data5?.map((idReg)=>(
+      idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() ? verifyLicensia=1 : null
+      
+    ))
+    
+    if(verifyDescanso==1)
+    {
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setModal2(!modal2)
+      console.log("ES.... PERMISO");
+      verifyDescanso = 0;
+      verifyIncapacitado = 0;
+      verifyVacaciones = 0;
+      verifyLicensia = 0;
+      
+    }
+    else if(verifyIncapacitado==1)
+    {
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setModal2(!modal2)
+        console.log("ES.... INCAPACITADO");
+        verifyDescanso = 0;
+        verifyIncapacitado = 0;
+        verifyVacaciones = 0;
+        verifyLicensia = 0;
+    }
+
+    else if(verifyVacaciones==1)
+    {
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setModal2(!modal2)
+        console.log("ES.... VACACIONES");
+        verifyDescanso = 0;
+        verifyIncapacitado = 0;
+        verifyVacaciones = 0;
+        verifyLicensia = 0;
+    }
+
+    else if(verifyLicensia==1)
+    {
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setModal2(!modal2)
+        console.log("ES.... LICENSIA");
+        verifyDescanso = 0;
+        verifyIncapacitado = 0;
+        verifyVacaciones = 0;
+        verifyLicensia = 0;
+    }
+    
+    else{
+
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setModal1(!modal1)
+      console.log("Normal");
+      verifyDescanso = 0;
+      verifyIncapacitado = 0;
+      verifyVacaciones = 0;
+      verifyLicensia = 0;
+    }
+    
+    
+    
+  }
   
 
   const testDescansos = (pid)=>{
       //Busco en el array de permisos si hay registros con el id del usuario 
 
       descanso=0;
+
       let std= new Date(startDate.setHours(0,0,0,0));
       let idregIni;
       let idregEnd;
@@ -101,7 +188,7 @@ export default function Barra() {
         idregIni = new Date (idReg.FechaInicio).setHours(0,0,0,0),
         idregEnd = new Date (idReg.FechaFinal).setHours(0,0,0,0),
         
-        idReg.Id_Empleado == pid &&  std.toISOString() >= new Date (idregIni).toISOString()  && std.toISOString() <= new Date(idregEnd).toISOString()  ? descanso = 1 : null
+        idReg.Id_Empleado == pid &&  std.toISOString() >= new Date (idregIni).toISOString()  && std.toISOString() <= new Date(idregEnd).toISOString()  ? descanso = 1 : null 
         
       ))
 
@@ -170,15 +257,15 @@ const testLicenses = (pid)=>{
 
   const exist = (pid,pg,gn,pn,cargo,pa,subgrupo) =>{
 
-    
+
     testDescansos(pid)
     testIncapacitys(pid)
     testRecess(pid)
     testLicenses(pid)
-    
+
 
     return <ul className="ulMain" key={pid}>
-      <li className={descanso == 1 ? "liMain-var1" :  incapacitado == 1 ? "liMain-var2" : licensia == 1 ? "liMain-var3" : vacaciones == 1 ? "liMain-var4" : "liMain"} key={pid} onClick={() =>  setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setModal1(!modal1) } >
+      <li className={descanso == 1 ? "liMain-var1" :  incapacitado == 1 ? "liMain-var2" : licensia == 1 ? "liMain-var3" : vacaciones == 1 ? "liMain-var4" : "liMain"} key={pid} onClick={() => verificar(pid,pn,pa,subgrupo,cargo) }>
         {pn +" "+pa}
       </li>
     </ul>
@@ -228,6 +315,11 @@ const testLicenses = (pid)=>{
         document.querySelector("#portal")
       )}
 
+      {createPortal(
+        <ModalPlanner3 estado={modal2} cambiarEstado={setModal2} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={color}/>,
+        document.querySelector("#portal")
+      )} 
+
       <div className="barra">
       
         <img src={tropa} alt="tropa" className="imgTropa" />
@@ -248,6 +340,7 @@ const testLicenses = (pid)=>{
 
                 <div className="hola" key={group._id}>
                   {
+                    
                     //Ciclo que trae todos los usuarios del sistema 
                     data1?.map((payroll)=>(
                     <div className="hol" key={payroll._id}>
@@ -255,8 +348,6 @@ const testLicenses = (pid)=>{
                              
                            payroll.grupo == group.nombre ?  exist(payroll._id,payroll.group,group.nombre,payroll.nombres,payroll.cargo,payroll.apellidos,payroll.subGrupo) : null
                           
-                         
-                      
                       }
                        
                     </div>

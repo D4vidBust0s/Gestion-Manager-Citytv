@@ -322,10 +322,25 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
               <span className="roll">{cargo}</span>
             </h3>
 
-
             <h2 className="fecha">{fechaPlaner.toDateString()}</h2>
             <img src={Calendar} alt="calendar" className="img-calendar" onClick={showCalendar}/>
           </div>
+
+          <div className="actividad">
+              <div className="actividad_title">
+                Time Out
+              </div>
+              <div className="actividad_container">
+              <div className="actividad_lista">
+                  <ul>
+                    <li className='liLista'>Permissions<span className='indicador'>1</span><progress value={1} max={100} className='progress'/></li>
+                    <li className='liLista'>Incapacitys<span className='indicador'>0</span><progress value={null} max={100} className='progress'/></li>
+                    <li className='liLista'>Recess<span className='indicador'>15</span><progress value={15} max={100} className='progress'/></li>
+                    <li className='liLista'>Licenses<span className='indicador'>0</span><progress value={null} max={100} className='progress'/></li> 
+                  </ul>
+                </div>
+              </div>
+            </div>
 
           <div className="cuerpoModal">
           <div className="close2" onClick={() => cambiarEstado(!estado)}>X</div>
@@ -333,7 +348,11 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
           {/*SECCION # 1*/}
             <div className="list-turnos">
               <div className="titulo">
-                <h2>TURNOS SEGUN ROTACION</h2>
+                <h2>INFORMACION</h2>
+              </div>
+
+              <div className="periodo">
+                <h5 className='periodo'> sabado 10 2024 - viernes 30 2024 </h5>
               </div>
 
               <div className="info1">
@@ -351,7 +370,11 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
               </div>
 
               <div className="info2">
-              <h6 className='titleBalancer'>Turnos según rotación</h6>
+                  <h6 className='titleBalancer'>Turnos según rotación</h6>
+              </div>
+
+              <div className="info2">
+                  <h6 className='titleBalancer'>Modificaciones en Balancer</h6>
               </div>
               
             </div>
@@ -443,9 +466,14 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                  <img src={Trash} alt="trash" className='img-butons' onClick={del}/>
                 </div>
               </div>
-              <div className='validar'>
+              {
+                /*
+                <div className='validar'>
                  <img src={Arrow} alt="trash" className='imgBtnValidate' onClick={validate}/>
                 </div>
+                */
+              }
+              
             </div>
 
             <div className="list-turnos">
