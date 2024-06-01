@@ -194,7 +194,7 @@
             flex-direction: column;
            
             width: 65%;
-            height: 80%;
+            height: 70%;
             margin-top: 2rem;
             border-radius: 2rem;
             padding: 2rem 2.5rem 2.5rem 2.5rem;
@@ -381,17 +381,20 @@
 
 .info1{
     background: #D9D9D9;
-    height: 25%;
+    height: 33%;
     width: 95%;
     margin-top:  2.5rem;
     overflow: auto;
+    padding: 1rem;
 }
 
 .info2{
     background: #D9D9D9;
-    height: 25%;
+    height: 33%;
     width: 95%;
     margin-top:  .5rem;
+    overflow: auto;
+    padding: 1rem;
 }
 
 .validar{
@@ -434,6 +437,7 @@
 
 .progress{
     float: right;
+    margin-left: .9rem;
 }
 
 .indicador{
@@ -446,44 +450,159 @@
     text-align: center;
   
 }
+
+.indicador2{
+    display: flex;
+    float:right;
+    background-color: #000000;
+    height: 1.1rem;
+    width: 15rem;
+    color: #D9D9D9;
+    text-align: center;
+    padding-left: 1rem;
+    font-size: .72rem;
+    padding-top: 2px;
+    
+  
+}
+
 .periodo{
-    margin-top: .5rem;
+    position: absolute;
+    width: 100%;
+    bottom: -15px;
+    text-align: center;
+    font-size: 1rem;
 }
 
 .actividad{
-    background: #545454;
-    height: 15%;
-    width: 26%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+}
+
+.barraButom{
     position: absolute;
-    top: 2%;
-    z-index: 500;
+    bottom: .5rem;
+    background-color: #D9D9D9;
+    height: 17%;
+    z-index: 100;
+    width: 60%;
+    padding: .3rem;
+    font-size: .8rem;
+    color: #000000;
+    overflow: auto;
+    border-radius: .5rem;
+}
+
+.aux1{
+    background-color: #D9D9D9;
+    position: absolute;
+    bottom: .5rem;
+    width: 10%;
+    color: #DADADA;
+    left: 9.7%;
+    height: 17%;
+    border-radius: .5rem;
+    z-index: 100;
+}
+    
+.aux2{
+    background-color: #D9D9D9;
+    position: absolute;
+    bottom: .5rem;
+    width: 10%;
+    color: #DADADA;
+    right: 9.7%;
+    height: 17%;
+    border-radius: .5rem;
+    z-index: 100;
+}
+
+.aux1_title{
+    background: #EB464B;
+    text-align: center;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    font-weight: 900;
+    font-size: 1.1rem;
     padding: .5rem;
     border-radius: .5rem;
-    box-shadow: #545454 2px 2px 20px;
+}
+
+.aux1_label{
+    color: #000000;
+    height: 80%;
     display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: 2rem;
+}
+
+.inspectorContainer{
+    background: #701CF5;
+    height: 100%;
+    padding: .3rem;
+    color: #D9D9D9;
+    overflow: auto;
+   
+}
+
+.liInspector{
+    display: flex;
+    background: #00094B;
+    align-items: center;
+    padding-left: .9rem;
+    margin-bottom: 2px; 
+}
+
+.liInspector2{
+    display: flex;
+    align-items: center;
+    margin-bottom: 2px;
+    position: fixed;
+    left: 29.75%;
+    
+}
+
+.nameUS{
+    font-weight: 900;
+    font-size: .9rem;
+    width: 15%;
+    
+
+}
+
+.cajaNumero{
+    margin-left: 3rem;
+    display: flex;
+ 
+}
+
+.cuadro20{
+    background: #DADADA;
+    color: #000000;
+    padding: .5rem;
+    margin-right: 1px;
+    font-weight: bold;
+    width: 36px;
+    display: flex;
+    align-items: center;
     justify-content: center;
 }
 
-.actividad_title{
-    position: absolute;
-    background: #00094B;
-    width: 30%;
-    text-align: center;
-    margin-top: -.7rem;
-    border-radius: .5rem;
-    padding: .2rem;
-    
+.cuadro201{
+    background: #000000;
+    color: #EB464B;
+    padding: .5rem;
+    margin-right: 1px;
+    font-weight: bold;
+    width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.actividad_container{
- margin-top: 2.3rem;
+.Separador{
+    margin-top:  2rem;
 }
-
-.actividad_lista{
-       
-        font-weight: 500;
-        width: 25rem;
-    
-}
-
-

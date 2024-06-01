@@ -177,6 +177,12 @@ function Sidebar() {
               </li>
 
               <li className="list__inside">
+                <Link to="/breaks" className="nav__link nav__link--inside">
+                  Breaks
+                </Link>
+              </li>
+
+              <li className="list__inside">
                 <Link to="/incapacity" className="nav__link nav__link--inside">
                   Incapacity
                 </Link>
@@ -258,9 +264,9 @@ function Sidebar() {
               </li>
 
               <li className="list__inside">
-                <a href="#" className="nav__link nav__link--inside">
+                <Link to="balancer" className="nav__link nav__link--inside">
                   Balancer
-                </a>
+                </Link>
               </li>
             </ul>
           </li>

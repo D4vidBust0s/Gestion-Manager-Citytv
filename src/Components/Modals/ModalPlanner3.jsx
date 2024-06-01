@@ -5,30 +5,71 @@ import  './ModalPlanner3.css'
 /* Import recursos */
 import Anita from '../../assets/Anita.jpg';
 import Calendar from '../../assets/calendar.webp';
+import imagen from '../../assets/employee.webp';
 
 
 
 /* Import dependencies */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import axios from 'axios';
-import {Toaster, toast} from 'react-hot-toast';
 
 
 
-function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser}) {
 
-  const [, setDate] = useState()
-  const [data, setData] = useState([]);
+
+
+function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color,tipo}) {
+
+  const [, setDate] = useState();
+ 
+  const [data2, setData2] = useState([]);
+  const [data3, setData3] = useState([]);
+  const [data4, setData4] = useState([]);
+  const [data5, setData5] = useState([]);
+ 
 
   /* Estados para el datepicker */
   const [calendar, setCalendar] = useState(new Date());
   const [starIn, setStarIn] = useState(new Date());
   const [starOut, setStarOut] = useState(new Date());
+
+  //FUNCIONES
+  //Funcion que obtiene la data de la api - listado de programs
  
 
+ 
+  const getDescansos = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/permissions/")
+    .then((response) => setData2(response.data));
+  }
 
-  //Referencias
+  const getIncapacity = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/incapacitys")
+    .then((response) => setData3(response.data));
+  }
+
+  const getRecess = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/recess")
+    .then((response) => setData4(response.data));
+  }
+
+  const getLicenses = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/licenses")
+    .then((response) => setData5(response.data));
+  }
+
+
+
+ 
+
+ 
+
+  
 
 
   useEffect(() => {
@@ -37,58 +78,35 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser}) 
       setDate(hoy.toDateString());
   },[]);
 
- 
-
-  function showCalendar(){
-    <DatePicker
-    className='input-especial'
-          selected={calendar}
-          onChange={(date) => setCalendar(date)}
-          showYearDropdown
-          dateFormatCalendar="MMMM"
-          yearDropdownItemNumber={15}
-          scrollableYearDropdown
-    />
-  }
-
-
-
-
-  //FUNCIONES
-  //Funcion que obtiene la data de la api - listado de programs
-  const obtenerListadoPrograms = async () => {
-    return await axios
-      .get("http://localhost:3000/api/programs")
-      .then((response) => setData(response.data));
-  };
-
-  
-
   
 
 
-  
 
-
-  
-
-  
-
-  
-
-
-  
 
 
   useEffect(() => {
-    obtenerListadoPrograms();
-  }, []);
+   if(tipo=="PERMISO")
+   {
+    getDescansos();
+   }
+   else if(tipo=="INCAPACIDAD"){
+    getIncapacity();
+   }
+   else if(tipo=="VACACIONES")
+   {
+    getRecess();
+   }
+   else if(tipo=="LICENSIA")
+   {
+    getLicenses();
+   }
+   
+  }, [tipo]);
 
 
 
   return (
     <>
-    <Toaster />
       {estado && (
         <div 
           className="container-modal1"
@@ -105,21 +123,41 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser}) 
             </h3>
 
             <h2 className="fecha">{fechaPlaner.toDateString()}</h2>
-            <img src={Calendar} alt="calendar" className="img-calendar" onClick={showCalendar}/>
+            <img src={Calendar} alt="calendar" className="img-calendar"/>
           </div>
 
-          <div className="actividad">
+          <div className="actividad2" style={{background: color}}>
               <div className="actividad_title2">
-                PERMISO
+               {tipo}
               </div>
-                <div className="actividad_container">
+                <div className="actividad_container2">
                     <div className="actividad_lista">
-                        <p>Lorem ipsum dolor sit amet, consectetur ndae recusandae dolore, optio, incidunt nisi quas aut rerum a repellendus accusantium dicta nesciunt?</p>
+                       {
+                         tipo=="PERMISO" 
+                         ?
+                         data2?.map((descanso)=>( 
+
+                          descanso.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(descanso.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(descanso.FechaFinal).setHours(0,0,0,0)  ?  
+                            <span key={descanso._id} className='tituloP'>{descanso.Nombre}</span>:null) )
+                        :
+                        tipo=="INCAPACIDAD"
+                        ?
+                        data3?.map((incapacidad)=>( 
+                          
+                          incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                            <span key={incapacidad._id} className='tituloP'>{incapacidad.Nombre}</span>:null) )
+                        :<span>NO ES NINGUN TIPO</span>
+                        
+                        
+                       }
+
                     </div> 
                 </div>
         </div>
 
-          <div className="cuerpoModal" style={{border: '#7ED957 2px solid'}}>
+          <div className="cuerpoModal2" style={{border: color +' 2px solid'}}>
           <div className="close2" onClick={() => cambiarEstado(!estado)}>X</div>
             {/* Body */}
 
@@ -127,49 +165,121 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser}) 
                 <div className="body-left">
                     <h4 className='body_left_title'>Especificación de dias</h4>
         
-                    <DatePicker
-                        selected={calendar}
-                        onChange={(date) => setCalendar(date)}
-                        inline
-                        showWeekNumbers
-                        showMonthDropdown
-                        startDate={starIn}
-                        endDate={starOut}
-                    />
+                    <img src={imagen} alt="" />
                 </div>
 
                 <div className="body-right">
                     <h4 className='body-right-title'>Información general</h4>
                     
                     <h4 className='body-right-description'>Descripción:</h4>
-                    <p className='body-right-parrafo'>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Iae, aspernatur laudantium ea nobis
-                         mollitia modi ducimus officia libero dolores eius, corrupti enim repellat sequi.</p>
+
+
+
+                    
+                    <p className='body-right-parrafo'>
+                    {
+                         tipo=="PERMISO" 
+                         ?
+                         data2?.map((descanso)=>( 
+                          descanso.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(descanso.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(descanso.FechaFinal).setHours(0,0,0,0)  ? 
+                          <span key={descanso._id} className='tituloP'>{descanso.Observacion}</span>:null))
+                        :
+
+                        tipo=="INCAPACIDAD" 
+                         ?
+                         data3?.map((incapacidad)=>( 
+                          incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                          <span key={incapacidad._id} className='tituloP'>{incapacidad.Observacion}</span>:null))
+                        :
+                        <span>NO ES NINGUN TIPO</span>
+
+                       }
+                   </p>
 
                     <h4 className='body-right-description'>Fecha de inicio:</h4>
                     <p className='body-right-parrafo'>
-                        sabado 20 de marzo de 2024
+                    {
+                         tipo=="PERMISO" 
+                         ?
+                         data2?.map((descanso)=>( 
+                          descanso.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(descanso.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(descanso.FechaFinal).setHours(0,0,0,0)  ? 
+                            <span key={descanso._id} className='tituloP'>{new Date(descanso.FechaInicio).toDateString()}</span>:null))
+                        :
+                        tipo=="INCAPACIDAD" 
+                         ?
+                         data3?.map((incapacidad)=>( 
+                          incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                            <span key={incapacidad._id} className='tituloP'>{new Date(incapacidad.FechaInicio).toDateString()}</span>:null))
+                        :<span>NO ES NINGUN TIPO</span>
+
+                       }
                     </p>
 
                     <h4 className='body-right-description'>Fecha final:</h4>
                     <p className='body-right-parrafo'>
-                        sabado 28 de marzo de 2024
+                    {
+                         tipo=="PERMISO" 
+                         ?
+                         data2?.map((descanso)=>( 
+                          descanso.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(descanso.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(descanso.FechaFinal).setHours(0,0,0,0)  ? 
+                            <span key={descanso._id} className='tituloP'>{new Date(descanso.FechaFinal).toDateString()}</span>:null))
+                        :
+                        tipo=="INCAPACIDAD" 
+                        ?
+                        data3?.map((incapacidad)=>( 
+                          incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                         new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                           <span key={incapacidad._id} className='tituloP'>{new Date(incapacidad.FechaFinal).toDateString()}</span>:null))
+                       :<span>NO ES NINGUN TIPO</span>
+
+                       }
                     </p>
 
                     <h4 className='body-right-description'>Autorizado por:</h4>
                     <p className='body-right-parrafo'>
-                        Jose David Vivas Betaba
+                    {
+                         tipo=="PERMISO" 
+                         ?
+                         data2?.map((descanso)=>( 
+                          descanso.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(descanso.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(descanso.FechaFinal).setHours(0,0,0,0)  ? 
+                            <span key={descanso._id} className='tituloP'>{descanso.NombreEmpleado}</span>:null))
+                        :
+                        tipo=="INCAPACIDAD" 
+                        ?
+                        data3?.map((incapacidad)=>( 
+                          incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                         new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                           <span key={incapacidad._id} className='tituloP'>{incapacidad.NombreEmpleado}</span>:null))
+                       :<span>NO ES NINGUN TIPO</span>
+
+                       }
                     </p>
 
-                    <h4 className='body-right-description'>Permisos en este año:</h4>
+                    <h4 className='body-right-description'>{tipo == "PERMISO" ? "Permisos" : tipo == "INCAPACIDAD" ? "Incapacidades" :  tipo == "VACACIONES" ? "Vacaciones" : tipo == "LICENSIA" ? "Licensias" : null} en este año:</h4>
                    <ul className='ulListado'>
-                    <li className='liListado'>- Nombre permiso 1 - fecha inicio: 25 de febrero de 2024 Fecha ---- final: 30 de marzo de 2024</li>
-                    <li className='liListado'>- Nombre permiso 2 - fecha inicio: 25 de febrero de 2024 Fecha ---- final: 30 de marzo de 2024</li>
-                    <li className='liListado'>- Nombre permiso 3 - fecha inicio: 25 de febrero de 2024 Fecha ---- final: 30 de marzo de 2024</li>
-                    <li className='liListado'>- Nombre permiso 4 - fecha inicio: 25 de febrero de 2024 Fecha ---- final: 30 de marzo de 2024</li>
-                    <li className='liListado'>- Nombre permiso 5 - fecha inicio: 25 de febrero de 2024 Fecha ---- final: 30 de marzo de 2024</li>
-                    <li className='liListado'>- Nombre permiso 6 - fecha inicio: 25 de febrero de 2024 Fecha ---- final: 30 de marzo de 2024</li>
-                    <li className='liListado'>- Nombre permiso 7 - fecha inicio: 25 de febrero de 2024 Fecha ---- final: 30 de marzo de 2024</li>
-                    <li className='liListado'>- Nombre permiso 8 - fecha inicio: 25 de febrero de 2024 Fecha ---- final: 30 de marzo de 2024</li>
+
+
+                      {
+                         tipo=="PERMISO" 
+                         ?
+                         data2?.map((descanso)=>( 
+                          descanso.Id_Empleado==iduser && descanso.Año == new Date(fechaPlaner).getFullYear() ? 
+                          <li key={descanso._id} className='liListado'>- {descanso.Nombre} - <span className='item-li'>fecha inicio:</span> {new Date(descanso.FechaInicio).toDateString()} <span className='item-li'>---- Fecha final:</span> {new Date(descanso.FechaFinal).toDateString()}</li>:null))
+                        :
+                        tipo=="INCAPACIDAD" 
+                         ?
+                         data3?.map((incapacidad)=>( 
+                          incapacidad.Id_Empleado==iduser && incapacidad.Año == new Date(fechaPlaner).getFullYear() ? 
+                          <li key={incapacidad._id} className='liListado'>- {incapacidad.Nombre} - <span className='item-li'>fecha inicio:</span> {new Date(incapacidad.FechaInicio).toDateString()} <span className='item-li'>---- Fecha final:</span> {new Date(incapacidad.FechaFinal).toDateString()}</li>:null))
+                        :<span>NO ES NINGUN TIPO</span>
+                      }
+                    
                    </ul>
 
                 </div>

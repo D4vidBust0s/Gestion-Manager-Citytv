@@ -10,6 +10,7 @@ import ModalPlanner2 from "../../../Modals/ModalPlanner2";
 import {useState,useEffect} from 'react'
 import { createPortal } from 'react-dom';
 import axios from 'axios';
+import {toast, Toaster} from 'react-hot-toast'
 //import DatePicker from 'react-datepicker';
 
 
@@ -44,20 +45,22 @@ export default function Listado() {
   const exist = (payrollId,payrollGrupo,groupNombre,payrollNombres) =>{
 
     return <div className="contentListado">
+      <Toaster />
       <ul className="ulEvent">
-      <li className="liEventTipe0" onClick={() => setModal2(!modal2)}>
+          <li className="liEventTipe0" onClick={() => setModal2(!modal2)}>
                   <a href="#" className="event">
                     Arriba Bogotá
                   </a>
-                </li>
+           </li>
       </ul>
     </div>
     
-    
-  
-
   };
 
+
+  const save = ()=>{
+      toast.success("Maiplanner Guardado");
+  }
  
 
   useEffect(() => {
@@ -112,6 +115,12 @@ export default function Listado() {
 
         </div>
       ))}
+
+<div className="sectionSave">
+        <div className="circle" onClick={save}>
+          Save
+        </div>
+      </div>
     </>
   );
 }

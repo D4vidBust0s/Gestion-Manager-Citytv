@@ -98,3 +98,18 @@
         cursor: pointer;
     }
 }
+
+.inputRules{
+    background: #545454;
+    width: 15%;
+    color: #FFFFFF;
+    text-align: center;
+    margin-left: 1rem;
+}
+
+.day{
+    background: #545454;
+    color: #FFFFFF;
+    width: 10rem;
+    margin-left: 1rem;
+}

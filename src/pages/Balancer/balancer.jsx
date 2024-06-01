@@ -1,18 +1,18 @@
 
 /* COMPONENTS */
-import BaseOperations1 from '../../Components/Body-Section/Bases/BaseOperations1';
+import BaseOperations1 from '../../Components/Body-Section/Bases/BaseOperations2';
 import Footer from '../../Components/Body-Section/Footer/Footer';
-import RecessContent from '../../pages/Recess/recesContent';
+import RecessContent from '../../pages/Balancer/balancerContent';
 
 /* DEPENDENCIAS */
 import {useState} from 'react';
 
 /* IMAGENES */
-import poster from '../../assets/vacaciones.jpg'
+import poster from '../../assets/Break.jpg'
 
 //-------------------------------------------------------------------------------------------------------------------
 
-const Incapacity = () => {
+const Balancer = () => {
     //Estados
     const [estadoFooter] = useState(false); 
 
@@ -20,11 +20,10 @@ const Incapacity = () => {
    <>
       { <Footer estado={estadoFooter} />}
       <div className='mainContainer'>
-       <BaseOperations1 titulo="Recess"  urlposter={poster}  content = {<RecessContent/>}/>
+       <BaseOperations1 titulo="Balancer"  urlposter={poster}  content = {<RecessContent/>}/>
     </div>
     </>
   )
 }
 
-export default Incapacity
-
+export default Balancer

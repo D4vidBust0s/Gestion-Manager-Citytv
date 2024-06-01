@@ -7,6 +7,7 @@ import Sun from '../../../../assets/bx-sun.svg'
 import Moon from '../../../../assets/bx-moon.svg'
 import Cake from '../../../../assets/bx-cake.svg'
 import Save from '../../../../assets/bxs-save.svg'
+import Period from '../../../../assets/period.svg'
 
 /* DEPENDENCIAS */
 import {useState,useRef, useEffect} from 'react';
@@ -33,6 +34,9 @@ export default function RulesContent() {
   const [data, setData] = useState([]);
   const [validador,setValidador] = useState(0);
   const [ID,setId]= useState();
+  
+  const [dias, setDias]= useState();
+  const [startDate, setStartDate] = useState(new Date());
  
   /* Referencias */
   const diaRef = useRef();
@@ -40,6 +44,8 @@ export default function RulesContent() {
   const endDiurnoRef = useRef();
   const inNocturnoRef = useRef();
   const endNocturnoRef = useRef();
+  const periodRef = useRef();
+  const diasRef = useRef();
 
 
   //FUNCIONES
@@ -52,7 +58,10 @@ export default function RulesContent() {
       InLaboralDiurna: startDateDiurno,
       EndLaboralDiurna: endDateDiurno,
       InLaboralNocturna: startDateNocturno,
-      EndLaboralNocturna: endDateNocturno
+      EndLaboralNocturna: endDateNocturno,
+      DiaPeriod: startDate,
+      Dia:dias
+
     });
 
     obtenerListadoRules();
@@ -89,6 +98,11 @@ export default function RulesContent() {
       toast.error("El campo hora final de la hora laborar nocturna, no debe estar vacio");
     }
 
+    else if(periodRef.current.value=="")
+    {
+      toast.error("El campo que especifica el dia de inicio del periodo, no debe estar vacio");
+    }
+
     else{
       if(validador == 0)
       {
@@ -97,7 +111,9 @@ export default function RulesContent() {
         inLaboralDiurna: startDateDiurno,
         endLaboralDiurna: endDateDiurno,
         inLaboralNocturna: startDateNocturno,
-        endLaboralNocturna: endDateNocturno
+        endLaboralNocturna: endDateNocturno,
+        diaPeriod: startDate,
+        dia: dias,
       });
 
       setValidador(1);
@@ -115,6 +131,12 @@ export default function RulesContent() {
   const setDia = () =>{
     setDiaInicio(diaRef.current.value);
   }
+
+  const setDays= () =>{
+    setDias(diasRef.current.value);
+  }
+
+  
 
   
   //Funcion que obtiene la data de la api - listado de de rules
@@ -155,6 +177,9 @@ export default function RulesContent() {
       setEndDateDiurno(Date.parse(rule.EndLaboralDiurna));
       setStartDateNocturno(Date.parse(rule.InLaboralNocturna));
       setEndDateNocturno(Date.parse(rule.EndLaboralNocturna));
+      setStartDate(Date.parse (rule.DiaPeriod));
+      setDias(rule.Dia);
+      diasRef.current.value=rule.Dia;
     });
   },[data]);
 
@@ -284,7 +309,28 @@ export default function RulesContent() {
          <button className='selectedBTN' onClick={() => setModal1(!modal1)}>ADMINISTRAR</button>
         </div>
       </div>
+
+     
+      <div className="filaContentRules">
+        <div className="fila_img">
+          <img src={Period} alt="Calendar" />
+        </div>
+        <div className="texto">Periodo de evaluación</div>
+        <div className="controls">
+          <input type="text" className='inputRules' placeholder='dias' ref={diasRef} onChange={setDays}/>
+          <DatePicker
+            className='day'
+            ref={periodRef}
+            showIcon
+            selected={startDate}
+            onChange={(date) => setStartDate(date) }
+         />
+        </div>
+      </div>
+
     </div>
+
+    
 
     {/* ACTIONS */}
     <div className="contentActions">

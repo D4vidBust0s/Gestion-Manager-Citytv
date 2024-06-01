@@ -9,8 +9,10 @@ import Clock from '../../assets/bx-time-five.svg'
 import Pencil from '../../assets/pencil.svg'
 import Plus from '../../assets/user-plus.svg'
 import Trash from '../../assets/trash.svg'
-import Arrow from '../../assets/arrow2.svg'
+
 import Balanza from '../../assets/balanza.png'
+import Regalo from '../../assets/regalo.svg'
+import Calendario from '../../assets/calendario.png'
 
 /* Import dependencies */
 import { useEffect, useRef, useState } from 'react';
@@ -18,13 +20,23 @@ import DatePicker from 'react-datepicker';
 import axios from 'axios';
 import {Toaster, toast} from 'react-hot-toast';
 
+/* VARIABLES */
+let fullPermisions = 0;
 
 
 function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color}) {
 
+  //Estados
   const [, setDate] = useState()
   const [data, setData] = useState([]);
   const [data1, setData1] = useState([]);
+  const [data2, setData2] = useState([]);
+  const [data3, setData3] = useState([]);
+
+  const [startHour, setStartHour] = useState(new Date());
+  const [EndHour, setEndHour] = useState(new Date());
+  const [IDUSER, setIDUSER] = useState();
+  const [FECHA, setFECHA] = useState();
 
   /* Estados para el datepicker */
   const [calendar, setCalendar] = useState(new Date());
@@ -67,10 +79,7 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
     />
   }
 
-  const [startHour, setStartHour] = useState(new Date());
-  const [EndHour, setEndHour] = useState(new Date());
-  const [IDUSER, setIDUSER] = useState();
-  const [FECHA, setFECHA] = useState();
+ 
 
   //const [OB,setOB]= useState();
 
@@ -95,6 +104,23 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
       })
       .then((response) => setData1(response.data));
   };
+
+
+   //Funcion que trae los datos o reglas de Rules
+   const getRules = async () => {
+    return await axios
+      .get("http://localhost:3000/api/rules")
+      .then((response) => setData2(response.data));
+      
+  };
+
+
+  const traerPermisosTrabajador = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/permissions/")
+    .then((response) => setData3(response.data));
+    
+  }
 
 
   const crear = async (ID_User,NombreUser,SubGrupo,FechaActiva,Start,End,Evento,Color,Tipo,Observacion)=>{
@@ -197,6 +223,10 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
     
   }
 
+  const turnoFree = ()=>{
+
+  }
+
 
   const updateAcciones = (tipo,evento,obse,start,end,e)=>{
 
@@ -280,14 +310,94 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
     customRef.current.value="";
   }
 
+  /*
   const validate = ()=>{
     toast.success("Aqui se valida los turnos por defecto segun programaci'on");
   }
 
- 
+  */
+
+  const validateMonts = (mont)=>{
+    if(mont == 0)
+    {
+        return "Enero";
+    }
+    else if(mont == 1){
+      return "Febrero";
+    }
+
+    else if(mont == 2){
+      return "Marzo";
+    }
+
+    else if(mont == 3){
+      return "Abril";
+    }
+
+    else if(mont == 4){
+      return "Mayo";
+    }
+
+    else if(mont == 5){
+      return "Junio";
+    }
+
+    else if(mont == 6){
+      return "Julio";
+    }
+
+    else if(mont == 7){
+      return "Agosto";
+    }
+
+    else if(mont == 8){
+      return "Septiembre";
+    }
+
+    else if(mont == 9){
+      return "Octubre";
+    }
+
+    else if(mont == 10){
+      return "Noviembre";
+    }
+
+    else if(mont == 11){
+      return "Diciembre";
+    }
+  }
+
   
+  const sumaDias = (fecha,dias)=>{
+    return new Date(new Date(fecha).setDate( new Date (fecha).getDate()+parseInt(dias))).getDate();
+  }
+
+  const sumaMes = (fecha,dias)=>{
+    return new Date(new Date(fecha).setDate( new Date (fecha).getDate()+parseInt(dias))).getMonth();
+  }
+
+  const sumaAño = (fecha,dias)=>{
+    return new Date(new Date(fecha).setDate( new Date (fecha).getDate()+parseInt(dias))).getFullYear();
+  }
 
  
+  const fullPermissionsUser = (idUser)=>{
+    fullPermisions=0;
+
+    data3?.map((item)=>(
+     //item.Id_Empleado==idUser?fullPermisions++:null
+     //item.Id_Empleado==idUser&&item.FechaInicio?fullPermisions++:null
+     //console.log(new Date(item.FechaInicio).setHours(0,0,0,0).toString()+"----"+new Date().setHours(0,0,0,0))
+     item.Id_Empleado == iduser && new Date(item.FechaInicio).setHours(0,0,0,0)< new Date().setHours(0,0,0,0)?console.log("es menor"):console.log("no es menor")
+    ))
+
+    return fullPermisions;
+  }
+
+
+
+
+
 
 
   
@@ -303,6 +413,17 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
     setCustom("");
     setObs("");
   }, [IDUSER, FECHA]);
+
+  useEffect(() => {
+    getRules();
+  }, []);
+
+  
+ useEffect(()=>{
+  traerPermisosTrabajador();
+ },[])
+
+
 
   return (
     <>
@@ -333,12 +454,34 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
               <div className="actividad_container">
               <div className="actividad_lista">
                   <ul>
-                    <li className='liLista'>Permissions<span className='indicador'>1</span><progress value={1} max={100} className='progress'/></li>
-                    <li className='liLista'>Incapacitys<span className='indicador'>0</span><progress value={null} max={100} className='progress'/></li>
-                    <li className='liLista'>Recess<span className='indicador'>15</span><progress value={15} max={100} className='progress'/></li>
-                    <li className='liLista'>Licenses<span className='indicador'>0</span><progress value={null} max={100} className='progress'/></li> 
+                    <li className='liLista'>Permissions<span className='indicador'>
+                      {
+                       fullPermissionsUser(iduser)
+                      }
+                    </span><progress 
+                      value={fullPermissionsUser(iduser)} 
+                      max={20} 
+                      className='progress'/>
+                    </li>
+
+
+
+
+
+                    <li className='liLista'>Breaks<span className='indicador'>0</span><progress value={0} max={10} className='progress'/></li>
+                    <li className='liLista'>Incapacitys<span className='indicador'>0</span><progress value={0} max={100} className='progress'/></li>
+                    <li className='liLista'>Recess<span className='indicador'>0</span><progress value={0} max={100} className='progress'/></li>
+                    <li className='liLista'>Licenses<span className='indicador'>0</span><progress value={0} max={100} className='progress'/></li> 
                   </ul>
                 </div>
+              </div>
+
+              <div className="periodo">
+                <h5 className='periodo'>
+                {data2?.map((item)=>(
+              new Date (item.DiaPeriod).getDate() + " de " + validateMonts(new Date (item.DiaPeriod).getMonth()) + " de " + new Date (item.DiaPeriod).getFullYear() + " ---- " + sumaDias(item.DiaPeriod,item.Dia) + " de " + validateMonts(sumaMes(item.DiaPeriod,item.Dia)) + " de " + sumaAño(item.DiaPeriod,item.Dia)
+          ))}
+                </h5>
               </div>
             </div>
 
@@ -351,9 +494,7 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                 <h2>INFORMACION</h2>
               </div>
 
-              <div className="periodo">
-                <h5 className='periodo'> sabado 10 2024 - viernes 30 2024 </h5>
-              </div>
+             
 
               <div className="info1">
                 <h6 className='titleBalancer'>Balancer</h6>
@@ -364,18 +505,26 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                     <li className='liLista'>David Bustos <span className='indicador'>15</span><progress value={15} max={100} className='progress'/></li>
                     <li className='liLista'>Erick Sierra <span className='indicador'>55</span><progress value={55} max={100} className='progress'/></li>
                     <li className='liLista'>Antoni Muñoz <span className='indicador'>30</span><progress value={30} max={100} className='progress'/></li> 
-                    <li className='liLista'>Pedro Torres <span className='indicador'>0</span><progress value={null} max={100} className='progress'/></li>
+                    <li className='liLista'>Mateo Jimenez <span className='indicador'>0</span><progress value={null} max={100} className='progress'/></li>
                   </ul>
                 </div>
               </div>
 
               <div className="info2">
                   <h6 className='titleBalancer'>Turnos según rotación</h6>
+                  <img src={Calendario} alt="balanza" className='balanza' />
+                  <div className="lista">
+                  <ul>
+                    <li className='liLista'>Feernando castillo <span className='indicador2'>Mañana</span></li>
+                    <li className='liLista'>David Bustos <span className='indicador2'>Tarde</span></li>
+                    <li className='liLista'>Erick Sierra <span className='indicador2'>Standby</span></li>
+                    <li className='liLista'>Antoni Muñoz <span className='indicador2'>Transversal</span></li> 
+                    <li className='liLista'>Mateo Jimenez <span className='indicador2'>standby</span></li>
+                  </ul>
+                </div>
               </div>
 
-              <div className="info2">
-                  <h6 className='titleBalancer'>Modificaciones en Balancer</h6>
-              </div>
+             
               
             </div>
 
@@ -462,6 +611,9 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                 <div className="containerSingleButtom">
                  <img src={Plus} alt="plus" className='img-butons' onClick={add}/>
                 </div>
+                <div className="containerSingleButtom">
+                 <img src={Regalo} alt="plus" className='img-butons' onClick={turnoFree}/>
+                </div>
                 <div className="containerSingleButtomDel">
                  <img src={Trash} alt="trash" className='img-butons' onClick={del}/>
                 </div>
@@ -497,11 +649,242 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
               </ul>
             </div>
 
+          </div>
 
+          <div className='aux1'>
+           <div className="aux1_title">
+            Time Remating
+           </div>
+           <div className="aux1_label">
+            120.5
+           </div>
+          </div>
 
+          <div className="barraButom">
+           <div className="inspectorContainer">
+
+           <ul>
+                    <li className='liInspector2'>
+                      <span className='nameUS'></span>
+                      <div className="cajaNumero">
+                        <div className="cuadro201">S</div>
+                        <div className="cuadro201">D</div>
+                        <div className="cuadro201">L</div>
+                        <div className="cuadro201">M</div>
+                        <div className="cuadro201">M</div>
+                        <div className="cuadro201">J</div>
+                        <div className="cuadro201">V</div>
+                        <div className="cuadro201">S</div>
+                        <div className="cuadro201">D</div>
+                        <div className="cuadro201">L</div>
+                        <div className="cuadro201">M</div>
+                        <div className="cuadro201">M</div>
+                        <div className="cuadro201">J</div>
+                        <div className="cuadro201">V</div>
+                        <div className="cuadro201">S</div>
+                        <div className="cuadro201">D</div>
+                        <div className="cuadro201">L</div>
+                        <div className="cuadro201">M</div>
+                        <div className="cuadro201">M</div>
+                        <div className="cuadro201">J</div>
+                        <div className="cuadro201">V</div>
+                      </div>
+                    </li>
+                  </ul>
+
+                  <ul className='Separador'>
+                    <li className='liInspector'>
+                      <span className='nameUS'>Fernando castillo</span>
+                      <div className="cajaNumero">
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                      </div>
+                    </li>
+                  </ul>
+
+                  <ul>
+                    <li className='liInspector'>
+                      <span className='nameUS'>David Bustos</span>
+                      <div className="cajaNumero">
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                      </div>
+                    </li>
+                  </ul>
+
+                  <ul>
+                    <li className='liInspector'>
+                      <span className='nameUS'>Erik Sierra</span>
+                      <div className="cajaNumero">
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                      </div>
+                    </li>
+                  </ul>
+
+                  <ul>
+                    <li className='liInspector'>
+                      <span className='nameUS'>Antony Muñoz</span>
+                      <div className="cajaNumero">
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                      </div>
+                    </li>
+                  </ul>
+
+                  <ul>
+                    <li className='liInspector'>
+                      <span className='nameUS'>Mateo Jimenez</span>
+                      <div className="cajaNumero">
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                      </div>
+                    </li>
+                  </ul>
+
+                  <ul>
+                    <li className='liInspector'>
+                      <span className='nameUS'>David Bustos</span>
+                      <div className="cajaNumero">
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                        <div className="cuadro20">10</div>
+                      </div>
+                    </li>
+                  </ul>
+
+                 
+                
+           </div>
+          </div>
+
+          <div className='aux2'>
+          <div className="aux1_title">
+            Full Time
+           </div>
+           <div className="aux1_label">
+            07:30
+           </div>
           </div>
         </div>
+        
+        
+
       )}
+      
     </>
   );
 }

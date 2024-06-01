@@ -30,6 +30,11 @@ let verifyLicensia = 0;           //Licensias
 
 
 
+
+
+
+
+
 export default function Barra() {
   
 //estado para la ventana modal1 
@@ -49,7 +54,13 @@ export default function Barra() {
  const [cargo, setCargo] = useState("");
  const [idUser, setIduser] = useState("");
  const [subGrupo, setSubgrupo] = useState(0);
- const [color, ] = useState("#00094B");
+
+
+ const [colorBorder, setColorBorder] = useState("#D9D9D9");
+ const [tipoEvento, setTipoEvento] = useState("");
+
+
+
 
 
 
@@ -72,7 +83,7 @@ export default function Barra() {
     .then((response) => setData1(response.data));
   }
 
-  const getDescansos = async ()=>{
+  const getPermissions = async ()=>{
     return await axios
     .get("http://localhost:3000/api/permissions/")
     .then((response) => setData2(response.data));
@@ -98,83 +109,82 @@ export default function Barra() {
 
   const verificar = (pid,pn,pa,subgrupo,cargo)=>{
 
+      verifyDescanso = 0;
+      verifyIncapacitado = 0;
+      verifyVacaciones = 0;
+      verifyLicensia = 0;
+
+
+      testPermissions(pid);
+      testIncapacitys(pid);
+      testRecess(pid);
+      testLicenses(pid);
     
     data2?.map((idReg)=>(
-        idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() ? verifyDescanso=1 : null
+        idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() && descanso == 1 ? verifyDescanso=1 : null
+        //console.log("Permisos  "+verifyDescanso)
         
     ))
 
     data3?.map((idReg)=>(
-      idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() ? verifyIncapacitado=1 : null
+      idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() && incapacitado == 1 ? verifyIncapacitado=1 : null
+      //console.log("Incapacidades  "+verifyIncapacitado)
       
     ))
 
     data4?.map((idReg)=>(
-      idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() ? verifyVacaciones=1 : null
+      idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() && vacaciones == 1 ? verifyVacaciones=1 : null
+      //console.log("Vacaciones  "+verifyVacaciones)
       
     ))
 
     data5?.map((idReg)=>(
-      idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() ? verifyLicensia=1 : null
+      idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() && licensia == 1 ? verifyLicensia=1 : null
+      //console.log("Licencias  "+verifyLicensia)
       
     ))
     
+    
     if(verifyDescanso==1)
     {
-      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setModal2(!modal2)
-      console.log("ES.... PERMISO");
-      verifyDescanso = 0;
-      verifyIncapacitado = 0;
-      verifyVacaciones = 0;
-      verifyLicensia = 0;
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#1f6103") + setTipoEvento("PERMISO") + setModal2(!modal2)
+      //console.log("ES.... PERMISO");
+    
       
     }
     else if(verifyIncapacitado==1)
     {
-      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setModal2(!modal2)
-        console.log("ES.... INCAPACITADO");
-        verifyDescanso = 0;
-        verifyIncapacitado = 0;
-        verifyVacaciones = 0;
-        verifyLicensia = 0;
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("red") + setTipoEvento("INCAPACIDAD") + setModal2(!modal2)
+        //console.log("ES.... INCAPACITADO");
+       
     }
 
     else if(verifyVacaciones==1)
     {
-      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setModal2(!modal2)
-        console.log("ES.... VACACIONES");
-        verifyDescanso = 0;
-        verifyIncapacitado = 0;
-        verifyVacaciones = 0;
-        verifyLicensia = 0;
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#E9BD1A") + setTipoEvento("VACACIONES") + setModal2(!modal2)
+        //console.log("ES.... VACACIONES");
+      
     }
 
     else if(verifyLicensia==1)
     {
-      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setModal2(!modal2)
-        console.log("ES.... LICENSIA");
-        verifyDescanso = 0;
-        verifyIncapacitado = 0;
-        verifyVacaciones = 0;
-        verifyLicensia = 0;
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#00094B") + setTipoEvento("LICENSIA") + setModal2(!modal2)
+        //console.log("ES.... LICENSIA");
+       
     }
     
     else{
 
-      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setModal1(!modal1)
-      console.log("Normal");
-      verifyDescanso = 0;
-      verifyIncapacitado = 0;
-      verifyVacaciones = 0;
-      verifyLicensia = 0;
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#DADADA")  + setModal1(!modal1)
+      //console.log("Normal");
+  
     }
-    
     
     
   }
   
 
-  const testDescansos = (pid)=>{
+  const testPermissions = (pid)=>{
       //Busco en el array de permisos si hay registros con el id del usuario 
 
       descanso=0;
@@ -188,7 +198,7 @@ export default function Barra() {
         idregIni = new Date (idReg.FechaInicio).setHours(0,0,0,0),
         idregEnd = new Date (idReg.FechaFinal).setHours(0,0,0,0),
         
-        idReg.Id_Empleado == pid &&  std.toISOString() >= new Date (idregIni).toISOString()  && std.toISOString() <= new Date(idregEnd).toISOString()  ? descanso = 1 : null 
+        idReg.Id_Empleado == pid &&  std.toISOString() >= new Date (idregIni).toISOString()  && std.toISOString() <= new Date(idregEnd).toISOString()  ? descanso = 1  : null 
         
       ))
 
@@ -258,7 +268,7 @@ const testLicenses = (pid)=>{
   const exist = (pid,pg,gn,pn,cargo,pa,subgrupo) =>{
 
 
-    testDescansos(pid)
+    testPermissions(pid)
     testIncapacitys(pid)
     testRecess(pid)
     testLicenses(pid)
@@ -286,7 +296,7 @@ const testLicenses = (pid)=>{
 
 
   useEffect(() => {
-    getDescansos();
+    getPermissions();
   }, []);
 
   useEffect(() => {
@@ -302,6 +312,9 @@ const testLicenses = (pid)=>{
     getLicenses();
   }, []);
 
+
+
+
  
 
   return (
@@ -311,12 +324,12 @@ const testLicenses = (pid)=>{
 
     
       {createPortal(
-        <ModalPlanner1 estado={modal1} cambiarEstado={setModal1} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={color}/>,
+        <ModalPlanner1 estado={modal1} cambiarEstado={setModal1} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={colorBorder}/>,
         document.querySelector("#portal")
       )}
 
       {createPortal(
-        <ModalPlanner3 estado={modal2} cambiarEstado={setModal2} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={color}/>,
+        <ModalPlanner3 estado={modal2} cambiarEstado={setModal2} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={colorBorder} tipo ={tipoEvento} />,
         document.querySelector("#portal")
       )} 
 
