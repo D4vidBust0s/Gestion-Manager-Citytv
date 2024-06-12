@@ -22,6 +22,10 @@ import {Toaster, toast} from 'react-hot-toast';
 
 /* VARIABLES */
 let fullPermisions = 0;
+let fullBreaks  = 0;
+let fullIncapacitys   = 0;
+let fullRecess  = 0;
+let fullLicenses   = 0;
 
 
 function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color}) {
@@ -32,6 +36,10 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
   const [data1, setData1] = useState([]);
   const [data2, setData2] = useState([]);
   const [data3, setData3] = useState([]);
+  const [data4, setData4] = useState([]);
+  const [data5, setData5] = useState([]);
+  const [data6, setData6] = useState([]);
+  const [data7, setData7] = useState([]);
 
   const [startHour, setStartHour] = useState(new Date());
   const [EndHour, setEndHour] = useState(new Date());
@@ -53,31 +61,9 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
   const startRef = useRef();
   const endRef = useRef();
   const observationRef = useRef();
- 
   const pruebaRef = useRef();
 
-  useEffect(() => {
-    const fecha =  Date.now();
-      const hoy = new Date(fecha);
-      setDate(hoy.toDateString());
-  },[]);
-
-  useEffect(() => {
-   setIDUSER(iduser);
-   setFECHA(fechaPlaner);
-  },[iduser,fechaPlaner]);
-
-  function showCalendar(){
-    <DatePicker
-    className='input-especial'
-          selected={calendar}
-          onChange={(date) => setCalendar(date)}
-          showYearDropdown
-          dateFormatCalendar="MMMM"
-          yearDropdownItemNumber={15}
-          scrollableYearDropdown
-    />
-  }
+ 
 
  
 
@@ -119,6 +105,34 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
     return await axios
     .get("http://localhost:3000/api/permissions/")
     .then((response) => setData3(response.data));
+    
+  }
+
+  const traerBreaksTrabajador = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/breaks/")
+    .then((response) => setData4(response.data));
+    
+  }
+
+  const traerIncapacitysTrabajador = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/incapacitys/")
+    .then((response) => setData5(response.data));
+    
+  }
+
+  const traerRecessTrabajador = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/recess/")
+    .then((response) => setData6(response.data));
+    
+  }
+
+  const traerLicensesTrabajador = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/licenses/")
+    .then((response) => setData7(response.data));
     
   }
 
@@ -381,17 +395,213 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
   }
 
  
+ const obtenerFechaRules = ()=>{
+  let fecha;
+
+    data2?.map((item)=>(
+      fecha = item.DiaPeriod
+    ))
+
+    return fecha;
+ }
+
+ const obtenerFechaRulesPlus = ()=>{
+  let fecha;
+
+    data2?.map((item)=>(
+      fecha = new Date (item.DiaPeriod).setDate(new Date(item.DiaPeriod).getDate()+parseInt(obtenerDiaRules()))
+    ))
+
+    return fecha;
+ }
+
+ const obtenerDiaRules = ()=>{
+  let dia;
+
+    data2?.map((item)=>(
+      dia = item.Dia
+    ))
+
+    return dia;
+ }
+
+ const entrando = (inicioPeriodo,finalPermiso)=>{
+  fullPermisions=0;
+  fullBreaks=0;
+  fullIncapacitys = 0;
+  fullRecess = 0;
+  fullLicenses = 0;
+  
+  let totalDias = new Date(finalPermiso).getTime()-new Date(inicioPeriodo).getTime();
+
+  fullPermisions = parseInt( totalDias/(1000*60*60*24) +1);
+  fullBreaks = parseInt( totalDias/(1000*60*60*24) +1);
+  fullIncapacitys = parseInt( totalDias/(1000*60*60*24) +1);
+  fullRecess = parseInt( totalDias/(1000*60*60*24) +1);
+  fullLicenses = parseInt( totalDias/(1000*60*60*24) +1);
+  
+ }
+
+ const saliendo = (inicioPermiso,finalPeriodo)=>{
+  fullPermisions=0;
+  fullBreaks = 0;
+  fullIncapacitys = 0;
+  fullRecess = 0;
+  fullLicenses = 0;
+  
+  let totalDias = new Date(finalPeriodo).getTime()-new Date(inicioPermiso).getTime();
+
+  fullPermisions = parseInt( totalDias/(1000*60*60*24) +1);
+  fullBreaks = parseInt( totalDias/(1000*60*60*24) +1);
+  fullIncapacitys = parseInt( totalDias/(1000*60*60*24) +1);
+  fullRecess = parseInt( totalDias/(1000*60*60*24) +1);
+  fullLicenses = parseInt( totalDias/(1000*60*60*24) +1);
+  
+ }
+
+ const dentro = (inicioPermiso,finalPermiso)=>{
+  fullPermisions=0;
+  fullBreaks = 0;
+  fullIncapacitys = 0;
+  fullRecess = 0;
+  fullLicenses = 0;
+  
+  let totalDias = new Date(finalPermiso).getTime()-new Date(inicioPermiso).getTime();
+
+  fullPermisions = parseInt( totalDias/(1000*60*60*24) +1);
+  fullBreaks = parseInt( totalDias/(1000*60*60*24) +1);
+  fullIncapacitys = parseInt( totalDias/(1000*60*60*24) +1);
+  fullRecess = parseInt( totalDias/(1000*60*60*24) +1);
+  fullLicenses = parseInt( totalDias/(1000*60*60*24) +1);
+  
+ }
+
+ const todo = ()=>{
+  fullPermisions=0;
+  fullBreaks = 0;
+  fullIncapacitys = 0;
+  fullRecess = 0;
+  fullLicenses = 0;
+  
+  fullPermisions = parseInt(data2[0].Dia);
+  fullBreaks = parseInt(data2[0].Dia);
+  fullIncapacitys = parseInt(data2[0].Dia);
+  fullRecess = parseInt(data2[0].Dia);
+  fullLicenses = parseInt(data2[0].Dia);
+  
+ }
+
+ 
   const fullPermissionsUser = (idUser)=>{
     fullPermisions=0;
 
     data3?.map((item)=>(
-     //item.Id_Empleado==idUser?fullPermisions++:null
-     //item.Id_Empleado==idUser&&item.FechaInicio?fullPermisions++:null
-     //console.log(new Date(item.FechaInicio).setHours(0,0,0,0).toString()+"----"+new Date().setHours(0,0,0,0))
-     item.Id_Empleado == iduser && new Date(item.FechaInicio).setHours(0,0,0,0)< new Date().setHours(0,0,0,0)?console.log("es menor"):console.log("no es menor")
+    
+     //PARA ENTRANDO
+     new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) <  new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0)  && new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRules()).setHours(0,0,0,0)  && item.Id_Empleado==idUser  ? entrando(new Date(obtenerFechaRules()).setHours(0,0,0,0),new Date(item.FechaFinal).setHours(0,0,0,0)) :null,
+     
+     //PARA SALIENDO
+     new Date(item.FechaInicio).setHours(0,0,0,0) > new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && item.Id_Empleado==idUser  ? saliendo(new Date(item.FechaInicio).setHours(0,0,0,0),new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0)) :null,
+
+     //PARA DENTRO 
+     new Date(item.FechaInicio).setHours(0,0,0,0) >= new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) <= new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0)  >=  new Date(obtenerFechaRules()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0) <= new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) <= new Date(item.FechaFinal).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) >= new Date(item.FechaInicio).setHours(0,0,0,0) && item.Id_Empleado==idUser ? dentro(new Date(item.FechaInicio).setHours(0,0,0,0),new Date(item.FechaFinal).setHours(0,0,0,0)) :null,
+
+     //PARA CUBRE TODO
+     new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRules()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && item.Id_Empleado==idUser ? todo() : null
+
     ))
 
     return fullPermisions;
+  }
+
+  const fullBreaksUser = (idUser)=>{
+    fullBreaks=0;
+
+    data4?.map((item)=>(
+    
+     //PARA ENTRANDO
+     new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) <  new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0)  && new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRules()).setHours(0,0,0,0)  && item.Id_Empleado==idUser  ? entrando(new Date(obtenerFechaRules()).setHours(0,0,0,0),new Date(item.FechaFinal).setHours(0,0,0,0)) :null,
+     
+     //PARA SALIENDO
+     new Date(item.FechaInicio).setHours(0,0,0,0) > new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && item.Id_Empleado==idUser  ? saliendo(new Date(item.FechaInicio).setHours(0,0,0,0),new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0)) :null,
+
+     //PARA DENTRO 
+     new Date(item.FechaInicio).setHours(0,0,0,0) >= new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) <= new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0)  >=  new Date(obtenerFechaRules()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0) <= new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) <= new Date(item.FechaFinal).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) >= new Date(item.FechaInicio).setHours(0,0,0,0) && item.Id_Empleado==idUser ? dentro(new Date(item.FechaInicio).setHours(0,0,0,0),new Date(item.FechaFinal).setHours(0,0,0,0)) :null,
+
+     //PARA CUBRE TODO
+     new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRules()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && item.Id_Empleado==idUser ? todo() : null
+
+    ))
+
+    return fullBreaks;
+  }
+
+
+  const fullIncapacitysUser = (idUser)=>{
+    fullIncapacitys=0;
+
+    data5?.map((item)=>(
+    
+     //PARA ENTRANDO
+     new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) <  new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0)  && new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRules()).setHours(0,0,0,0)  && item.Id_Empleado==idUser  ? entrando(new Date(obtenerFechaRules()).setHours(0,0,0,0),new Date(item.FechaFinal).setHours(0,0,0,0)) :null,
+     
+     //PARA SALIENDO
+     new Date(item.FechaInicio).setHours(0,0,0,0) > new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && item.Id_Empleado==idUser  ? saliendo(new Date(item.FechaInicio).setHours(0,0,0,0),new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0)) :null,
+
+     //PARA DENTRO 
+     new Date(item.FechaInicio).setHours(0,0,0,0) >= new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) <= new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0)  >=  new Date(obtenerFechaRules()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0) <= new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) <= new Date(item.FechaFinal).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) >= new Date(item.FechaInicio).setHours(0,0,0,0) && item.Id_Empleado==idUser ? dentro(new Date(item.FechaInicio).setHours(0,0,0,0),new Date(item.FechaFinal).setHours(0,0,0,0)) :null,
+
+     //PARA CUBRE TODO
+     new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRules()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && item.Id_Empleado==idUser ? todo() : null
+
+    ))
+
+    return fullIncapacitys;
+  }
+
+
+  const fullRecessUser = (idUser)=>{
+    fullRecess = 0;
+
+    data6?.map((item)=>(
+    
+     //PARA ENTRANDO
+     new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) <  new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0)  && new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRules()).setHours(0,0,0,0)  && item.Id_Empleado==idUser  ? entrando(new Date(obtenerFechaRules()).setHours(0,0,0,0),new Date(item.FechaFinal).setHours(0,0,0,0)) :null,
+     
+     //PARA SALIENDO
+     new Date(item.FechaInicio).setHours(0,0,0,0) > new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && item.Id_Empleado==idUser  ? saliendo(new Date(item.FechaInicio).setHours(0,0,0,0),new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0)) :null,
+
+     //PARA DENTRO 
+     new Date(item.FechaInicio).setHours(0,0,0,0) >= new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) <= new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0)  >=  new Date(obtenerFechaRules()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0) <= new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) <= new Date(item.FechaFinal).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) >= new Date(item.FechaInicio).setHours(0,0,0,0) && item.Id_Empleado==idUser ? dentro(new Date(item.FechaInicio).setHours(0,0,0,0),new Date(item.FechaFinal).setHours(0,0,0,0)) :null,
+
+     //PARA CUBRE TODO
+     new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRules()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && item.Id_Empleado==idUser ? todo() : null
+
+    ))
+
+    return fullRecess;
+  }
+
+  const fullLicensesUser = (idUser)=>{
+    fullLicenses = 0;
+
+    data7?.map((item)=>(
+    
+     //PARA ENTRANDO
+     new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) <  new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0)  && new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRules()).setHours(0,0,0,0)  && item.Id_Empleado==idUser  ? entrando(new Date(obtenerFechaRules()).setHours(0,0,0,0),new Date(item.FechaFinal).setHours(0,0,0,0)) :null,
+     
+     //PARA SALIENDO
+     new Date(item.FechaInicio).setHours(0,0,0,0) > new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && item.Id_Empleado==idUser  ? saliendo(new Date(item.FechaInicio).setHours(0,0,0,0),new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0)) :null,
+
+     //PARA DENTRO 
+     new Date(item.FechaInicio).setHours(0,0,0,0) >= new Date(obtenerFechaRules()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) <= new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0)  >=  new Date(obtenerFechaRules()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0) <= new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && new Date(item.FechaInicio).setHours(0,0,0,0) <= new Date(item.FechaFinal).setHours(0,0,0,0) && new Date(item.FechaFinal).setHours(0,0,0,0) >= new Date(item.FechaInicio).setHours(0,0,0,0) && item.Id_Empleado==idUser ? dentro(new Date(item.FechaInicio).setHours(0,0,0,0),new Date(item.FechaFinal).setHours(0,0,0,0)) :null,
+
+     //PARA CUBRE TODO
+     new Date(item.FechaInicio).setHours(0,0,0,0) < new Date(obtenerFechaRules()).setHours(0,0,0,0) &&  new Date(item.FechaFinal).setHours(0,0,0,0) > new Date(obtenerFechaRulesPlus()).setHours(0,0,0,0) && item.Id_Empleado==idUser ? todo() : null
+
+    ))
+
+    return fullLicenses;
   }
 
 
@@ -399,7 +609,28 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
 
 
 
+  useEffect(() => {
+    const fecha =  Date.now();
+      const hoy = new Date(fecha);
+      setDate(hoy.toDateString());
+  },[]);
 
+  useEffect(() => {
+   setIDUSER(iduser);
+   setFECHA(fechaPlaner);
+  },[iduser,fechaPlaner]);
+
+  function showCalendar(){
+    <DatePicker
+    className='input-especial'
+          selected={calendar}
+          onChange={(date) => setCalendar(date)}
+          showYearDropdown
+          dateFormatCalendar="MMMM"
+          yearDropdownItemNumber={15}
+          scrollableYearDropdown
+    />
+  }
   
 
   useEffect(() => {
@@ -421,6 +652,22 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
   
  useEffect(()=>{
   traerPermisosTrabajador();
+ },[])
+
+ useEffect(()=>{
+  traerBreaksTrabajador();
+ },[])
+
+ useEffect(()=>{
+  traerIncapacitysTrabajador();
+ },[])
+
+ useEffect(()=>{
+  traerRecessTrabajador();
+ },[])
+
+ useEffect(()=>{
+  traerLicensesTrabajador();
  },[])
 
 
@@ -460,18 +707,57 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                       }
                     </span><progress 
                       value={fullPermissionsUser(iduser)} 
-                      max={20} 
+                      max={parseInt(data2[0].Dia)} 
                       className='progress'/>
+                    </li>
+
+
+                    <li className='liLista'>Breaks<span className='indicador'>
+                      {
+                       fullBreaksUser(iduser)
+                      }
+                      </span><progress 
+                      value={fullBreaksUser(iduser)} 
+                      max={parseInt(data2[0].Dia)} 
+                      className='progress'/>
+                    </li>
+
+                    
+                    <li className='liLista'>Incapacitys<span className='indicador'>
+                      {
+                        fullIncapacitysUser(iduser)
+                      }
+                     </span><progress 
+                       value={fullIncapacitysUser(iduser)} 
+                       max={parseInt(data2[0].Dia)} 
+                       className='progress'/>
                     </li>
 
 
 
 
+                    <li className='liLista'>Recess<span className='indicador'>
+                       {
+                        fullRecessUser(iduser)
+                       }
+                      </span><progress 
+                        value={fullRecessUser(iduser)} 
+                        max={parseInt(data2[0].Dia)} 
+                        className='progress'/>
+                    </li>
 
-                    <li className='liLista'>Breaks<span className='indicador'>0</span><progress value={0} max={10} className='progress'/></li>
-                    <li className='liLista'>Incapacitys<span className='indicador'>0</span><progress value={0} max={100} className='progress'/></li>
-                    <li className='liLista'>Recess<span className='indicador'>0</span><progress value={0} max={100} className='progress'/></li>
-                    <li className='liLista'>Licenses<span className='indicador'>0</span><progress value={0} max={100} className='progress'/></li> 
+
+
+                    <li className='liLista'>Licenses<span className='indicador'>
+                       {
+                        fullLicensesUser(iduser)
+                       }
+                      </span><progress
+                        value={fullLicensesUser(iduser)} 
+                        max={parseInt(data2[0].Dia)} 
+                        className='progress'/>
+                    </li> 
+
                   </ul>
                 </div>
               </div>

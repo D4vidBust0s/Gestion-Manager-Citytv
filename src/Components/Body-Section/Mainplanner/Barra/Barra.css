@@ -12,6 +12,9 @@
     --Black: #000000;
     --Especial: #7ED957;
     --TextColor: #DADADA;
+    --Alternativo1: #dd6c21;
+    --Alternativo2: #2f800d;
+    --Alternativo3: #E9BD1A;
   }
   
 .barra{
@@ -87,9 +90,8 @@
             height: 1.61rem;
             padding-top: 4.5px;
             font-weight: 700;
-            color: #DADADA;
-            /*background:#429e1a;*/
-            background:#1f6103;
+            color: #000000;
+            background:#E9BD1A;
             
         }
 
@@ -145,7 +147,7 @@
 
         /* ----------------------------------------------------------------------------------------------------------------- */
 
-        /* estilos para personal en permiso */
+        /* estilos para personal en  vacaciones*/
 
         .liMain-var4{
             color: #000000;
@@ -154,12 +156,33 @@
             font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
             height: 1.61rem;
             padding-top: 4.5px;
-            background:  #E9BD1A;
+            background:  #dd6c21;
             font-weight: 700;
             
         }
 
         .liMain-var4:hover{
+            cursor: pointer;
+              
+        }
+
+        /* ----------------------------------------------------------------------------------------------------------------- */
+
+        /* estilos para personal en descanso o break */
+
+        .liMain-var5{
+            color: #000000;
+            width: 100%;
+            border-bottom: 1px solid #545454;
+            font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            height: 1.61rem;
+            padding-top: 4.5px;
+            background:  #2f800d;
+            font-weight: 700;
+            
+        }
+
+        .liMain-var5:hover{
             cursor: pointer;
               
         }

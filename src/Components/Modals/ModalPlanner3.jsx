@@ -5,13 +5,16 @@ import  './ModalPlanner3.css'
 /* Import recursos */
 import Anita from '../../assets/Anita.jpg';
 import Calendar from '../../assets/calendar.webp';
-import imagen from '../../assets/employee.webp';
+import imagenPermissions from '../../assets/break1.jpg';
+import imagenBreaks from '../../assets/break2.jpg';
+import imagenIncapacity from '../../assets/Incapacity1.jpg';
+import imagenRecess from '../../assets/recess1.jpg';
+import imagenLicense from '../../assets/license1.jpg';
 
 
 
 /* Import dependencies */
 import { useEffect, useState } from 'react';
-import DatePicker from 'react-datepicker';
 import axios from 'axios';
 
 
@@ -27,12 +30,10 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
   const [data3, setData3] = useState([]);
   const [data4, setData4] = useState([]);
   const [data5, setData5] = useState([]);
+  const [data6, setData6] = useState([]);
  
 
-  /* Estados para el datepicker */
-  const [calendar, setCalendar] = useState(new Date());
-  const [starIn, setStarIn] = useState(new Date());
-  const [starOut, setStarOut] = useState(new Date());
+
 
   //FUNCIONES
   //Funcion que obtiene la data de la api - listado de programs
@@ -61,6 +62,12 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
     return await axios
     .get("http://localhost:3000/api/licenses")
     .then((response) => setData5(response.data));
+  }
+
+  const getBreaks = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/breaks")
+    .then((response) => setData6(response.data));
   }
 
 
@@ -99,6 +106,10 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
    else if(tipo=="LICENSIA")
    {
     getLicenses();
+   }
+   else if(tipo=="DESCANSO")
+   {
+    getBreaks();
    }
    
   }, [tipo]);
@@ -141,6 +152,8 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                           new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(descanso.FechaFinal).setHours(0,0,0,0)  ?  
                             <span key={descanso._id} className='tituloP'>{descanso.Nombre}</span>:null) )
                         :
+
+
                         tipo=="INCAPACIDAD"
                         ?
                         data3?.map((incapacidad)=>( 
@@ -148,7 +161,44 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                           incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
                           new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
                             <span key={incapacidad._id} className='tituloP'>{incapacidad.Nombre}</span>:null) )
-                        :<span>NO ES NINGUN TIPO</span>
+
+                            
+                        :
+
+                        tipo=="VACACIONES"
+                        ?
+                        data4?.map((incapacidad)=>( 
+                          
+                          incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                            <span key={incapacidad._id} className='tituloP'>{incapacidad.Nombre}</span>:null) )
+
+                            
+                        :
+
+                        tipo=="LICENSIA"
+                        ?
+                        data5?.map((incapacidad)=>( 
+                          
+                          incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                            <span key={incapacidad._id} className='tituloP'>{incapacidad.Nombre}</span>:null) )
+
+                            
+                        :
+
+                        tipo=="DESCANSO"
+                        ?
+                        data6?.map((incapacidad)=>( 
+                          
+                          incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                            <span key={incapacidad._id} className='tituloP'>{incapacidad.Nombre}</span>:null) )
+
+                            
+                        :
+                        
+                        <span>NO ES NINGUN TIPO</span>
                         
                         
                        }
@@ -163,9 +213,12 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
 
             <div className="body_container">
                 <div className="body-left">
-                    <h4 className='body_left_title'>Especificación de dias</h4>
+                    <h4 className='body_left_title'>{tipo}</h4>
         
-                    <img src={imagen} alt="" />
+                    <img src={tipo=="PERMISO"?imagenPermissions:tipo=="INCAPACIDAD"?imagenIncapacity:tipo=="VACACIONES"?imagenRecess:tipo=="LICENSIA"?imagenLicense:tipo=="DESCANSO"?imagenBreaks:null} alt="" />
+                    <div className="waterMark">
+                      Powered By David Bustos
+                    </div>
                 </div>
 
                 <div className="body-right">
@@ -193,6 +246,31 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                           new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
                           <span key={incapacidad._id} className='tituloP'>{incapacidad.Observacion}</span>:null))
                         :
+
+                        tipo=="VACACIONES" 
+                         ?
+                         data4?.map((incapacidad)=>( 
+                          incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                          <span key={incapacidad._id} className='tituloP'>{incapacidad.Observacion}</span>:null))
+                        :
+
+                        tipo=="LICENSIA" 
+                        ?
+                        data5?.map((incapacidad)=>( 
+                         incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                         new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                         <span key={incapacidad._id} className='tituloP'>{incapacidad.Observacion}</span>:null))
+                       :
+
+                       tipo=="DESCANSO" 
+                       ?
+                       data6?.map((incapacidad)=>( 
+                        incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                        new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                        <span key={incapacidad._id} className='tituloP'>{incapacidad.Observacion}</span>:null))
+                      :
+                        
                         <span>NO ES NINGUN TIPO</span>
 
                        }
@@ -208,13 +286,41 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                           new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(descanso.FechaFinal).setHours(0,0,0,0)  ? 
                             <span key={descanso._id} className='tituloP'>{new Date(descanso.FechaInicio).toDateString()}</span>:null))
                         :
+
                         tipo=="INCAPACIDAD" 
                          ?
                          data3?.map((incapacidad)=>( 
                           incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
                           new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
                             <span key={incapacidad._id} className='tituloP'>{new Date(incapacidad.FechaInicio).toDateString()}</span>:null))
-                        :<span>NO ES NINGUN TIPO</span>
+                        :
+                        
+                        tipo=="VACACIONES" 
+                         ?
+                         data4?.map((incapacidad)=>( 
+                          incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                            <span key={incapacidad._id} className='tituloP'>{new Date(incapacidad.FechaInicio).toDateString()}</span>:null))
+                        :
+
+                        tipo=="LICENSIA" 
+                        ?
+                        data5?.map((incapacidad)=>( 
+                         incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                         new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                           <span key={incapacidad._id} className='tituloP'>{new Date(incapacidad.FechaInicio).toDateString()}</span>:null))
+                       :
+
+                       tipo=="DESCANSO" 
+                       ?
+                       data6?.map((incapacidad)=>( 
+                        incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                        new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                          <span key={incapacidad._id} className='tituloP'>{new Date(incapacidad.FechaInicio).toDateString()}</span>:null))
+                      :
+                        
+                        
+                        <span>NO ES NINGUN TIPO</span>
 
                        }
                     </p>
@@ -235,7 +341,35 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                           incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
                            <span key={incapacidad._id} className='tituloP'>{new Date(incapacidad.FechaFinal).toDateString()}</span>:null))
-                       :<span>NO ES NINGUN TIPO</span>
+                       :
+
+                       tipo=="VACACIONES" 
+                       ?
+                       data4?.map((incapacidad)=>( 
+                         incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                        new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                          <span key={incapacidad._id} className='tituloP'>{new Date(incapacidad.FechaFinal).toDateString()}</span>:null))
+                      :
+
+                      tipo=="LICENSIA" 
+                       ?
+                       data5?.map((incapacidad)=>( 
+                         incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                        new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                          <span key={incapacidad._id} className='tituloP'>{new Date(incapacidad.FechaFinal).toDateString()}</span>:null))
+                      :
+
+                      tipo=="DESCANSO" 
+                      ?
+                      data6?.map((incapacidad)=>( 
+                        incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                       new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                         <span key={incapacidad._id} className='tituloP'>{new Date(incapacidad.FechaFinal).toDateString()}</span>:null))
+                     :
+                       
+                       
+                       
+                       <span>NO ES NINGUN TIPO</span>
 
                        }
                     </p>
@@ -250,13 +384,41 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                           new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(descanso.FechaFinal).setHours(0,0,0,0)  ? 
                             <span key={descanso._id} className='tituloP'>{descanso.NombreEmpleado}</span>:null))
                         :
+
                         tipo=="INCAPACIDAD" 
                         ?
                         data3?.map((incapacidad)=>( 
                           incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
                            <span key={incapacidad._id} className='tituloP'>{incapacidad.NombreEmpleado}</span>:null))
-                       :<span>NO ES NINGUN TIPO</span>
+                       :
+
+                       tipo=="VACACIONES" 
+                       ?
+                       data4?.map((incapacidad)=>( 
+                         incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                        new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                          <span key={incapacidad._id} className='tituloP'>{incapacidad.NombreEmpleado}</span>:null))
+                      :
+
+                      tipo=="LICENSIA" 
+                      ?
+                      data5?.map((incapacidad)=>( 
+                        incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                       new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                         <span key={incapacidad._id} className='tituloP'>{incapacidad.NombreEmpleado}</span>:null))
+                     :
+
+                     tipo=="DESCANSO" 
+                      ?
+                      data6?.map((incapacidad)=>( 
+                        incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
+                       new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
+                         <span key={incapacidad._id} className='tituloP'>{incapacidad.NombreEmpleado}</span>:null))
+                     :
+                       
+                                    
+                       <span>NO ES NINGUN TIPO</span>
 
                        }
                     </p>
@@ -277,7 +439,37 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                          data3?.map((incapacidad)=>( 
                           incapacidad.Id_Empleado==iduser && incapacidad.Año == new Date(fechaPlaner).getFullYear() ? 
                           <li key={incapacidad._id} className='liListado'>- {incapacidad.Nombre} - <span className='item-li'>fecha inicio:</span> {new Date(incapacidad.FechaInicio).toDateString()} <span className='item-li'>---- Fecha final:</span> {new Date(incapacidad.FechaFinal).toDateString()}</li>:null))
-                        :<span>NO ES NINGUN TIPO</span>
+                        :
+
+                        tipo=="VACACIONES" 
+                         ?
+                         data4?.map((incapacidad)=>( 
+                          incapacidad.Id_Empleado==iduser && incapacidad.Año == new Date(fechaPlaner).getFullYear() ? 
+                          <li key={incapacidad._id} className='liListado'>- {incapacidad.Nombre} - <span className='item-li'>fecha inicio:</span> {new Date(incapacidad.FechaInicio).toDateString()} <span className='item-li'>---- Fecha final:</span> {new Date(incapacidad.FechaFinal).toDateString()}</li>:null))
+                        :
+
+                        tipo=="LICENSIA" 
+                        ?
+                        data5?.map((incapacidad)=>( 
+                         incapacidad.Id_Empleado==iduser && incapacidad.Año == new Date(fechaPlaner).getFullYear() ? 
+                         <li key={incapacidad._id} className='liListado'>- {incapacidad.Nombre} - <span className='item-li'>fecha inicio:</span> {new Date(incapacidad.FechaInicio).toDateString()} <span className='item-li'>---- Fecha final:</span> {new Date(incapacidad.FechaFinal).toDateString()}</li>:null))
+                       :
+
+                       tipo=="DESCANSO" 
+                        ?
+                        data6?.map((incapacidad)=>( 
+                         incapacidad.Id_Empleado==iduser && incapacidad.Año == new Date(fechaPlaner).getFullYear() ? 
+                         <li key={incapacidad._id} className='liListado'>- {incapacidad.Nombre} - <span className='item-li'>fecha inicio:</span> {new Date(incapacidad.FechaInicio).toDateString()} <span className='item-li'>---- Fecha final:</span> {new Date(incapacidad.FechaFinal).toDateString()}</li>:null))
+                       :
+
+
+
+
+
+
+
+
+                        <span>NO ES NINGUN TIPO</span>
                       }
                     
                    </ul>
