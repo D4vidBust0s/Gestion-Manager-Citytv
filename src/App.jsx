@@ -1,7 +1,7 @@
 import './App.css';
 import {useEffect, useState} from 'react';
 import {BrowserRouter,Routes,Route} from 'react-router-dom';
-
+import Swal from "sweetalert2";
 
 /*Componentes */
 import Sidebar from '/src/Components/Sidebar-Section/Sidebar';
@@ -38,14 +38,19 @@ let day;
 let mes;
 let año;
 
-let fecha2;
+let fechaActual;
 let dayActual;
 let mesActual;
 let añoActual;
 
 let aux;
-let total;
+let fechaRules;
 let total2;
+
+let id;
+let contador = 0;
+
+let aux3 = 0;
 
 
 
@@ -56,6 +61,8 @@ function App() {
 /* estado para la ventana modal1 */
 const [modal1, setModal1] = useState(false); 
 const [data, setData] = useState([]);
+const [data1, setData1] = useState([]);
+const [data2, setData2] = useState([]);
 const [ID,setId]= useState();
 
 
@@ -63,11 +70,7 @@ const [ID,setId]= useState();
 
 //FUNCIONES
 
-//Traemos la fecha actual
-fecha2 = new Date().setHours(0,0,0,0);
-dayActual = new Date(fecha2).getDate();
-mesActual = new Date(fecha2).getMonth();
-añoActual = new Date(fecha2).getFullYear();
+
 
 
 //Estas dos  funcion actualiza el dia clave para el resto de operaciones del sistema
@@ -78,62 +81,178 @@ const obtenerListadoRules = async () => {
 
 };
 
-
-
 const update= async () => {
     
-  await axios.put("http://localhost:3000/api/rules/" + ID, {
+  await axios.put("http://localhost:3000/api/rules/" + id, {
     DiaPeriod: total2,
    
   });
 }
 
+//Traer todos los registros de rotationsManager
+const getAllRotationsManager= async () => {
+    
+  return await axios
+    .get("http://localhost:3000/api/rotationsmanager/")
+    .then((response) => setData1(response.data));
+}
 
-const createBalancerData = ()=>{
+//Traer todos los registros de los usuarios
+const getAllPayroll= async () => {
+    
+  return await axios
+    .get("http://localhost:3000/api/payroll/")
+    .then((response) => setData2(response.data));
+}
 
-  //Proceso para crear por primera vez la informacion que actualizara el balancer
+const enviar = async (usNombre,usApellido,id,grupo,grupoid,scName,scID,ts,tg,ac)=>{
+
+  await axios.post("http://localhost:3000/api/rotationsmanager/", {
+
+      nombreusuario: usNombre +" "+usApellido,
+      userid: id,
+      groupname: grupo, 
+      groupid: grupoid,
+      schemaname: scName,
+      schemaid: scID,
+      totalschema: ts,
+      totalgroup: tg,
+      actual: ac
+    });
 
 }
 
 
+//Traemos la fecha actual
+fechaActual = new Date().setHours(0,0,0,0);
+dayActual = new Date(fechaActual).getDate();        //Dia actual
+mesActual = new Date(fechaActual).getMonth();       //Mes actual
+añoActual = new Date(fechaActual).getFullYear();    //Año actual
 
+
+//Traemos las configuraciones 
 data?.map((dato)=>{
 
- 
- total = new Date(dato.DiaPeriod).setHours(0,0,0,0);
- total2 = new Date (total);
- total2.setDate(total2.getDate() + parseInt(dato.Dia) + 1)  // se trae la cantidad de dias definidas en rules
+ fechaRules = new Date(dato.DiaPeriod).setHours(0,0,0,0);
+ total2 = new Date (fechaRules);
+ total2.setDate(total2.getDate() + parseInt(dato.Dia) ) // se trae la cantidad de dias definidas en rules
                                                             //  y se agrega un dia mas para que concuerde con el sabado que pasaria a ser el nuevo dia clave
  day = new Date(total2).getDate();
  mes = new Date(total2).getMonth();
  año = new Date(total2).getFullYear();
 
 
+//------------------------------------------------------------------------------------------------------------------------
+ // OPERACIONES PARA MANTENER ACTUALIZADO EL DIA CLAVE
+//------------------------------------------------------------------------------------------------------------------------
 
- //Operaciones para mantener actualizado el dia clave
-  if(day==dayActual && mes == mesActual && año == añoActual)
+  if(new Date(fechaRules).getDate()==dayActual && mes == mesActual && año == añoActual)
   {
     //Procedemos a actualizar el dia clave en rules si 
-    console.log("SEACTUALIZO LA NUEVA FECHA");
+    console.log("MOMENTO DE ACTUALIZAR LA FECHA DEL NUEVO PERIODO");
     aux = 1;
-    
   }
   else{
-    console.log("ACTUAL .. " + "dia actual " + dayActual + " Mes actual " + mesActual + " Año actual " + añoActual);
-    console.log("------------------");
-    console.log("META .. " + "dia meta " + day + " Mes meta " + mes + " Año meta " + año);
+  
+    /*
+      console.log("NO ES TIEMPO DE ACTUALIZAR PERIODO");
+      console.log("----------------------------------");
+      console.log("Dia actual " + dayActual +" Dia meta " + new Date(fechaRules).getDate());
+      console.log("Mes actual " + mesActual +" Mes meta " + mes);
+      console.log("Año actual " + añoActual +" Año meta " + año);
+      console.log("Dias Rules " + data[0].Dia);
+    */
 
-    console.log("------------------")
-    console.log("DIA ES " + data[0].Dia)
+    if(mes < mesActual && añoActual == año)
+    {
+      //console.log("LA FECHA DEL NUEVO PERIODO ESTA DESACTUALIZADA");
+
+      Swal.fire({
+        title: "La fecha de evaluación de periodo está desactualizada, por favor actualícela inmediatamente",
+        //showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: "Ok la actualizaré",
+        //denyButtonText: `Ok la actualizaré`,
+        footer: '<h5>Gestión Manager Citytv</h5> <br> <h6>Mensajes del sistema</h6>',
+        
+      }).then((result) => {
+        /* Read more about isConfirmed, isDenied below */
+        if (result.isConfirmed) {
+          //Swal.fire("Saved!", "", "success");
+        } else if (result.isDenied) 
+        {
+          EliminarGP();
+          //Swal.fire("Registro eliminado del sistema", "", "success");
+        }
+      });
+    }
+
   }
 
 })
 
 if(aux == 1)
 {
-   setId(data[0]._id);
+   id=data[0]._id;
    update();
 }
+
+//----------------------------------------------------------------------------------------------------------------------------
+ // OPERACIONES PARA LA GESTION DE ROTACIONES DE TURNOS
+//----------------------------------------------------------------------------------------------------------------------------
+
+const setDaily = () =>{
+
+  console.log("EJECUTANDO " + data1.length + " TAREAS");
+
+  //ejecuto tares uno por uno en base al ID de usuario
+  data2?.map((payroll)=>(
+    data1?.map((item)=>(
+      payroll._id == item.userId && 
+          console.log(item.userName) 
+
+    ))
+  ))
+}
+
+//Valido si ya hay creado un registro en la base de datos
+
+const validar =()=>{
+
+  
+  if(data1.length==0)
+  {
+    //como el array esta vacio procedo a crear uno registro de todos los usuarios del sistema con valores por defecto
+    data2?.map((item)=>(
+      enviar(item.nombres,item.apellidos,item._id,item.grupo,"idGrupo","SchemaName","SchemaID",0,0,0)
+    ))
+
+    console.log("VALIDACION DIARIA HECHA CORRECTAMENTE  " + data1.length);
+
+  }
+  else
+  {
+    //Como ya existen los datos de la administracion de turnos automatica, procedo a actualizarlos cada uno independientemente
+    setDaily();
+  }
+}
+
+
+const timer = setTimeout(function(){
+    if(contador<=3)
+    {
+
+      //Tareas diarias a ejecutar automaticamente
+      validar();
+
+      contador++;
+      clearTimeout(timer);
+    }
+    
+}, 7000);
+
+
+
 
 
 
@@ -143,6 +262,17 @@ if(aux == 1)
 useEffect(()=>{
   obtenerListadoRules();
 },[]);
+
+useEffect(()=>{
+  getAllPayroll();
+},[]);
+
+useEffect(()=>{
+  getAllRotationsManager();
+  aux3 = data1.length;
+},[]);
+
+
 
 
 

@@ -9,7 +9,10 @@ import ingeniero from './ingeniero.svg';
 import liveU from './liveU.svg';
 import vtr from './vtr.svg';
 import Iluminación from './luces.svg';
-import Switcher from './swicher.svg'
+import Switcher from './swicher.svg';
+import Almacenistas from './almacenistas.svg';
+import Consola from './consola.svg';
+import Practicantes from './practicantes.svg';
 
 export default [
   {
@@ -82,6 +85,24 @@ export default [
     id: 12,
     img: Switcher,
     titulo: "Switcher's",
+  },
+
+  {
+    id: 13,
+    img: Almacenistas,
+    titulo: "Almacenistas",
+  },
+
+  {
+    id: 14,
+    img: Consola,
+    titulo: "Audio Estudio",
+  },
+
+  {
+    id: 15,
+    img: Practicantes,
+    titulo: "Practicantes",
   },
 
 ];

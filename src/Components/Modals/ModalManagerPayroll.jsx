@@ -26,7 +26,7 @@ let aux = 0;
 let aux2 = 0;
 //------------------------------------------------------------------------------------------------------------------------------------
 
-export default function ModalManagerPayroll({id,op}) {
+export default function ModalManagerPayroll({id,op,GrupoID}) {
   
  
 
@@ -69,6 +69,7 @@ export default function ModalManagerPayroll({id,op}) {
   const estadoReF = useRef();
   const mainplannerRef = useRef();
   const sbRef = useRef();
+  
 
   
 
@@ -158,7 +159,7 @@ export default function ModalManagerPayroll({id,op}) {
 
     else{
 
-      //evaluamos que operacion se debe hacer si agregar o eliminar
+      //evaluamos que operacion se debe hacer si agregar o eliminar 0 es agregar 1 Editar
       if(op == 0)
       {
         //Se envia la informacion validada al api
@@ -181,13 +182,14 @@ export default function ModalManagerPayroll({id,op}) {
           TarjetaProfesional: profesionalReF.current.value,
           Cargo: cargoReF.current.value,
           Grupo: grupoReF.current.value,
+          GrupoID: grupoReF.current.value,
           FechaIngreso: ingresoReF.current.input.value,
           RH: rhReF.current.value,
           ContactoPrincipal: contactoPrincipalReF.current.value,
           ContactoAux: contactoSecundarioReF.current.value,
           Activo: estadoReF.current.value,
           Mainplanner: mainplannerRef.current.value,
-          SubGrupo:sbRef.current.value,
+          SubGrupo:sbRef.current.value
       });
 
       toast.success("Usuario agregado correctamente");
@@ -216,13 +218,14 @@ export default function ModalManagerPayroll({id,op}) {
           tarjetaProfesional: profesionalReF.current.value,
           cargo: cargoReF.current.value,
           grupo: grupoReF.current.value,
+          grupoID: grupoReF.current.value,
           fechaIngreso: ingresoReF.current.input.value,
           RH: rhReF.current.value,
           contactoPrincipal: contactoPrincipalReF.current.value,
           contactoAux: contactoSecundarioReF.current.value,
           activo: estadoReF.current.value,
           mainplanner: mainplannerRef.current.value,
-          subGrupo: sbRef.current.value,
+          subGrupo: sbRef.current.value
 
         });
 
@@ -351,7 +354,7 @@ useEffect(()=>{
   pasaporteReF.current.value=dataDos["pasaporte"];
   profesionalReF.current.value=dataDos["tarjetaProfesional"];
   cargoReF.current.value=dataDos["cargo"];
-  grupoReF.current.value=dataDos["grupo"];
+  grupoReF.current.value=dataDos["grupoID"];
   ingresoReF.current.input.value=new Date(dataDos["fechaIngreso"]).toLocaleDateString();
   setStartDateIngreso(Date.parse(dataDos["fechaIngreso"]));
   rhReF.current.value=dataDos["RH"];
@@ -388,7 +391,7 @@ useEffect(()=>{
                 </div>
                 <div className="row">
                   <div className="columA">
-                     Nombres
+                     Nombres {GrupoID}
                   </div>
                   <div className="columB">
                   <input type="text" name="Nombres" className='input-normal' ref={nombresRef} />
@@ -571,7 +574,7 @@ useEffect(()=>{
 
                     {
                       data?.map((group)=>(
-                        <option value={group.nombre} key={group._id}>{group.nombre}</option>
+                        <option value={group._id} key={group._id}>{group.nombre}</option>
                       ))
                     }
                       

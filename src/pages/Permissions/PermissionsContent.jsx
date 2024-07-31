@@ -55,6 +55,13 @@ const groupChange = () =>
     
   }
 
+
+  /*
+      queda pemndiente actualizar todos las otras vistas de descansos y demas ya que cambie el nombre por id de grupo y esto me genero
+      bastantes cambios,  ya tengo solucionado permissions ahora debo seguir con los  */
+
+
+
 //Funcion que obtiene la data de la api - listado de grupos
 const obtenerListadoGroups = async () => {
     return await axios
@@ -64,7 +71,7 @@ const obtenerListadoGroups = async () => {
 
   const getPeopleOfGroup = async ()=>{
     return await axios
-    .get("http://localhost:3000/api/payroll/people/"+groupsRef.current.value)
+    .get("http://localhost:3000/api/payroll/idgp/"+groupsRef.current.value)
     .then((response) => setData1(response.data));
   }
 
@@ -101,7 +108,6 @@ const obtenerListadoGroups = async () => {
     namePermissionRef.current.value="";
     setStarIn(new Date());
     setStarOut(new Date());
-    setStartDate(new Date());
     observacionesRef.current.value="";
     idRegistro="";
     setData2([]);
@@ -116,7 +122,6 @@ const limpiar = ()=>{
 
   setStarIn(new Date());
   setStarOut(new Date());
-  setStartDate(new Date());
   observacionesRef.current.value="";
   idRegistro="";
   setData2([]);
@@ -314,7 +319,7 @@ const editar = async ()=>{
         <option key={0} value={"none"}>{"-----------------------------------"}</option>
           {
             data?.map((group)=>(
-              <option key={group._id} value={group.nombre} >{group.nombre}</option>
+              <option key={group._id} value={group._id} >{group.nombre}</option>
             ))
           }
         </select>

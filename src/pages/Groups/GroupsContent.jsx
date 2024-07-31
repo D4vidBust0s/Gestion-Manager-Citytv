@@ -27,13 +27,19 @@ export default function ProgramsContent() {
   const [logo, setLogo] = useState(Default);
   const [valueLogo, setValueLogo] = useState("Default");
   const [ID, setId] = useState(null);
+  const [order,setOrder] = useState("Seleccione");
 
   //Referencias
   const refName = useRef();
   const refLogo = useRef();
   const refDescripcion = useRef();
-
+  const refOrder = useRef();
   //------------------------------------------------------------------------------------
+
+  const setNew = (orden)=>{
+
+    refOrder.current.value=orden;
+  }
 
   //FUNCIONES
   //Funcion que obtiene la data de la api - listado de grupos
@@ -52,7 +58,10 @@ export default function ProgramsContent() {
           setNameGroup(response.data.nombre) +
           setDescription(response.data.descripcion) +
           setLogo(response.data.logo) +
-          setValueLogo(response.data.logo)
+          setValueLogo(response.data.logo) +
+          setOrder(response.data.orden) +
+          setNew(response.data.orden)
+
       );
     setId(id);
 
@@ -80,10 +89,16 @@ export default function ProgramsContent() {
       toast.error("El campo logo no puede estar vacio");
     } else if (refDescripcion.current.value == "") {
       toast.error("El campo Descripción debe tener un contenido");
-    } else {
+    } else if (refOrder.current.value == "") {
+      toast.error("El campo Orden no debe estar vacio");
+    } 
+    
+    else 
+    {
       await axios.post("http://localhost:3000/api/groups/", {
         nombre: nameGroup,
         logo: logo,
+        order: order,
         descripcion: description,
       });
 
@@ -104,7 +119,7 @@ export default function ProgramsContent() {
     else 
     {
       Swal.fire({
-        title: "¿Realmente desea eliminar el Grupo?",
+        title: "¿Realmente desea eliminar el Grupo " + nameGroup + "?",
         showDenyButton: true,
         showCancelButton: true,
         confirmButtonText: "No",
@@ -143,10 +158,16 @@ export default function ProgramsContent() {
       toast.error("El campo logo no puede estar vacio");
     } else if (refDescripcion.current.value == "") {
       toast.error("El campo Descripción debe tener un contenido");
-    } else {
+    } else if (refOrder.current.value == "") {
+      toast.error("El campo Orden debe especificar el número de orden");
+    }
+    
+    else 
+    {
       await axios.put("http://localhost:3000/api/groups/" + ID, {
         nombre: nameGroup,
         logo: logo,
+        orden: order,
         descripcion: description,
       });
 
@@ -170,6 +191,10 @@ export default function ProgramsContent() {
     setLogo(e.target.value);
   };
 
+  const cambiarOrden = (e) => {
+    setOrder(e.target.value);
+  };
+
   const cambiarDescripcion = (e) => {
     setDescription(e.target.value);
   };
@@ -187,7 +212,7 @@ export default function ProgramsContent() {
       </div>
       <div className="contenPGM">
         <div className="sectionAdd">
-          <h3 className="subTitulo">Nombre del Grupo</h3>
+          <h3 className="subTitulo">Nombre del Grupo {" "+ order}</h3>
           <input
             type="text"
             className="inputName"
@@ -196,6 +221,45 @@ export default function ProgramsContent() {
             id="name"
             onChange={cambiarNombre}
           />
+
+          <h3 className="subTitulo">Orden</h3>
+          <div className="contentSectionLogo2">
+            <select className="inputDir" ref={refOrder} onChange={cambiarOrden}>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+             
+            </select>
+          </div>
+
+
           <h3 className="subTitulo">Logo</h3>
           <div className="contentSectionLogo">
             <select className="inputDir" ref={refLogo} onChange={cambiarLogo}>

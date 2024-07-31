@@ -7,6 +7,7 @@ import Sunday from '../../assets/Sunday.png';
 import Plus from '../../assets/Plus.svg';
 import Edit from '../../assets/pencil.svg';
 import Delete from '../../assets/trash.svg';
+import Save from '../../assets/bxs-save.svg';
 
 /* DEPENDENCIAS */ 
 import DatePicker from 'react-datepicker';
@@ -27,6 +28,10 @@ const RotationsContent = () => {
   
   const [data4, setData4] = useState([]);
   const [data5, setData5] = useState([]);
+  const [data6, setData6] = useState([]);
+  
+
+
   const [titleDaily, setTitleDaily] = useState("------------------");
   const [titleFs, setTitleFs] = useState("------------------");
 
@@ -36,16 +41,25 @@ const RotationsContent = () => {
   const [newValueTwo,setNweValueTwo] = useState("");
   const [idRegFS,setIdRegFS] = useState();
 
-  
+  const [order,setOrder] = useState();
+  const [orderFS,setOrderFS] = useState();
+
+  const [excluirES,setexcluirES]=useState(false);
+  const [excluirFS,setexcluirFS]=useState(false);
   
   /* Variables */
+  let aux = "";
  
 
   /* Referencias */
   const groupsRef = useRef();
   const newEntresemana = useRef();
   const newFinsemana = useRef();
-
+  const newOrder = useRef();
+  const newOrderFS = useRef();
+  const excluirESref = useRef();
+  const excluirFSref = useRef();
+  const pruebaRef = useRef();
 
  
   
@@ -69,6 +83,16 @@ const RotationsContent = () => {
     .get("http://localhost:3000/api/rotations/fs/"+groupsRef.current.value)
     .then((response) => setData5(response.data));
   }
+
+  
+  const getPeopleOfGroup = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/payroll/people/"+aux)
+    .then((response) => setData6(response.data));  
+
+  }
+
+  
 
    
   const agregar = async ()=>{
@@ -111,6 +135,12 @@ const RotationsContent = () => {
       toast.error("Debe especificar una hora final");
     }
 
+    else if(newOrder.current.value== "")
+    {
+      newOrder.current.focus();
+      toast.error("Debe especificar un número que defina el orden de la rotación");
+    }
+
     else{
 
       
@@ -118,6 +148,10 @@ const RotationsContent = () => {
         nombre: newEntresemana.current.value,
         hinicio: startDate1,
         hfin: endDate1,
+        grupoid: groupsRef.current.value,
+        tipo: "Entre Semana",
+        order: parseInt(newOrder.current.value),
+        excluir: excluirES
 
         /*
         programas: [
@@ -127,13 +161,15 @@ const RotationsContent = () => {
         ],
         */
 
-        grupoid: groupsRef.current.value,
-        tipo: "Entre Semana",
+       
       });
 
       obtenerListadoGroupsPorID();
       obtenerListadoGroupsPorIDFs();
       newEntresemana.current.value="";
+      setOrder("");
+      setNweValueOne("");
+      setexcluirES(false);
       toast.success("Registro agregado correctamente");
 
     }
@@ -181,6 +217,12 @@ const RotationsContent = () => {
       toast.error("Debe especificar una hora final");
     }
 
+    else if(newOrderFS.current.value== "")
+    {
+      newOrderFS.current.focus();
+      toast.error("Debe especificar un número que defina el orden de la rotación para fines de semana");
+    }
+
     else{
 
       
@@ -188,14 +230,19 @@ const RotationsContent = () => {
         nombre: newFinsemana.current.value,
         hinicio: startDate2,
         hfin: endDate2,
-
         grupoid: groupsRef.current.value,
         tipo: "Fin de Semana",
+        order: parseInt(newOrderFS.current.value),
+        excluir: excluirFS
       });
 
       obtenerListadoGroupsPorID();
       obtenerListadoGroupsPorIDFs();
       newFinsemana.current.value="";
+      newOrder.current.value="";
+      setOrderFS("");
+      setNweValueTwo("");
+      setexcluirFS(false);
       toast.success("Registro agregado correctamente");
 
     }
@@ -205,13 +252,29 @@ const RotationsContent = () => {
 
   const programClick = () =>
   {
+
     obtenerListadoGroupsPorID();
     obtenerListadoGroupsPorIDFs();
+
+    //Funcion para obtener el nombre del grupo segun id y guardarlo en aux
+    data?.map((item)=>(item._id==groupsRef.current.value?aux = item._id:null))
+
+
+    getPeopleOfGroup();
     setTitleDaily("------------------");
     setTitleFs("------------------");
+
+    setNweValueOne("");
+    setOrder("");
+    setNweValueTwo("");
+    setOrderFS("");
+    setexcluirES(false);
+    setexcluirFS(false);
+      
+    
   }
 
-  const callItem1 =  (Nombres,horaInicio,horaFinal,id)=>{
+  const callItem1 =  (Nombres,horaInicio,horaFinal,id,order,ex)=>{
 
     //Cambio el nombre del label
     setTitleDaily(Nombres);
@@ -224,9 +287,15 @@ const RotationsContent = () => {
     setIdRegES(id); 
     setNweValueOne(Nombres);
 
+    //actualizo el numero de Order
+    setOrder(order);
+
+    //actualizo excluir ES
+    setexcluirES(ex)
+
   }
 
-  const callItem2 =  (Nombres,horaInicio,horaFinal,id)=>{
+  const callItem2 =  (Nombres,horaInicio,horaFinal,id,order,ex)=>{
 
     //Cambio el nombre del label
     setTitleFs(Nombres);
@@ -239,6 +308,12 @@ const RotationsContent = () => {
     setIdRegFS(id); 
     setNweValueTwo(Nombres);
 
+    //actualizo el numero de Order
+    setOrderFS(order);
+
+    //actualizo excluir
+    setexcluirFS(ex);
+
   }
 
 
@@ -250,6 +325,22 @@ const RotationsContent = () => {
     setNweValueTwo(e.target.value)
   }
 
+  const Cambiar3 = (e)=>{
+    setOrder(e.target.value)
+  }
+
+  const Cambiar4 = (e)=>{
+    setOrderFS(e.target.value)
+  }
+
+  const Cambiar5 = ()=>{
+    setexcluirES(!excluirES)
+  }
+
+  const Cambiar6 = ()=>{
+    setexcluirFS(!excluirFS)
+  }
+
   const updateES = async ()=>{
 
     //Hago una validacion sencilla antes de actualizar
@@ -257,6 +348,12 @@ const RotationsContent = () => {
     {
       newEntresemana.current.focus();
       toast.error("Para actualizar la información, debe especificar un nombre para el Schema");
+    }
+
+    else if(newOrder.current.value== "")
+    {
+      newOrder.current.focus();
+      toast.error("Debe especificar un número que defina el orden de la rotación");
     }
 
     else{
@@ -269,12 +366,16 @@ const RotationsContent = () => {
         nuevaHoraInicio: startDate1,
         nuevaHoraFinal: endDate1,
         nuevoNombre: newValueOne,
+        order: parseInt(newOrder.current.value),
+        excluir: excluirES
     });
 
     
 
     obtenerListadoGroupsPorID();
     setNweValueOne("");
+    setOrder("");
+    setexcluirES(false);
     toast.success("Datos entre semana actualizados correctamente");
     }
 
@@ -290,6 +391,12 @@ const RotationsContent = () => {
       toast.error("Para actualizar la información, debe especificar un nombre para el Schema");
     }
 
+    else if(newOrderFS.current.value== "")
+    {
+      newOrderFS.current.focus();
+      toast.error("Debe especificar un número que defina el orden de la rotación para fines de semana");
+    }
+
 
     else{
 
@@ -301,10 +408,15 @@ const RotationsContent = () => {
         nuevaHoraInicio: startDate2,
         nuevaHoraFinal: endDate2,
         nuevoNombre: newValueTwo,
+        order: parseInt(newOrderFS.current.value),
+        excluir: excluirFS
+        
     });
 
     obtenerListadoGroupsPorIDFs();
     setNweValueTwo("");
+    setOrderFS("");
+    setexcluirFS(false);
     toast.success("Datos de fin de semana actualizados correctamente");
     }
 
@@ -341,6 +453,9 @@ const RotationsContent = () => {
     });
 
     obtenerListadoGroupsPorID();
+    setNweValueOne("");
+    setOrder("");
+    setexcluirES(false);
   }
 
   const deleteFS = async ()=>{
@@ -364,6 +479,10 @@ const RotationsContent = () => {
     });
   }
 
+  const save = async ()=>{
+    toast.success("Aqui se deberia guardar");
+  }
+
   const EliminarRegistro2 = async ()=>{
 
     //Simplemete elimino el registro con el id que ya conocemos
@@ -372,8 +491,25 @@ const RotationsContent = () => {
       
     });
 
+    setNweValueTwo("");
+    setOrderFS("");
     obtenerListadoGroupsPorIDFs();
+    setexcluirFS(false);
   }
+
+   const prueba = (id,nombre)=>{
+    aux = nombre;
+    return id;
+   }
+
+
+   const actualizar = ()=>{
+    toast.success("Aqui se deberia guardar el item seleccionado para entre semana");
+   }
+
+   const actualizarFS = ()=>{
+    toast.success("Aqui se deberia guardar el item seleccionado para FIN DE SEMANA");
+   }
 
   //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -396,17 +532,97 @@ const RotationsContent = () => {
   return (
     <div className="contentRotations">
       <Toaster />
+      <div className="asignations">
+        <ul>
+      {
+        /*
+
+            PARA LA PROXIMA
+            -------------------------------------------------------------
+
+
+           Ahora debo crear una coleccion que administre la rotacion de turnos y que se actualice automaticamente
+           al igual que se deben llenar los combobox con los esquemas de cada grupo para que sea coherente la 
+           informacion que se presenta al usuario.
+
+           para ello antes de hacer algo aqui debo crear la operacion que lleve el turno que deberia
+           llevar cada usuario, luego de eso simplemete seria traerlo y llenarlos en los combobox
+
+           BENDICIOJNES PARA LA PROXIMA !!!!!!
+
+      */
+
+      }
+
+
+          {
+            data6?.map((item)=>(
+              <li className="asiganation_li">
+              {item.nombres + " " + item.apellidos} 
+              <span className="asiganations_option">
+              
+                <select className="asignation_select" onChange={() => actualizar()}>
+                  
+                    {
+                      
+                         data4?.map((item)=>(
+                          <option>
+                             {item.Nombre}
+                          </option>
+                        ))
+                        
+                      
+                    }
+                  
+                </select>
+
+                <select className="asignation_select" onChange={() => actualizarFS()}>
+                {
+                      
+                      data5?.map((item)=>(
+                       <option>
+                          {item.Nombre}
+                       </option>
+                     ))
+                     
+                   
+                 }
+                </select>
+                
+                
+              </span>
+              
+          </li>
+            ))
+              
+          }
+          
+        </ul>
+
+       
+      </div>
+
+      
+
+      
+        
+       
+        
+      
+
+
       <div className="subTitulo">
         Grupos
         <select className="inputDir" onChange={()=> programClick()} ref={groupsRef}>
         <option key={0} value={"none"}>{"-----------------------------------"}</option>
           {
             data?.map((program)=>(
-              <option key={program._id} value={program._id} >{program.nombre}</option>
-            ))
+              <option key={program._id} value={program._id}>{program.nombre}</option>
+            )) 
           }
         </select>
       </div>
+      
       <div className="sectionDaily">
         <img src={dia} alt="" className="imgDaily"/>
         <h2 className="seleccionadoDaily">{titleDaily}</h2>
@@ -415,11 +631,13 @@ const RotationsContent = () => {
           <div className="caja1">
               {
                 data4?.map((nombres)=>(
-                  <p className="item" key={nombres._id} onClick={()=> callItem1(nombres.Nombre,nombres.HoraInicio,nombres.HoraFinal,nombres._id)}>{nombres.Nombre}</p>
+                  <p className="item" key={nombres._id} onClick={()=> callItem1(nombres.Nombre,nombres.HoraInicio,nombres.HoraFinal,nombres._id,nombres.Order,nombres.Excluir)}>{nombres.Nombre}<span className="id">P : {nombres.Order}</span></p>
+                  
                 ))
               }
             
           </div>
+
         </div>
 
        
@@ -482,6 +700,9 @@ const RotationsContent = () => {
 
           </div>
           <input type="text" name="nuevoFinde"  className="inputDir3" ref={newEntresemana} value={newValueOne} placeholder={titleDaily} onChange={Cambiar}/>
+          <input type="text" name="nuevoFinde"  className="inputDir4" ref={newOrder} value={order} placeholder={titleDaily} onChange={Cambiar3}/>
+          <span className="excluir">Turno transversal</span>
+          <input className="check" ref={excluirESref} type="checkbox" checked={excluirES} onChange={Cambiar5}/>
         </div>
 
       </div>
@@ -500,7 +721,7 @@ const RotationsContent = () => {
 
              {
                 data5?.map((nombres)=>(
-                  <p className="item" key={nombres._id} onClick={()=> callItem2(nombres.Nombre,nombres.HoraInicio,nombres.HoraFinal,nombres._id)}>{nombres.Nombre}</p>
+                  <p className="item" key={nombres._id} onClick={()=> callItem2(nombres.Nombre,nombres.HoraInicio,nombres.HoraFinal,nombres._id,nombres.Order,nombres.Excluir)}>{nombres.Nombre}<span className="id">P : {nombres.Order}</span></p>
                 ))
               }
            
@@ -572,6 +793,9 @@ const RotationsContent = () => {
 
           </div>
           <input type="text" name="nuevoFinde" className="inputDir3" value={newValueTwo} ref={newFinsemana} placeholder={titleFs} onChange={Cambiar2} />
+          <input type="text" name="nuevoFinde"  className="inputDir4" ref={newOrderFS} value={orderFS} placeholder={titleDaily} onChange={Cambiar4}/>
+          <span className="excluir">Turno transversal</span>
+          <input className="check" ref={excluirFSref} type="checkbox" checked={excluirFS} onChange={Cambiar6}/>
         </div>
 
       </div>

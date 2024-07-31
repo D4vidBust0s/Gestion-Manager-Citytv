@@ -148,7 +148,7 @@ const addPerson = () =>{
   }
 
   //Funcion que obtiene la data de la api - listado de grupos
-  const showUsersGroup = async (name_group,e) => {
+  const showUsersGroup = async (groupID,e) => {
 
      //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
      if (e.target.classList=="contentForma") 
@@ -166,7 +166,7 @@ const addPerson = () =>{
 
 
     return await axios
-      .get("http://localhost:3000/api/payroll/show/"+name_group)
+      .get("http://localhost:3000/api/payroll/idGroup/"+groupID)
       .then((response) => setData2(response.data));
       
   };
@@ -176,7 +176,7 @@ const addPerson = () =>{
   return (
     <>
     <Toaster />
-    {createPortal(<ModalBase1 estado={modal1} cambiarEstado={setModal1} title="Gestión del personal" content={<ModalPayrollManager id={selectPersonId} op={operation}/>}/>,document.querySelector('#portal'))}
+    {createPortal(<ModalBase1 estado={modal1} cambiarEstado={setModal1} title="Gestión del personal" content={<ModalPayrollManager id={selectPersonId} op={operation} GrupoID={100}/>}/>,document.querySelector('#portal'))}
 
       <div className="contenPAYROLL">
       <h3 className="subTitulo1">Grupos o Áreas </h3>
@@ -185,7 +185,7 @@ const addPerson = () =>{
           <ul className='ulListado'>
               {
                   data?.map((group)=>(
-                    <li key={group._id} className="contentForma" onClick={(e)=>showUsersGroup(group.nombre,e)}>
+                    <li key={group._id} className="contentForma" onClick={(e)=>showUsersGroup(group._id,e)}>
                       <img src={group.logo} alt={group.nombre} className='img-cam'/>
                       {group.nombre}
                     </li>

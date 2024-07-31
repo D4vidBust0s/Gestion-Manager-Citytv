@@ -98,7 +98,7 @@ export default function Listado() {
             <div className="hol" key={payroll._id}>
               {
                      
-                   payroll.grupo == group.nombre ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres) : null
+                   payroll.grupoID == group._id ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres) : null
               
               }
             </div>

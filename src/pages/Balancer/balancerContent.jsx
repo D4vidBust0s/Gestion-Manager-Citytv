@@ -10,10 +10,12 @@ import { useState, useEffect} from "react";
 
 /* IMAGENES */
 import Logodefault from '../../assets/logos/audio.svg';
+import Calendar from '../../assets/calendar.webp';
 
 /* VARIABLES */
 let numDias = [];
 let monts = [];
+let numDias2 = [];
 
 let fechaRules;
 let fechaRulesFormat;
@@ -37,12 +39,15 @@ let ancho2 = 0;
 
 
 
+
+
 export default function BalancerContent() {
     
     const [startDate,setStartDate] = useState(new Date());
     const [data, setData] = useState([]);
     const [data1, setData1] = useState([]);
     const [data2, setData2] = useState([]);
+    const [data3, setData3] = useState([]);
    
    
     //----------------------------------------------------------------------------------------------------------
@@ -69,6 +74,19 @@ export default function BalancerContent() {
       
   };
 
+  //Funcion que trae los datos de el balancer
+  const getBalancerActual = async () => {
+    return await axios
+      .get("http://localhost:3000/api/balancer")
+      .then((response) => setData3(response.data));
+      
+  };
+
+  
+  
+
+  
+  
   const validateMonts = (mont)=>{
     if(mont == 0)
     {
@@ -146,6 +164,20 @@ export default function BalancerContent() {
     
       numDias.push(auxDias3);
     }
+
+
+
+    //Limpiamos el array
+    for (let index = 0; index < parseInt(diasRules); index++) {
+      numDias2.splice(0,numDias2.length);
+    }
+
+    //Llenamos el array
+    for (let i = 0; i <= parseInt(diasRules); i++) {
+
+      //Proceso para llenar el nuevo array con los dias correspondientes
+      numDias2.push(i);
+    }
   }
 
 
@@ -184,7 +216,7 @@ export default function BalancerContent() {
       for (let i = 0; i <= parseInt(diasRules); i++) {
         //Operacion para saber cuantos dias son de un mes y cuantos de otro
         
-        console.log(numDias[i+1]+"--"+(numDias[i]+1))
+        //console.log(numDias[i+1]+"--"+(numDias[i]+1))
         
         if(numDias[i+1]==(numDias[i]+1))
         {
@@ -220,41 +252,24 @@ export default function BalancerContent() {
   }
 
  
-  
- 
 
 
   const exist = (payrollId,payrollGrupo,groupNombre,payrollNombres, payrollApellidos ) =>{
 
+
     return (
       <div key={payrollId}>
         <div className="principal">
+          
           {payrollNombres + " " + payrollApellidos}
-      
           <ul className="pr">
-            <li className="li-pr">{data2[0].Dia}</li>
-            <li className="li-pr">{payrollId}</li>
-            <li className="li-pr">20</li>
-            <li className="li-pr">10</li>
-            <li className="li-pr">5</li>
-            <li className="li-pr">14</li>
-            <li className="li-pr">8</li>
-            <li className="li-pr">20</li>
-            <li className="li-pr">10</li>
-            <li className="li-pr">5</li>
-            <li className="li-pr">14</li>
-            <li className="li-pr">8</li>
-            <li className="li-pr">20</li>
-            <li className="li-pr">10</li>
-            <li className="li-pr">5</li>
-            <li className="li-pr">-</li>
-            <li className="li-pr">-</li>
-            <li className="li-pr">-</li>
-            <li className="li-pr">-</li>
-            <li className="li-pr">-</li>
-            <li className="li-pr">-</li>
-            <li className="li-pr2">777</li>
-          </ul>
+          {
+            numDias2?.map((item,index)=>(
+              item.idUser ? <li className="li-pr" key={index}>{new Date(item.From).getMonth()}</li> : <li className="li-pr" key={index}>-</li>
+            ))
+          }
+           <li className="li-pr2">000</li>
+         </ul>
         </div>
       </div>
     );
@@ -273,6 +288,12 @@ export default function BalancerContent() {
     return new Date(new Date(fecha).setDate( new Date (fecha).getDate()+parseInt(dias))).getFullYear();
   }
 
+  const createFirstBalancer = ()=>{
+    console.log("SE CREA EL REGISTRO");
+    createBalancer();
+  }
+
+  
 
   useEffect(()=>{
     getRules();
@@ -286,7 +307,11 @@ export default function BalancerContent() {
       getPeople();
     }, []);
 
+    useEffect(()=>{
+      getBalancerActual();
+    },[]);
 
+   
   
   
     
@@ -305,6 +330,7 @@ export default function BalancerContent() {
 
       <div className="containerMain">
         <div className="date">
+        <img src={Calendar} alt="calendarLog" className='calendarLog'/>
           {data2?.map((item)=>(
               new Date (item.DiaPeriod).getDate() + " de " + validateMonts(new Date (item.DiaPeriod).getMonth()) + " de " + new Date (item.DiaPeriod).getFullYear() + " ---- " + sumaDias(item.DiaPeriod,item.Dia) + " de " + validateMonts(sumaMes(item.DiaPeriod,item.Dia)) + " de " + sumaAño(item.DiaPeriod,item.Dia)
           ))}
@@ -362,7 +388,7 @@ export default function BalancerContent() {
               {
                 data1?.map((payroll)=>(
                 
-                  payroll.grupo == group.nombre ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres,payroll.apellidos) : null
+                  payroll.grupoID == group._id ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres,payroll.apellidos) : null
                   
                 ))
               }

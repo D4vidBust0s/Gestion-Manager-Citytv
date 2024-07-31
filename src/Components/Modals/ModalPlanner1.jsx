@@ -27,8 +27,13 @@ let fullIncapacitys   = 0;
 let fullRecess  = 0;
 let fullLicenses   = 0;
 
+let totalGrupo = 0;
+let totalSchema = 0;
 
-function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color}) {
+
+function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color,gp,gpid}) {
+
+
 
   //Estados
   const [, setDate] = useState()
@@ -40,6 +45,9 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
   const [data5, setData5] = useState([]);
   const [data6, setData6] = useState([]);
   const [data7, setData7] = useState([]);
+  const [data8, setData8] = useState([]);
+  const [data9, setData9] = useState([]);
+ 
 
   const [startHour, setStartHour] = useState(new Date());
   const [EndHour, setEndHour] = useState(new Date());
@@ -135,6 +143,21 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
     .then((response) => setData7(response.data));
     
   }
+
+  const traerPayroll = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/payroll")
+    .then((response) => setData8(response.data));
+    
+  }
+
+  const traerRotations = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/rotations")
+    .then((response) => setData9(response.data));
+    
+  }
+
 
 
   const crear = async (ID_User,NombreUser,SubGrupo,FechaActiva,Start,End,Evento,Color,Tipo,Observacion)=>{
@@ -605,7 +628,9 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
   }
 
 
-
+   const reset = ()=>{
+    totalGrupo=0;
+   }
 
 
 
@@ -631,6 +656,13 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
           scrollableYearDropdown
     />
   }
+
+
+ 
+
+   /* *********************************************************************************************************************** */
+     /* EFECTOS
+   /* *********************************************************************************************************************** */
   
 
   useEffect(() => {
@@ -670,6 +702,15 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
   traerLicensesTrabajador();
  },[])
 
+ useEffect(()=>{
+  traerPayroll();
+ },[])
+
+ useEffect(()=>{
+  traerRotations();
+ },[])
+
+ 
 
 
   return (
@@ -787,11 +828,14 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                 <img src={Balanza} alt="balanza" className='balanza' />
                 <div className="lista">
                   <ul>
-                    <li className='liLista'>Feernando castillo <span className='indicador'>75</span><progress value={75} max={100} className='progress'/></li>
-                    <li className='liLista'>David Bustos <span className='indicador'>15</span><progress value={15} max={100} className='progress'/></li>
-                    <li className='liLista'>Erick Sierra <span className='indicador'>55</span><progress value={55} max={100} className='progress'/></li>
-                    <li className='liLista'>Antoni Muñoz <span className='indicador'>30</span><progress value={30} max={100} className='progress'/></li> 
-                    <li className='liLista'>Mateo Jimenez <span className='indicador'>0</span><progress value={null} max={100} className='progress'/></li>
+                    {
+                      data8?.map((item)=>(
+                        item.grupo == gp ? <li className={nombres == item.nombres + " " + item.apellidos ? 'liListaItemActual' : 'liListaItem'} key={item._id}>{item.nombres + "  " + item.apellidos} <span className='indicador'>75</span><progress value={75} max={100} className='progress'/></li>:null
+                        
+                      ))
+                    }
+                   
+                   
                   </ul>
                 </div>
               </div>
@@ -801,11 +845,22 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                   <img src={Calendario} alt="balanza" className='balanza' />
                   <div className="lista">
                   <ul>
-                    <li className='liLista'>Feernando castillo <span className='indicador2'>Mañana</span></li>
-                    <li className='liLista'>David Bustos <span className='indicador2'>Tarde</span></li>
-                    <li className='liLista'>Erick Sierra <span className='indicador2'>Standby</span></li>
-                    <li className='liLista'>Antoni Muñoz <span className='indicador2'>Transversal</span></li> 
-                    <li className='liLista'>Mateo Jimenez <span className='indicador2'>standby</span></li>
+                    {reset()}
+                    {
+                       data8?.map((item)=>(
+              
+                        item.grupo == gp ? totalGrupo++ : null,
+                        item.grupo == gp ? <li className={nombres == item.nombres + " " + item.apellidos ? 'liListaItemActual' : 'liListaItem'} key={item._id}>{item.nombres + "  " + item.apellidos}<span className='indicador2'>Mañana</span></li>:null
+                      
+                      ))
+                    }
+
+                    {
+                       data9?.map((item)=>(
+                        item.Grupo_ID == gpid && totalSchema++ 
+                       ))
+                    }
+                    
                   </ul>
                 </div>
               </div>
@@ -949,7 +1004,7 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
           <div className="barraButom">
            <div className="inspectorContainer">
 
-           <ul>
+                  <ul>
                     <li className='liInspector2'>
                       <span className='nameUS'></span>
                       <div className="cajaNumero">
@@ -978,181 +1033,42 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                     </li>
                   </ul>
 
-                  <ul className='Separador'>
-                    <li className='liInspector'>
-                      <span className='nameUS'>Fernando castillo</span>
-                      <div className="cajaNumero">
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                      </div>
-                    </li>
-                  </ul>
-
-                  <ul>
-                    <li className='liInspector'>
-                      <span className='nameUS'>David Bustos</span>
-                      <div className="cajaNumero">
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                      </div>
-                    </li>
-                  </ul>
-
-                  <ul>
-                    <li className='liInspector'>
-                      <span className='nameUS'>Erik Sierra</span>
-                      <div className="cajaNumero">
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                      </div>
-                    </li>
-                  </ul>
-
-                  <ul>
-                    <li className='liInspector'>
-                      <span className='nameUS'>Antony Muñoz</span>
-                      <div className="cajaNumero">
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                      </div>
-                    </li>
-                  </ul>
-
-                  <ul>
-                    <li className='liInspector'>
-                      <span className='nameUS'>Mateo Jimenez</span>
-                      <div className="cajaNumero">
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                      </div>
-                    </li>
-                  </ul>
-
-                  <ul>
-                    <li className='liInspector'>
-                      <span className='nameUS'>David Bustos</span>
-                      <div className="cajaNumero">
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                        <div className="cuadro20">10</div>
-                      </div>
-                    </li>
-                  </ul>
-
-                 
+                  {
+                    data8?.map((item)=>(
+                      item.grupo == gp &&  
+                      
+                      <ul className='Separador' key={item._id}>
+                        <li className='liInspector'>
+                          <span className={nombres == item.nombres + " " + item.apellidos ? 'nameUSActual' : 'nameUS'}>{item.nombres + " " + item.apellidos}</span>
+                          <div className="cajaNumero">
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                            <div className="cuadro20">10</div>
+                          </div>
+                        </li>
+                     </ul>
+                      
+                      
+                    ))
+                  }
                 
            </div>
           </div>

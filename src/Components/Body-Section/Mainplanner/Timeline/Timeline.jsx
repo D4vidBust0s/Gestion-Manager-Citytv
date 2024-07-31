@@ -10,7 +10,7 @@ import {useState,useEffect} from 'react';
 
 export default function Timeline() {
 
-  const [desplazamiento, setDesplazamiento] = useState('-25px');
+  const [desplazamiento, setDesplazamiento] = useState();
   
 
   useEffect(() =>{

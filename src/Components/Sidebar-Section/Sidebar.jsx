@@ -212,11 +212,7 @@ function Sidebar() {
                 </Link>
               </li>
 
-              <li className="list__inside">
-                <Link to="/bonds" className="nav__link nav__link--inside">
-                  Bonds
-                </Link>
-              </li>
+              
             </ul>
           </li>
 

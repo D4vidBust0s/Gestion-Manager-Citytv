@@ -61,7 +61,16 @@
         justify-content: space-between;
         align-items: center;
         width: 60%;
-        
+        margin-top: -.8rem;
+    }
+
+    .contentSectionLogo2{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 40%;
+        margin-bottom: .8rem;
+        margin-top: -.8rem;
     }
 
     .area{

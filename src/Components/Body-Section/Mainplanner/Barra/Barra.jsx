@@ -66,6 +66,8 @@ export default function Barra() {
  const [cargo, setCargo] = useState("");
  const [idUser, setIduser] = useState("");
  const [subGrupo, setSubgrupo] = useState(0);
+ const [grupo, setGrupo] = useState("NONE");
+ const [gpid, setGpid] = useState("");
 
 
  const [colorBorder, setColorBorder] = useState("#D9D9D9");
@@ -125,7 +127,8 @@ export default function Barra() {
     .then((response) => setData5(response.data));
   }
 
-  const verificar = (pid,pn,pa,subgrupo,cargo)=>{
+  const verificar = (pid,pn,pa,subgrupo,cargo,pg,gid)=>{
+
 
       verifyDescanso = 0;
       verifyIncapacitado = 0;
@@ -173,42 +176,42 @@ export default function Barra() {
     
     if(verifyDescanso==1)
     {
-      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#E9BD1A") + setTipoEvento("PERMISO") + setModal2(!modal2)
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#E9BD1A") + setTipoEvento("PERMISO") + setGrupo(pg) + setModal2(!modal2)
       //console.log("ES.... PERMISO");
     
       
     }
     else if(verifyIncapacitado==1)
     {
-      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("red") + setTipoEvento("INCAPACIDAD") + setModal2(!modal2)
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("red") + setTipoEvento("INCAPACIDAD") + setGrupo(pg) + setModal2(!modal2)
         //console.log("ES.... INCAPACITADO");
        
     }
 
     else if(verifyVacaciones==1)
     {
-      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#dd6c21") + setTipoEvento("VACACIONES") + setModal2(!modal2)
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#dd6c21") + setTipoEvento("VACACIONES") + setGrupo(pg) + setModal2(!modal2)
         //console.log("ES.... VACACIONES");
       
     }
 
     else if(verifyLicensia==1)
     {
-      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#00094B") + setTipoEvento("LICENSIA") + setModal2(!modal2)
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#00094B") + setTipoEvento("LICENSIA") + setGrupo(pg) + setModal2(!modal2)
         //console.log("ES.... LICENSIA");
        
     }
 
     else if(verifyBreaks==1)
     {
-      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#2f800d") + setTipoEvento("DESCANSO") + setModal2(!modal2)
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#2f800d") + setTipoEvento("DESCANSO") + setGrupo(pg) + setModal2(!modal2)
         //console.log("ES.... LICENSIA");
        
     }
     
     else{
 
-      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#DADADA")  + setModal1(!modal1)
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#DADADA")  + setGrupo(pg) + setGpid(gid) + setModal1(!modal1)  
       //console.log("Normal");
   
     }
@@ -318,7 +321,7 @@ const testBreaks = (pid)=>{
  
 
 
-  const exist = (pid,pg,gn,pn,cargo,pa,subgrupo) =>{
+  const exist = (pid,pg,gn,pn,cargo,pa,subgrupo,grupoid) =>{
 
 
     testPermissions(pid)
@@ -329,7 +332,7 @@ const testBreaks = (pid)=>{
 
 
     return <ul className="ulMain" key={pid}>
-      <li className={permissions == 1 ? "liMain-var1" :  incapacitado == 1 ? "liMain-var2" : licensia == 1 ? "liMain-var3" : vacaciones == 1 ? "liMain-var4" : breaks == 1 ? "liMain-var5" : "liMain"} key={pid} onClick={() => verificar(pid,pn,pa,subgrupo,cargo) }>
+      <li className={permissions == 1 ? "liMain-var1" :  incapacitado == 1 ? "liMain-var2" : licensia == 1 ? "liMain-var3" : vacaciones == 1 ? "liMain-var4" : breaks == 1 ? "liMain-var5" : "liMain"} key={pid} onClick={() => verificar(pid,pn,pa,subgrupo,cargo,pg,grupoid) }>
         {pn +" "+pa}
       </li>
     </ul>
@@ -382,12 +385,12 @@ const testBreaks = (pid)=>{
 
     
       {createPortal(
-        <ModalPlanner1 estado={modal1} cambiarEstado={setModal1} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={colorBorder}/>,
+        <ModalPlanner1 estado={modal1} cambiarEstado={setModal1} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={colorBorder} gp={grupo} gpid={gpid}/>,
         document.querySelector("#portal")
       )}
 
       {createPortal(
-        <ModalPlanner3 estado={modal2} cambiarEstado={setModal2} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={colorBorder} tipo ={tipoEvento} />,
+        <ModalPlanner3 estado={modal2} cambiarEstado={setModal2} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={colorBorder} gp={grupo} tipo ={tipoEvento} />,
         document.querySelector("#portal")
       )} 
 
@@ -417,7 +420,7 @@ const testBreaks = (pid)=>{
                     <div className="hol" key={payroll._id}>
                       {
                              
-                           payroll.grupo == group.nombre ?  exist(payroll._id,payroll.group,group.nombre,payroll.nombres,payroll.cargo,payroll.apellidos,payroll.subGrupo) : null
+                           payroll.grupoID == group._id ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres,payroll.cargo,payroll.apellidos,payroll.subGrupo,payroll.grupoID) : null
                           
                       }
                        

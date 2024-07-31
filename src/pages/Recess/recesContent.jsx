@@ -93,7 +93,6 @@ const obtenerListadoGroups = async () => {
     namePermissionRef.current.value="";
     setStarIn(new Date());
     setStarOut(new Date());
-    setStartDate(new Date());
     observacionesRef.current.value="";
     idRegistro="";
     setData2([]);
@@ -108,7 +107,6 @@ const limpiar = ()=>{
 
   setStarIn(new Date());
   setStarOut(new Date());
-  setStartDate(new Date());
   observacionesRef.current.value="";
   idRegistro="";
   setData2([]);
@@ -306,7 +304,7 @@ const editar = async ()=>{
         <option key={0} value={"none"}>{"-----------------------------------"}</option>
           {
             data?.map((group)=>(
-              <option key={group._id} value={group.nombre} >{group.nombre}</option>
+              <option key={group._id} value={group._id} >{group.nombre}</option>
             ))
           }
         </select>
