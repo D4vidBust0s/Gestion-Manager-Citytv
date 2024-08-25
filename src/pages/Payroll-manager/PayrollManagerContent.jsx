@@ -39,6 +39,9 @@ export default function PayrollManagerContent() {
   //Estado para guardar el id de la persona seleccionada, para usarlo en el momento de actualizacion o eliminacion
   const [selectPersonId, setSelectPersonId] = useState();
 
+  //Estado para guardar el id del grupo de  la persona seleccionada,
+  const [selectPersonIdgroup, setSelectPersonIdgroup] = useState();
+
   //Estado para definir si se va a agregar editar o eliminar
   const [operation, setOperation]= useState("0");
  
@@ -69,9 +72,10 @@ export default function PayrollManagerContent() {
 
  //Funcion para actualizar el Usuario seleccionado en el label de la parte inferior
 
- const operationPerson = async (id,name, apellido,e) =>{
+ const operationPerson = (id,name, apellido,idGroup,e) =>{
    setSelectPerson(name + " " + apellido);
    setSelectPersonId(id);
+   setSelectPersonIdgroup(idGroup);
 
 
     //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
@@ -176,7 +180,7 @@ const addPerson = () =>{
   return (
     <>
     <Toaster />
-    {createPortal(<ModalBase1 estado={modal1} cambiarEstado={setModal1} title="Gestión del personal" content={<ModalPayrollManager id={selectPersonId} op={operation} GrupoID={100}/>}/>,document.querySelector('#portal'))}
+    {createPortal(<ModalBase1 estado={modal1} cambiarEstado={setModal1} title="Gestión del personal" content={<ModalPayrollManager id={selectPersonId} op={operation} GrupoID={selectPersonIdgroup}/>}/>,document.querySelector('#portal'))}
 
       <div className="contenPAYROLL">
       <h3 className="subTitulo1">Grupos o Áreas </h3>
@@ -219,7 +223,7 @@ const addPerson = () =>{
                data2.map((payroll,index)=>(
                 <div className="sb" key={index}>
                   <div className="subGrupo">{payroll.subGrupo}</div>
-                   <li className='ListLI' key={payroll._id} onClick={(e)=> operationPerson(payroll._id,payroll.nombres,payroll.apellidos,e)}>{payroll.nombres} {payroll.apellidos}</li>
+                   <li className='ListLI' key={payroll._id} onClick={(e)=> operationPerson(payroll._id,payroll.nombres,payroll.apellidos,payroll.grupoID,e)}>{payroll.nombres} {payroll.apellidos}</li>
                 </div>
                 
                ))

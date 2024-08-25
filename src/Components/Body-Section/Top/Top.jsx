@@ -27,6 +27,9 @@ function Top() {
     },1000)
   },[]);
 
+ 
+
+
   return (
     <div className="container">
       <div className="content-avatar">

@@ -48,9 +48,6 @@ let fechaRules;
 let total2;
 
 let id;
-let contador = 0;
-
-let aux3 = 0;
 
 
 
@@ -63,17 +60,13 @@ const [modal1, setModal1] = useState(false);
 const [data, setData] = useState([]);
 const [data1, setData1] = useState([]);
 const [data2, setData2] = useState([]);
-const [ID,setId]= useState();
 
 
-
-
-//FUNCIONES
-
-
-
-
+//----------------------------------------------------------------------------------------------------------------------------
+// FUNCIONES
+//----------------------------------------------------------------------------------------------------------------------------
 //Estas dos  funcion actualiza el dia clave para el resto de operaciones del sistema
+
 const obtenerListadoRules = async () => {
   return await axios
     .get("http://localhost:3000/api/rules")
@@ -103,24 +96,9 @@ const getAllPayroll= async () => {
   return await axios
     .get("http://localhost:3000/api/payroll/")
     .then((response) => setData2(response.data));
+  
 }
 
-const enviar = async (usNombre,usApellido,id,grupo,grupoid,scName,scID,ts,tg,ac)=>{
-
-  await axios.post("http://localhost:3000/api/rotationsmanager/", {
-
-      nombreusuario: usNombre +" "+usApellido,
-      userid: id,
-      groupname: grupo, 
-      groupid: grupoid,
-      schemaname: scName,
-      schemaid: scID,
-      totalschema: ts,
-      totalgroup: tg,
-      actual: ac
-    });
-
-}
 
 
 //Traemos la fecha actual
@@ -168,6 +146,7 @@ data?.map((dato)=>{
       //console.log("LA FECHA DEL NUEVO PERIODO ESTA DESACTUALIZADA");
 
       Swal.fire({
+      
         title: "La fecha de evaluación de periodo está desactualizada, por favor actualícela inmediatamente",
         //showDenyButton: true,
         showCancelButton: true,
@@ -175,7 +154,9 @@ data?.map((dato)=>{
         //denyButtonText: `Ok la actualizaré`,
         footer: '<h5>Gestión Manager Citytv</h5> <br> <h6>Mensajes del sistema</h6>',
         
+        
       }).then((result) => {
+        
         /* Read more about isConfirmed, isDenied below */
         if (result.isConfirmed) {
           //Swal.fire("Saved!", "", "success");
@@ -185,6 +166,7 @@ data?.map((dato)=>{
           //Swal.fire("Registro eliminado del sistema", "", "success");
         }
       });
+      
     }
 
   }
@@ -201,63 +183,7 @@ if(aux == 1)
  // OPERACIONES PARA LA GESTION DE ROTACIONES DE TURNOS
 //----------------------------------------------------------------------------------------------------------------------------
 
-const setDaily = () =>{
-
-  console.log("EJECUTANDO " + data1.length + " TAREAS");
-
-  //ejecuto tares uno por uno en base al ID de usuario
-  data2?.map((payroll)=>(
-    data1?.map((item)=>(
-      payroll._id == item.userId && 
-          console.log(item.userName) 
-
-    ))
-  ))
-}
-
-//Valido si ya hay creado un registro en la base de datos
-
-const validar =()=>{
-
-  
-  if(data1.length==0)
-  {
-    //como el array esta vacio procedo a crear uno registro de todos los usuarios del sistema con valores por defecto
-    data2?.map((item)=>(
-      enviar(item.nombres,item.apellidos,item._id,item.grupo,"idGrupo","SchemaName","SchemaID",0,0,0)
-    ))
-
-    console.log("VALIDACION DIARIA HECHA CORRECTAMENTE  " + data1.length);
-
-  }
-  else
-  {
-    //Como ya existen los datos de la administracion de turnos automatica, procedo a actualizarlos cada uno independientemente
-    setDaily();
-  }
-}
-
-
-const timer = setTimeout(function(){
-    if(contador<=3)
-    {
-
-      //Tareas diarias a ejecutar automaticamente
-      validar();
-
-      contador++;
-      clearTimeout(timer);
-    }
-    
-}, 7000);
-
-
-
-
-
-
-
-//-**************************************************************************************************************
+// **************************************************************************************************************
 
 useEffect(()=>{
   obtenerListadoRules();
@@ -269,12 +195,11 @@ useEffect(()=>{
 
 useEffect(()=>{
   getAllRotationsManager();
-  aux3 = data1.length;
 },[]);
 
 
 
-
+// ***************************************************************************************************************
 
   return (
     <BrowserRouter>
@@ -282,7 +207,7 @@ useEffect(()=>{
         <Sidebar />
         <div className="content">
          <Modal1 estado={modal1} cambiarEstado={setModal1}/>
-         <Top/>
+         <Top />
         <Footer/>
           <Routes>
             <Route path="/" element={<Dashboard />} />

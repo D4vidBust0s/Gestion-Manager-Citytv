@@ -20,7 +20,7 @@
 .inputDir{
     background: #545454;
     height: 2rem;
-    width: 30%;
+    width: 25%;
     color: #DADADA;
     padding-left: 1.1rem;
     font-size: 1.1rem;
@@ -205,6 +205,8 @@
             
         }
     }
+
+    
 
     .containerDeleteButtom2{
         background: #EB464B;
@@ -486,9 +488,9 @@
 }
 .asignations{
     background-color: #000000;
-    width: 40%;
+    width: 45%;
     float: right;
-    margin-right: 27rem;
+    margin-right: 26.5rem;
     height: 25%;
     margin-top: -20px;
     padding: .5rem;
@@ -504,7 +506,7 @@
 }
 .asiganation_li{
     background: #00094B;
-    width: 35.5rem;
+    width: 40rem;
     height: 1.5rem;
     padding: .3rem;
 }
@@ -554,6 +556,58 @@
     margin-left: 42%;
     padding: 0;
 }
+
+.checkFijo{
+    margin-left: .5rem;
+}
+
+.fijoSpan{
+    margin-left: .5rem;
+}
+
+.containerBreak{
+    background: #DADADA;
+    margin-top: .5rem;
+    padding: .2rem;
+    border-radius: .5rem;
+    box-shadow: .2rem .2rem .8rem #545454;
+    height: 3.5rem;
+    margin-left: 4.5rem;
+
+
+    .img-butons{
+        height: 3rem;
+        width: 3.5rem;
+        
+    }
+}
+
+.containerBreak2{
+    background: #701CF5;
+    margin-top: .5rem;
+    padding: .2rem;
+    border-radius: .5rem;
+    box-shadow: .2rem .2rem .8rem #545454;
+    height: 3.5rem;
+    margin-left: 4.5rem;
+
+
+    .img-butons{
+        height: 3rem;
+        width: 3.5rem;
+        
+    }
+}
+
+.containerBreak:hover{
+ transform: scale(1.05);
+ cursor: pointer;
+}
+
+.checkHidden{
+    display: none;
+}
+
 
 
 

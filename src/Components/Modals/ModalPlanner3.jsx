@@ -16,7 +16,7 @@ import imagenLicense from '../../assets/license1.jpg';
 /* Import dependencies */
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-
+import DatePicker from 'react-datepicker';
 
 
 
@@ -32,7 +32,7 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
   const [data5, setData5] = useState([]);
   const [data6, setData6] = useState([]);
  
-
+  const[startDate1,setStartDate1] = useState(new Date());
 
 
   //FUNCIONES
@@ -216,6 +216,18 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                     <h4 className='body_left_title'>{tipo}</h4>
         
                     <img src={tipo=="PERMISO"?imagenPermissions:tipo=="INCAPACIDAD"?imagenIncapacity:tipo=="VACACIONES"?imagenRecess:tipo=="LICENSIA"?imagenLicense:tipo=="DESCANSO"?imagenBreaks:null} alt="" />
+
+                    <DatePicker
+                         className='inputIn'
+                        selected={startDate1}
+                        onChange={(date) => setStartDate1(date)}
+                        showYearDropdown
+                        dateFormatCalendar="MMMM"
+                        yearDropdownItemNumber={50}
+                        scrollableYearDropdown
+                        
+                  />
+
                     <div className="waterMark">
                       Powered By David Bustos
                     </div>

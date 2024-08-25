@@ -8,6 +8,7 @@ import Plus from '../../assets/Plus.svg';
 import Edit from '../../assets/pencil.svg';
 import Delete from '../../assets/trash.svg';
 import Save from '../../assets/bxs-save.svg';
+import Coffee from '../../assets/coffee.svg';
 
 /* DEPENDENCIAS */ 
 import DatePicker from 'react-datepicker';
@@ -29,6 +30,12 @@ const RotationsContent = () => {
   const [data4, setData4] = useState([]);
   const [data5, setData5] = useState([]);
   const [data6, setData6] = useState([]);
+  const [data7, setData7] = useState([]);
+  const [data8, setData8] = useState([]);
+
+  const [coffeeES,setCoffeeES] = useState(false);
+  const [coffeeFS,setCoffeeFS] = useState(false);
+
   
 
 
@@ -41,14 +48,17 @@ const RotationsContent = () => {
   const [newValueTwo,setNweValueTwo] = useState("");
   const [idRegFS,setIdRegFS] = useState();
 
-  const [order,setOrder] = useState();
-  const [orderFS,setOrderFS] = useState();
+  const [order,setOrder] = useState(0);
+  const [orderFS,setOrderFS] = useState(0);
 
   const [excluirES,setexcluirES]=useState(false);
   const [excluirFS,setexcluirFS]=useState(false);
+
+
   
   /* Variables */
   let aux = "";
+  let contador = 0;
  
 
   /* Referencias */
@@ -60,6 +70,8 @@ const RotationsContent = () => {
   const excluirESref = useRef();
   const excluirFSref = useRef();
   const pruebaRef = useRef();
+  const descandoESref= useRef();
+  const descandoFSref = useRef();
 
  
   
@@ -91,6 +103,30 @@ const RotationsContent = () => {
     .then((response) => setData6(response.data));  
 
   }
+
+  //Traer todos los registros de los usuarios
+const getAllPayroll= async () => {
+    
+  return await axios
+    .get("http://localhost:3000/api/payroll/")
+    .then((response) => setData7(response.data));
+  
+}
+
+//Traer todos los registros de rotationsManager
+const getAllRotationsManager= async () => {
+    
+  return await axios
+    .get("http://localhost:3000/api/rotationsmanager/")
+    .then((response) => setData8(response.data));
+}
+
+//Eliminar todos los registros de rotationsManager
+const delAllRotationsManager= async () => {
+    
+  return await axios
+    .delete("http://localhost:3000/api/rotationsmanager/")
+}
 
   
 
@@ -141,6 +177,11 @@ const RotationsContent = () => {
       toast.error("Debe especificar un número que defina el orden de la rotación");
     }
 
+    else if(coffeeES == true && excluirES == true)
+    {
+      toast.error("¿Descanso Trasversal entres semana?")
+    }
+
     else{
 
       
@@ -151,7 +192,8 @@ const RotationsContent = () => {
         grupoid: groupsRef.current.value,
         tipo: "Entre Semana",
         order: parseInt(newOrder.current.value),
-        excluir: excluirES
+        excluir: excluirES,
+        descanso: coffeeES
 
         /*
         programas: [
@@ -223,6 +265,11 @@ const RotationsContent = () => {
       toast.error("Debe especificar un número que defina el orden de la rotación para fines de semana");
     }
 
+    else if(coffeeFS == true && excluirFS == true)
+    {
+      toast.error("¿Descanso Trasversal en Fin de semana?")
+    }
+
     else{
 
       
@@ -233,7 +280,8 @@ const RotationsContent = () => {
         grupoid: groupsRef.current.value,
         tipo: "Fin de Semana",
         order: parseInt(newOrderFS.current.value),
-        excluir: excluirFS
+        excluir: excluirFS,
+        descanso: coffeeFS
       });
 
       obtenerListadoGroupsPorID();
@@ -248,6 +296,60 @@ const RotationsContent = () => {
     }
     
    
+  }
+
+  const enviar = async (usNombre,usApellido,id,grupo,grupoid,scName,scID,ts,tg,ac)=>{
+
+    await axios.post("http://localhost:3000/api/rotationsmanager/", {
+  
+        nombreusuario: usNombre +" "+usApellido,
+        userid: id,
+        groupname: grupo, 
+        groupid: grupoid,
+        schemaname: scName,
+        schemaid: scID,
+        totalschema: ts,
+        totalgroup: tg,
+        actual: ac
+      });
+  
+      console.log("Agregado...");
+      
+  }
+
+  
+
+
+  const tarea = () =>{
+
+    if(data7.length>0 && data8.length==0)
+    {
+      //procedemos a agregar por primera vez los usuarios del sistema dentro de ROTATIONSMANAGER en mongoDB
+     
+      data7?.map((item)=>(
+        enviar(item.nombres,item.apellidos,item._id,item.grupo,item.grupoID,"NombreSchema","IDSCHEMA",0,0,0)
+      ))
+
+      toast.success("Se agregaron por primera vez los datos para el funcionamiento de las rotaciones semanales automáticas" + data7.length +"  "+ data8.length );
+      getAllRotationsManager();
+      
+    }
+    
+    else if(data7.length>0 && data8.length<data7.length || data8.length>data7.length ){
+      //Como es menor, es por que se agregaron nuevos usuarios y no estan actualizados en la coleccion ROTATIONSMANAGER
+      //por tal razon procedo a borrar los datos de la tabla y a escribierlos nuevamente
+
+      delAllRotationsManager();
+
+      
+      data7?.map((item)=>(
+        enviar(item.nombres,item.apellidos,item._id,item.grupo,item.grupoID,"NombreSchema","IDSCHEMA",0,0,0)
+      ))
+
+      toast.custom("Se detectó un cambio en Payroll, Gestionmanager optimizó la base de datos " + data7.length +"  "+ data8.length);
+      
+    }
+
   }
 
   const programClick = () =>
@@ -270,11 +372,13 @@ const RotationsContent = () => {
     setOrderFS("");
     setexcluirES(false);
     setexcluirFS(false);
-      
+    setCoffeeES(false);
+    setCoffeeFS();
     
+    tarea();
   }
 
-  const callItem1 =  (Nombres,horaInicio,horaFinal,id,order,ex)=>{
+  const callItem1 =  (Nombres,horaInicio,horaFinal,id,order,ex,descanso)=>{
 
     //Cambio el nombre del label
     setTitleDaily(Nombres);
@@ -293,9 +397,12 @@ const RotationsContent = () => {
     //actualizo excluir ES
     setexcluirES(ex)
 
+    //actualizo descanso si lo es
+    setCoffeeES(descanso);
+
   }
 
-  const callItem2 =  (Nombres,horaInicio,horaFinal,id,order,ex)=>{
+  const callItem2 =  (Nombres,horaInicio,horaFinal,id,order,ex,descanso)=>{
 
     //Cambio el nombre del label
     setTitleFs(Nombres);
@@ -313,6 +420,9 @@ const RotationsContent = () => {
 
     //actualizo excluir
     setexcluirFS(ex);
+
+    //actualizo descanso si lo es
+    setCoffeeFS(descanso);
 
   }
 
@@ -341,6 +451,14 @@ const RotationsContent = () => {
     setexcluirFS(!excluirFS)
   }
 
+  const cambiarDescansoES = ()=>{
+    setCoffeeES(!coffeeES);
+  }
+
+  const cambiarDescansoFS = ()=>{
+    setCoffeeFS(!coffeeFS);
+  }
+
   const updateES = async ()=>{
 
     //Hago una validacion sencilla antes de actualizar
@@ -356,6 +474,11 @@ const RotationsContent = () => {
       toast.error("Debe especificar un número que defina el orden de la rotación");
     }
 
+    else if(coffeeES == true && excluirES == true)
+    {
+      toast.error("¿Descanso Trasversal entre semana?")
+    }
+
     else{
 
        /* Llamo la api y le envio la información para realizar la operacion de actualizacion */
@@ -367,7 +490,8 @@ const RotationsContent = () => {
         nuevaHoraFinal: endDate1,
         nuevoNombre: newValueOne,
         order: parseInt(newOrder.current.value),
-        excluir: excluirES
+        excluir: excluirES,
+        descanso: coffeeES
     });
 
     
@@ -397,6 +521,10 @@ const RotationsContent = () => {
       toast.error("Debe especificar un número que defina el orden de la rotación para fines de semana");
     }
 
+    else if(coffeeFS == true && excluirFS == true)
+    {
+      toast.error("¿Descanso Trasversal en Fin de semana?")
+    }
 
     else{
 
@@ -409,7 +537,8 @@ const RotationsContent = () => {
         nuevaHoraFinal: endDate2,
         nuevoNombre: newValueTwo,
         order: parseInt(newOrderFS.current.value),
-        excluir: excluirFS
+        excluir: excluirFS,
+        descanso: coffeeFS
         
     });
 
@@ -442,6 +571,14 @@ const RotationsContent = () => {
         //Swal.fire("Registro eliminado del sistema", "", "success");
       }
     });
+  }
+
+  const DefinirDescanso = ()=>{
+    setCoffeeES(!coffeeES);
+  }
+
+  const DefinirDescansoFs = ()=>{
+    setCoffeeFS(!coffeeFS);
   }
 
   const EliminarRegistro = async ()=>{
@@ -518,6 +655,13 @@ const RotationsContent = () => {
     obtenerListadoGroups();
   }, []);
 
+  useEffect(() => {
+    getAllPayroll();
+  }, []);
+
+  useEffect(() => {
+    getAllRotationsManager();
+  }, []);
 
 
   
@@ -557,7 +701,7 @@ const RotationsContent = () => {
 
           {
             data6?.map((item)=>(
-              <li className="asiganation_li">
+              <li className="asiganation_li" key={item._id}>
               {item.nombres + " " + item.apellidos} 
               <span className="asiganations_option">
               
@@ -566,7 +710,7 @@ const RotationsContent = () => {
                     {
                       
                          data4?.map((item)=>(
-                          <option>
+                          <option key={item._id}>
                              {item.Nombre}
                           </option>
                         ))
@@ -580,7 +724,7 @@ const RotationsContent = () => {
                 {
                       
                       data5?.map((item)=>(
-                       <option>
+                       <option key={item._id}>
                           {item.Nombre}
                        </option>
                      ))
@@ -588,6 +732,8 @@ const RotationsContent = () => {
                    
                  }
                 </select>
+
+                <span className="fijoSpan">Fijo</span><input type="checkbox"  className="checkFijo"/>
                 
                 
               </span>
@@ -603,8 +749,7 @@ const RotationsContent = () => {
       </div>
 
       
-
-      
+    
         
        
         
@@ -631,7 +776,7 @@ const RotationsContent = () => {
           <div className="caja1">
               {
                 data4?.map((nombres)=>(
-                  <p className="item" key={nombres._id} onClick={()=> callItem1(nombres.Nombre,nombres.HoraInicio,nombres.HoraFinal,nombres._id,nombres.Order,nombres.Excluir)}>{nombres.Nombre}<span className="id">P : {nombres.Order}</span></p>
+                  <p className="item" key={nombres._id} onClick={()=> callItem1(nombres.Nombre,nombres.HoraInicio,nombres.HoraFinal,nombres._id,nombres.Order,nombres.Excluir,nombres.Descanso)}>{nombres.Nombre}<span className="id">P : {nombres.Order}</span></p>
                   
                 ))
               }
@@ -698,9 +843,20 @@ const RotationsContent = () => {
               />
             </div>
 
+            <div className={coffeeES==true?"containerBreak2":"containerBreak"}>
+              <img
+                src={Coffee}
+                alt="Break"
+                className="img-butons"
+                onClick={DefinirDescanso}
+              />
+            </div>
+
+            <input type="checkbox" className="checkHidden" checked={coffeeES} onChange={cambiarDescansoES} ref={descandoESref}/>
+
           </div>
-          <input type="text" name="nuevoFinde"  className="inputDir3" ref={newEntresemana} value={newValueOne} placeholder={titleDaily} onChange={Cambiar}/>
-          <input type="text" name="nuevoFinde"  className="inputDir4" ref={newOrder} value={order} placeholder={titleDaily} onChange={Cambiar3}/>
+          <input type="text" name="nuevoEntre"  className="inputDir3" ref={newEntresemana} value={newValueOne} placeholder={titleDaily} onChange={Cambiar}/>
+          <input type="text" name="nuevoEntre"  className="inputDir4" ref={newOrder} value={order} placeholder={titleDaily} onChange={Cambiar3}/>
           <span className="excluir">Turno transversal</span>
           <input className="check" ref={excluirESref} type="checkbox" checked={excluirES} onChange={Cambiar5}/>
         </div>
@@ -721,7 +877,7 @@ const RotationsContent = () => {
 
              {
                 data5?.map((nombres)=>(
-                  <p className="item" key={nombres._id} onClick={()=> callItem2(nombres.Nombre,nombres.HoraInicio,nombres.HoraFinal,nombres._id,nombres.Order,nombres.Excluir)}>{nombres.Nombre}<span className="id">P : {nombres.Order}</span></p>
+                  <p className="item" key={nombres._id} onClick={()=> callItem2(nombres.Nombre,nombres.HoraInicio,nombres.HoraFinal,nombres._id,nombres.Order,nombres.Excluir,nombres.Descanso)}>{nombres.Nombre}<span className="id">P : {nombres.Order}</span></p>
                 ))
               }
            
@@ -791,8 +947,18 @@ const RotationsContent = () => {
               />
             </div>
 
+            <div className={coffeeFS==true?"containerBreak2":"containerBreak"}>
+              <img
+                src={Coffee}
+                alt="Breaks"
+                className="img-butons"
+                onClick={DefinirDescansoFs}
+              />
+             <input type="checkbox" className="checkHidden" checked={coffeeFS} onChange={cambiarDescansoFS} ref={descandoFSref}/>
+            </div>
+
           </div>
-          <input type="text" name="nuevoFinde" className="inputDir3" value={newValueTwo} ref={newFinsemana} placeholder={titleFs} onChange={Cambiar2} />
+         <input type="text" name="nuevoFinde" className="inputDir3" value={newValueTwo} ref={newFinsemana} placeholder={titleFs} onChange={Cambiar2} />
           <input type="text" name="nuevoFinde"  className="inputDir4" ref={newOrderFS} value={orderFS} placeholder={titleDaily} onChange={Cambiar4}/>
           <span className="excluir">Turno transversal</span>
           <input className="check" ref={excluirFSref} type="checkbox" checked={excluirFS} onChange={Cambiar6}/>

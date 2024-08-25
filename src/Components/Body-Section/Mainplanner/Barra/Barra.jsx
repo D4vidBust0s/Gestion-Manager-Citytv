@@ -15,6 +15,7 @@ import DatePicker from 'react-datepicker';
 /* COMPONENTES MODALES*/
 import ModalPlanner1 from "../../../Modals/ModalPlanner1";
 import ModalPlanner3 from "../../../Modals/ModalPlanner3";
+import toast from 'react-hot-toast';
 
 //Variables Globales
 let permissions = 0;           // Permisos - Permissions         -- color Amarillo
@@ -127,6 +128,11 @@ export default function Barra() {
     .then((response) => setData5(response.data));
   }
 
+
+  const semanasAlDia = ()=>{
+    
+  }
+
   const verificar = (pid,pn,pa,subgrupo,cargo,pg,gid)=>{
 
 
@@ -215,6 +221,11 @@ export default function Barra() {
       //console.log("Normal");
   
     }
+
+
+    //---------------------------------------------------------------------------------------------------------
+    //Procedimiento para mantener al dia la semana de rotacion a todos los usuarios
+    semanasAlDia();
     
     
   }
@@ -381,9 +392,6 @@ const testBreaks = (pid)=>{
   return (
     <>
 
-      
-
-    
       {createPortal(
         <ModalPlanner1 estado={modal1} cambiarEstado={setModal1} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={colorBorder} gp={grupo} gpid={gpid}/>,
         document.querySelector("#portal")
