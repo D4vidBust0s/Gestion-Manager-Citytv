@@ -6,7 +6,7 @@ import tropa from '../../../../assets/tropa.png';
 //import flecha from '../../../../assets/arrow.svg'
 
 /* DEPENDENCIAS */
-import {useState, useEffect} from 'react'
+import {useState, useEffect, useContext} from 'react'
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 //import {Toaster, toast} from 'react-hot-toast'
@@ -16,6 +16,7 @@ import DatePicker from 'react-datepicker';
 import ModalPlanner1 from "../../../Modals/ModalPlanner1";
 import ModalPlanner3 from "../../../Modals/ModalPlanner3";
 import toast from 'react-hot-toast';
+import { FechaBarraContext } from '../../../../context/FechaBarraProvider';
 
 //Variables Globales
 let permissions = 0;           // Permisos - Permissions         -- color Amarillo
@@ -48,13 +49,17 @@ let verifyBreaks = 0;             //Breaks
 
 
 export default function Barra() {
+
+  //CONTEXTOS
+  const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Este contexto hace referencia a la fecha que se selecciona 
+                                                                    //en la barra del mainplanner
   
 //estado para la ventana modal1 
  const [modal1, setModal1] = useState(false); 
  const [modal2, setModal2] = useState(false); 
 
  //Estados para la Data de groups
- const [startDate, setStartDate] = useState(new Date());
+ const [startDate, setStartDate] = useState(new Date(fechaBarra));
  const [data, setData] = useState([]);
  const [data1, setData1] = useState([]);
  const [data2, setData2] = useState([]);
@@ -62,6 +67,7 @@ export default function Barra() {
  const [data4, setData4] = useState([]);
  const [data5, setData5] = useState([]);
  const [data6, setData6] = useState([]);
+ const [data7, setData7] = useState([]);
 
  const [nombre, setNombre] = useState("");
  const [cargo, setCargo] = useState("");
@@ -128,9 +134,27 @@ export default function Barra() {
     .then((response) => setData5(response.data));
   }
 
+  const getRotationsmanager = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/rotationsmanager")
+    .then((response) => setData7(response.data));
+  }
 
-  const semanasAlDia = ()=>{
-    
+
+  const semanasAlDia = (ID_Usuario,Nombre,Apellido)=>{
+
+   
+    /* Itero sobre el arreglo de "rotationsManager" para el usuario actual
+       y hago las respectivas operaciones */
+
+    data7?.map((item)=>(
+      item.userId == ID_Usuario && 
+        
+      //Valido si se ha asiganado turno en rotations o no
+      item.totalGrupo == 0 && item.userId == ID_Usuario && toast.error("Para " + Nombre + " " +Apellido +" no se ha definido una rotación actual en ROTATIONS")
+
+    ))
+
   }
 
   const verificar = (pid,pn,pa,subgrupo,cargo,pg,gid)=>{
@@ -225,9 +249,8 @@ export default function Barra() {
 
     //---------------------------------------------------------------------------------------------------------
     //Procedimiento para mantener al dia la semana de rotacion a todos los usuarios
-    semanasAlDia();
-    
-    
+    semanasAlDia(pid,pn,pa);
+
   }
   
 
@@ -385,13 +408,17 @@ const testBreaks = (pid)=>{
   }, []);
 
 
+  useEffect(()=>{
+    getRotationsmanager();
+  },[])
 
 
+  
  
 
   return (
     <>
-
+      
       {createPortal(
         <ModalPlanner1 estado={modal1} cambiarEstado={setModal1} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={colorBorder} gp={grupo} gpid={gpid}/>,
         document.querySelector("#portal")
@@ -402,6 +429,7 @@ const testBreaks = (pid)=>{
         document.querySelector("#portal")
       )} 
 
+        
       <div className="barra">
       
         <img src={tropa} alt="tropa" className="imgTropa" />
@@ -410,7 +438,7 @@ const testBreaks = (pid)=>{
         <DatePicker
           className="picker"
           selected={startDate}
-          onChange={(date) => setStartDate(date)}
+          onChange={(date) => setStartDate(date) + setFechaBarra(new Date(date).toDateString())}
           showMonthDropdown
         />
       </div>

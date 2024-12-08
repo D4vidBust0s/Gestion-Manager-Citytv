@@ -849,16 +849,21 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,su
                     {
                        data8?.map((item)=>(
               
-                        item.grupo == gp ? totalGrupo++ : null,
-                        item.grupo == gp ? <li className={nombres == item.nombres + " " + item.apellidos ? 'liListaItemActual' : 'liListaItem'} key={item._id}>{item.nombres + "  " + item.apellidos}<span className='indicador2'>Mañana</span></li>:null
+                        //item.grupo == gp ? totalGrupo++ : null,
+                        item.grupo == gp ? <li className={nombres == item.nombres + " " + item.apellidos ? 'liListaItemActual' : 'liListaItem'} key={item._id}>{item.nombres + "  " + item.apellidos}<span className='indicador2'>
+                          Mañana
+                          </span></li>:null
                       
                       ))
                     }
 
                     {
+                      /*
                        data9?.map((item)=>(
                         item.Grupo_ID == gpid && totalSchema++ 
                        ))
+
+                       */
                     }
                     
                   </ul>

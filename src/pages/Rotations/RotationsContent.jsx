@@ -32,6 +32,8 @@ const RotationsContent = () => {
   const [data6, setData6] = useState([]);
   const [data7, setData7] = useState([]);
   const [data8, setData8] = useState([]);
+  const [data9, setData9] = useState([]);
+  const [data10, setData10] = useState([]);
 
   const [coffeeES,setCoffeeES] = useState(false);
   const [coffeeFS,setCoffeeFS] = useState(false);
@@ -52,13 +54,13 @@ const RotationsContent = () => {
   const [orderFS,setOrderFS] = useState(0);
 
   const [excluirES,setexcluirES]=useState(false);
-  const [excluirFS,setexcluirFS]=useState(false);
+  const [excluirFS,setexcluirFS]=useState(false);         
 
 
   
   /* Variables */
   let aux = "";
-  let contador = 0;
+  let aux2;
  
 
   /* Referencias */
@@ -69,9 +71,9 @@ const RotationsContent = () => {
   const newOrderFS = useRef();
   const excluirESref = useRef();
   const excluirFSref = useRef();
-  const pruebaRef = useRef();
   const descandoESref= useRef();
   const descandoFSref = useRef();
+ 
 
  
   
@@ -103,6 +105,14 @@ const RotationsContent = () => {
     .then((response) => setData6(response.data));  
 
   }
+  
+  //Trae todos los registros de rotations
+  const getAllRotations = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/rotations/")
+    .then((response) => setData9(response.data));  
+
+  }
 
   //Traer todos los registros de los usuarios
 const getAllPayroll= async () => {
@@ -128,7 +138,33 @@ const delAllRotationsManager= async () => {
     .delete("http://localhost:3000/api/rotationsmanager/")
 }
 
-  
+//Actualizar el dia clave de todo un grupo segun id de grupo en rotationsManager
+const updateDayKeyGroup= async (idG) => {
+    
+  return await axios
+    .put("http://localhost:3000/api/rotationsmanager/"+idG,{
+      newDayKey: new Date().setHours(0,0,0,0),
+      totalschema: data4.length,
+      totalgrupo: data6.length
+    })
+}
+
+//Actualizar el index del turno actual y el nombre des schema en rotationsManager para un usuario
+const updateIndex= async (idUs,nameSchema,Actual,idSchema) => {
+    
+  return await axios
+    .put("http://localhost:3000/api/rotationsmanager/update/"+idUs,{
+      nameschema:  nameSchema,
+      actual: Actual,
+      idschema: idSchema
+    })
+    
+}
+
+
+
+
+
 
    
   const agregar = async ()=>{
@@ -310,7 +346,8 @@ const delAllRotationsManager= async () => {
         schemaid: scID,
         totalschema: ts,
         totalgroup: tg,
-        actual: ac
+        actual: ac,
+        dayKey: new Date(),
       });
   
       console.log("Agregado...");
@@ -357,6 +394,7 @@ const delAllRotationsManager= async () => {
 
     obtenerListadoGroupsPorID();
     obtenerListadoGroupsPorIDFs();
+    getAllRotationsManager();
 
     //Funcion para obtener el nombre del grupo segun id y guardarlo en aux
     data?.map((item)=>(item._id==groupsRef.current.value?aux = item._id:null))
@@ -639,14 +677,188 @@ const delAllRotationsManager= async () => {
     return id;
    }
 
+   const corroborarNombre =  (idNuevoSchema)=>{
 
-   const actualizar = ()=>{
-    toast.success("Aqui se deberia guardar el item seleccionado para entre semana");
+    let nombreSchema;
+
+    data9?.map((item)=>(
+      idNuevoSchema == item._id && (nombreSchema = item.Nombre)
+    ))
+
+    return nombreSchema;
+
    }
+
+
+   const corroborarActual =  (idNuevoSchema)=>{
+
+    let Actual;
+
+    data9?.map((item)=>(
+      idNuevoSchema == item._id && (Actual = item.Order)
+    ))
+
+    return Actual;
+
+   }
+
+
+   const actualizar = (idUser,e)=>{
+
+    //Aqui se ejecuta el proceso para actualizar la informacion
+    //en la coleccion rotationsManager
+
+     let idSchema,idGrupo,totalSchema,totalGrupo,actual;
+     let DiaClave,newName;
+     let globalIDUser = idUser;
+     let globalNameSchema = corroborarNombre(e.target.value); 
+     let globalActual = corroborarActual(e.target.value);
+
+       data8?.map((rm)=>(
+        
+          idUser == rm.userId && 
+
+          //TRAEMOS LA INFO PARA OPERARLA
+          //Traigo el id del Schema
+          (idSchema = rm.schemaId) && 
+
+          //Traigo el id de grupo
+          (idGrupo = rm.groupName) &&
+
+          //Traigo totalSchema
+          (totalSchema = rm.totalSchema) +
+
+          //Traigo total Grupo
+          (totalGrupo = rm.totalGrupo) +
+
+          //Traigo Actual
+          (actual = rm.actual) +
+
+          //Traigo el dia clave
+          (DiaClave = new Date(rm.dayKey).setHours(0,0,0,0))
+
+          
+        ))
+      
+    
+        console.log("Id user... " + idUser);
+        console.log("Nuevo valor... " + e.target.value);
+        console.log("SchemaID... " + idSchema);
+        console.log("Id Grupo... " + idGrupo);
+        console.log("Total Schema... " + totalSchema);
+        console.log("Total Grupo... " + totalGrupo);
+        console.log("Actual... " + actual);
+        console.log("Dia clave... " + DiaClave);
+
+        //Operacion para saber que semana esta y hacer las operaciones correspondientes
+
+        //Fecha actual 
+        let fechaHoy = new Date().setHours(0,0,0,0);
+
+        //DayKey aumentado 8 dias, es decir una semana
+        let daykeyPlus = new Date(DiaClave).setDate(new Date(DiaClave).getDate()+8);
+
+        //Traer cual es el nombre del dia "Lunes..martes.." del dayKey 
+        let NombreDia = new Date(DiaClave).getUTCDay();
+
+        //Traigo el dia "1,3,5" del dayKey
+        let diaDayKey = new Date(DiaClave).getDate();
+
+        //Traigo el mes "0,1,2 hasta 11 que es diciembre" del dayKey
+        let mesDayKey = new Date(DiaClave).getMonth();
+
+        //Traigo el año "0,1,2 hasta 11 que es diciembre" del dayKey
+        let añoDayKey = new Date(DiaClave).getFullYear();
+
+        //VALIDACION PARA SABER SI EL DIA DEL (diaclave) ESTA ENTRE SEMANA O FIN DE SEMANA
+        //--------------------------------------------------------------------------
+  
+
+        //Defino la nueva fecha de inicio de semana segun DiaClave
+        let fechaInicioSemana;
+        let fechaFinalSemana;
+     
+
+        /*Esta instruccion define un dia entre semana, es decir de lunes a viernes*/
+        NombreDia <= 5 && NombreDia >= 1 
+        ? NombreDia == 1 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate()+0) , fechaFinalSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate()+4)) :     //Lunes
+          NombreDia == 2 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate()-1) , fechaFinalSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate()+3)) :     //Martes
+          NombreDia == 3 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate()-2) , fechaFinalSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate()+2)) :     //Miercoles
+          NombreDia == 4 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate()-3) , fechaFinalSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate()+1)) :     //Jueves
+          NombreDia == 5 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate()-4) , fechaFinalSemana = new Date(DiaClave)): null                                         //Viernes
+
+          
+      
+          
+          
+          //Aqui deberia implemetar el procedimiento pero para fines de semana
+        : toast.error("EL DIA NO ES UN DIA ENTRE SEMANA, SE DEBERIA EJECUTAR EN LA LOGICA DE FINES DE SEMANA");
+
+        //toast.success(new Date(DiaClave).toDateString() +"--"+ (new Date (fechaHoy)).toDateString());
+        //toast.success("dayKeyPlus es.. "+ new Date(daykeyPlus).toLocaleDateString());
+        //toast.success("El dia es.. "+ Dia);
+        //toast.success("Fecha de inicio es.. "+ new Date(fechaInicioSemana).toDateString());
+        //toast.success("Fecha final es.. "+ new Date(fechaFinalSemana).toDateString());
+
+        //console.log("Fecha de inicio es.. "+ new Date(fechaInicioSemana).toDateString());
+        //console.log("Fecha final es.. "+ new Date(fechaFinalSemana).toDateString());
+
+
+        //AHORA PROCEDO A ACTUALIZAR  LA INFORMACION DENTRO DE LA TABLA ROTATIONSMANAGER SEGUN CORRESPONDA
+        //-------------------------------------------------------------------------------------------------------------
+
+        /* Actualizo la fecha en todo el grupo a la fecha actual y adicionalmente el nuevo nombre de turno o nombre eschema para el usuario */
+        
+
+        /* Defino el totalSchema que es un numero entero que define cuantos schemas de grupo hay */
+        let totalschema = data4.length;
+
+        /* defino cuantos usuarios hay en el grupo */
+        let totalG = data6.length;
+
+        
+
+        if(totalschema != totalG  )
+        {
+            toast.error("El número de personas y de esquemas, no es el mismo, corrija para poder asignar un esquema al usuario");
+            toast.custom("Esquemas = "+ totalschema + " --- " + "Personas = "+totalG);
+        }
+
+        else{
+          //como el numero de usuarios del grupo y el numero de turno es el mismo actualizo la informacion correspondiente
+          updateDayKeyGroup(idGrupo);
+
+        
+
+
+          //actualizo el nombre des schema para el usuario al igual que el index del schema
+          updateIndex(globalIDUser,globalNameSchema,globalActual,e.target.value);
+
+          //console.log("---------------------------------------")
+          //console.log(" e.target.value " + e.target.value)
+
+          //Envio un memsaje de notificacion de los cambios
+          toast.success("Información actualizada");
+          getAllRotationsManager();
+        }
+        
+   }
+
+
+
+
+
+
 
    const actualizarFS = ()=>{
     toast.success("Aqui se deberia guardar el item seleccionado para FIN DE SEMANA");
    }
+
+   const setChangeFijo = ()=>{
+    toast.error("Fijo esta pendiente por ser implementado, recordar que es válido solo para turnos entre semana");
+   }
+
+   
 
   //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -663,7 +875,9 @@ const delAllRotationsManager= async () => {
     getAllRotationsManager();
   }, []);
 
-
+  useEffect(()=>{
+    getAllRotations();
+  },[]);
   
 
   /*
@@ -678,45 +892,35 @@ const delAllRotationsManager= async () => {
       <Toaster />
       <div className="asignations">
         <ul>
-      {
-        /*
-
-            PARA LA PROXIMA
-            -------------------------------------------------------------
-
-
-           Ahora debo crear una coleccion que administre la rotacion de turnos y que se actualice automaticamente
-           al igual que se deben llenar los combobox con los esquemas de cada grupo para que sea coherente la 
-           informacion que se presenta al usuario.
-
-           para ello antes de hacer algo aqui debo crear la operacion que lleve el turno que deberia
-           llevar cada usuario, luego de eso simplemete seria traerlo y llenarlos en los combobox
-
-           BENDICIOJNES PARA LA PROXIMA !!!!!!
-
-      */
-
-      }
 
 
           {
-            data6?.map((item)=>(
-              <li className="asiganation_li" key={item._id}>
-              {item.nombres + " " + item.apellidos} 
+            data6?.map((peoleOfGroup)=>(
+              <li className="asiganation_li" key={peoleOfGroup._id}>
+              {peoleOfGroup.nombres + " " + peoleOfGroup.apellidos} 
               <span className="asiganations_option">
               
-                <select className="asignation_select" onChange={() => actualizar()}>
-                  
+                <select className="asignation_select"  onChange={(e) => actualizar(peoleOfGroup._id,e)}>
+                  <option> 
                     {
-                      
-                         data4?.map((item)=>(
-                          <option key={item._id}>
-                             {item.Nombre}
-                          </option>
+                        //item.nombres
+                        data8?.map((rm)=>(
+                          peoleOfGroup._id == rm.userId && rm.schemaId && rm.SchemaName
+                          
                         ))
-                        
-                      
                     }
+                  </option>
+                  {
+                      
+                      data4?.map((schemaname)=>(
+                       <option key={schemaname._id}  value={schemaname._id}>
+                          {schemaname.Nombre}
+                       </option>
+                     ))
+                     
+                   
+                 }
+                    
                   
                 </select>
 
@@ -733,7 +937,7 @@ const delAllRotationsManager= async () => {
                  }
                 </select>
 
-                <span className="fijoSpan">Fijo</span><input type="checkbox"  className="checkFijo"/>
+                <span className="fijoSpan">Fijo</span><input type="checkbox"  className="checkFijo" onChange={setChangeFijo}/>
                 
                 
               </span>

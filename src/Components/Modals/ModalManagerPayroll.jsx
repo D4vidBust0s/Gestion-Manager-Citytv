@@ -163,8 +163,10 @@ export default function ModalManagerPayroll({id,op,GrupoID}) {
       //evaluamos que operacion se debe hacer si agregar o eliminar 0 es agregar 1 Editar
       if(op == 0)
       {
-        //Se envia la informacion validada al api
 
+        toast.success("op0 = "+ op);
+        //Se envia la informacion validada al api
+        /*
         await axios.post("http://localhost:3000/api/payroll/", {
 
           Nombres: nombresRef.current.value,
@@ -190,8 +192,8 @@ export default function ModalManagerPayroll({id,op,GrupoID}) {
           ContactoAux: contactoSecundarioReF.current.value,
           Activo: estadoReF.current.value,
           Mainplanner: mainplannerRef.current.value,
-          SubGrupo:sbRef.current.value
-      });
+          SubGrupo:sbRef.current.value 
+      }); */
 
 
           toast.success("Usuario agregado correctamente");
@@ -201,35 +203,37 @@ export default function ModalManagerPayroll({id,op,GrupoID}) {
 
       else if (op == 1)
       {
+        toast.success("id "+ id);
+
         //Proceso de actualizacion en la api
-        await axios.put("http://localhost:3000/api/payroll/" + id, {
+         await axios.put("http://localhost:3000/api/payroll/" + id, {
 
           nombres: nombresRef.current.value,
           apellidos: apellidosRef.current.value,
-          edad: edadRef.current.value,
-          fechaDeNacimiento: nacimientoRef.current.input.value,
-          genero: generoRef.current.value,
-          estadoCivil: civilRef.current.value,
-          celularPrioritario: celPrioritarioRef.current.value,
-          celularAux: celAuxReF.current.value,
-          telefonoFijo: fijoRef.current.value,
-          direccionResidencia: dirReF.current.value,
-          email: emailReF.current.value,
-          cc: ccReF.current.value,
-          pasaporte: pasaporteReF.current.value,
-          tarjetaProfesional: profesionalReF.current.value,
+          //edad: edadRef.current.value,
+          //fechaDeNacimiento: nacimientoRef.current.input.value,
+          //genero: generoRef.current.value,
+          //estadoCivil: civilRef.current.value,
+          //celularPrioritario: celPrioritarioRef.current.value,
+          //celularAux: celAuxReF.current.value,
+          //telefonoFijo: fijoRef.current.value,
+          //direccionResidencia: dirReF.current.value,
+          //email: emailReF.current.value,
+          //cc: ccReF.current.value,
+          //pasaporte: pasaporteReF.current.value,
+          //tarjetaProfesional: profesionalReF.current.value,
           cargo: cargoReF.current.value,
           grupo: grupoReF.current.value,
           grupoID: grupoReF.current.value,
           fechaIngreso: ingresoReF.current.input.value,
-          RH: rhReF.current.value,
-          contactoPrincipal: contactoPrincipalReF.current.value,
-          contactoAux: contactoSecundarioReF.current.value,
+          //RH: rhReF.current.value,
+          //contactoPrincipal: contactoPrincipalReF.current.value,
+          //contactoAux: contactoSecundarioReF.current.value,
           activo: estadoReF.current.value,
           mainplanner: mainplannerRef.current.value,
           subGrupo: sbRef.current.value
 
-        });
+        }); 
 
 
         toast.success("Usuario en actualizado correctamente");
