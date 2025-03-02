@@ -38,6 +38,8 @@ export default function ProgramsContent() {
   const [checkLViernes, setCheckViernes] = useState(false);
   const [checkSabado, setCheckSabado] = useState(false);
   const [checkDomingo, setCheckDomingo] = useState(false);
+  const [checkMain, setCheckMain] = useState(false);
+  const [checkSecondary, setCheckSecondary] = useState(false);
 
    //Estados para los controles HTML
    const [nameProgram, setNameProgram] = useState("Default");
@@ -57,6 +59,8 @@ export default function ProgramsContent() {
   const refStart = useRef();
   const refEnd = useRef();
   const refDescripcion = useRef();
+  const refMain = useRef();
+  const refSecondary = useRef();
 
   //FUNCIONES
   //Funcion que obtiene la data de la api - listado de programs
@@ -95,6 +99,14 @@ export default function ProgramsContent() {
     setCheckDomingo(!checkDomingo);
   };
 
+  const handleOnChangeMain = () => {
+    setCheckMain(!checkMain);
+  };
+
+  const handleOnChangeSecondary = () => {
+    setCheckSecondary(!checkSecondary);
+  };
+
   useEffect(() => {
     obtenerListadoPrograms();
   }, []);
@@ -110,7 +122,7 @@ export default function ProgramsContent() {
   };
 
 
-  //Funcion para traer y actualizar la informacion al dar click sobre el grupo
+  //Funcion para traer y actualizar la informacion al dar click sobre el grupo Main
   const grupoClick = async (id,e) => {
     await axios
       .get("http://localhost:3000/api/programs/" + id)
@@ -129,7 +141,9 @@ export default function ProgramsContent() {
           setStartDate(new Date(response.data.Start)) +
           setEndDate(new Date(response.data.End)) +
 
-          setDescription(response.data.descripcion)
+          setDescription(response.data.descripcion) +
+          setCheckMain(response.data.Type=="Main"?true:false) +
+          setCheckSecondary(response.data.Type=="Secondary"?true:false)
       );
     setId(id);
     console.log("start:"+startDate);
@@ -150,11 +164,14 @@ export default function ProgramsContent() {
      }
   };
 
+  
+
 
   //-------------------------------------------------------------------------------------------------------
 
   //Agregar Program
-  const agregarProgram = async () => {
+  const agregarProgram = async () => 
+  {
     if (refName.current.value == "") {
       toast.error("El campo Programa o evento no puede estar vacio");
     } else if (refStart.current.value == "") {
@@ -163,8 +180,26 @@ export default function ProgramsContent() {
       toast.error("El campo End no esta definido");
     } else if (refDescripcion.current.value == "") {
       toast.error("El campo Descripción no debe estar vacio");
+    }
+      else if(refMain.current.checked && refSecondary.current.checked)
+      {
+        toast.error("Solo puede seleccionar un tipo de evento, ya sea Main o Secondary, no los dos a la vez")
+      }
+
+      else if(refMain.current.checked == false && refSecondary.current.checked == false)
+      {
+        toast.error("Se debe seleccionar si el tipo es Main o Secondary")
+      }
+
+      else if (refLunes.current.checked==false  && refMartes.current.checked==false && refMiercoles.current.checked==false && refJueves.current.checked==false && refViernes.current.checked==false && refSabado.current.checked==false && refDomingo.current.checked==false)
+      {
+        toast.error("Se debe seleccionar minimo un dia")
+      }
+
+     
       
-    } else {
+    else {
+      
       await axios.post("http://localhost:3000/api/programs/", {
         nombre: nameProgram,
         lunes: checkLunes,
@@ -176,9 +211,10 @@ export default function ProgramsContent() {
         domingo: checkDomingo,
         descripcion: description,
         start: startDate,
-        end: endDate
+        end: endDate,
+        type: refMain.current.checked ? "Main" : "Secondary" ,
       });
-
+      
       obtenerListadoPrograms();
 
       toast.success("Programa agregado");
@@ -195,6 +231,8 @@ export default function ProgramsContent() {
       setCheckViernes(false);
       setCheckSabado(false);
       setCheckDomingo(false);
+      setCheckMain(false);
+      setCheckSecondary(false);
     }
   };
 
@@ -244,6 +282,8 @@ export default function ProgramsContent() {
         setCheckViernes(false);
         setCheckSabado(false);
         setCheckDomingo(false);
+        setCheckMain(false);
+        setCheckSecondary(false);
   }
 
    //Actualizar program
@@ -260,6 +300,21 @@ export default function ProgramsContent() {
     } else if (refDescripcion.current.value == "") {
       toast.error("Debe especificar una descripción");
     }
+      else if(refMain.current.checked && refSecondary.current.checked)
+      {
+        toast.error("Solo puede seleccionar un tipo de evento, ya sea Main o Secondary, no los dos a la vez")
+      }
+
+      else if(refMain.current.checked == false && refSecondary.current.checked == false)
+      {
+        toast.error("Se debe seleccionar si el tipo es Main o Secondary")
+      }
+
+      else if (refLunes.current.checked==false  && refMartes.current.checked==false && refMiercoles.current.checked==false && refJueves.current.checked==false && refViernes.current.checked==false && refSabado.current.checked==false && refDomingo.current.checked==false)
+      {
+        toast.error("Se debe seleccionar minimo un dia")
+      }
+
     else {
       await axios.put("http://localhost:3000/api/programs/" + ID, {
         nombre: nameProgram,
@@ -273,6 +328,7 @@ export default function ProgramsContent() {
         descripcion: description,
         Start: startDate,
         End: endDate,
+        Type: refMain.current.checked ? "Main" : "Secondary" ,
       });
 
       obtenerListadoPrograms();
@@ -291,6 +347,8 @@ export default function ProgramsContent() {
       setCheckViernes(false);
       setCheckSabado(false);
       setCheckDomingo(false);
+      setCheckMain(false);
+      setCheckSecondary(false);
       
     }
   };
@@ -317,7 +375,14 @@ export default function ProgramsContent() {
               <li><input type="checkbox" ref={refDomingo} name='Domingo' id='7' checked={checkDomingo} onChange={handleOnChangeDomingo}/> Domingo</li>
              
             </ul>
+
+            <div className="TipoEvent">
+              <div><input type="checkbox" name="Main Program" id="1" checked={checkMain} className='check' ref={refMain} onChange={handleOnChangeMain}/> Main  </div>
+              <div><input type="checkbox" name="Secondary Program" id="2" checked={checkSecondary} className='check' ref={refSecondary} onChange={handleOnChangeSecondary}/> Secondary </div>
+            </div>
           </div>
+
+          
           <div className="contentSectionTime">
             <img src={Clock} alt="Clock Start" className="imgTime" />
             <DatePicker
@@ -363,13 +428,37 @@ export default function ProgramsContent() {
         </div>
 
         
-        <div className="sectionList">
+
+        
+        <div className="sectionLt">
+          <div className="cabezal">
+            Main Programs
+          </div>
+
+          <div className="sub1">
+            <ul className='ListUL'>
+            {data?.map((prog) => (
+              prog.Type == "Main" &&
+              <li key={prog._id} className='ListLI' onClick={(e) => grupoClick(prog._id,e)}>{prog.nombre}</li>
+              ))
+            }
+            </ul>
+          </div>
+
+          <div className="cabezal2">
+            Secondary Events
+            </div>
+          <div className="sub2">
+          
           <ul className='ListUL'>
-          {data?.map((prog) => (
-             <li key={prog._id} className='ListLI' onClick={(e) => grupoClick(prog._id,e)}>{prog.nombre}</li>
-            ))
-          }
-          </ul>
+            {data?.map((prog) => (
+              prog.Type == "Secondary" &&
+              <li key={prog._id} className='ListLI' onClick={(e) => grupoClick(prog._id,e)}>{prog.nombre}</li>
+              ))
+            }
+            </ul>
+          </div>
+         
         </div>
       </div>
     </>

@@ -13,7 +13,7 @@ import { createPortal } from 'react-dom';
 import axios from 'axios';
 import {toast, Toaster} from 'react-hot-toast'
 import { FechaBarraContext } from '../../../../context/FechaBarraProvider';
-//import DatePicker from 'react-datepicker';
+import { PronosticoContext } from '../../../../context/PronosticoTurnosProvider';
 
 
 
@@ -26,15 +26,24 @@ export default function Listado() {
   const [data1, setData1] = useState([]);
   const [data2, setData2] = useState([]);
   const [data3, setData3] = useState([]);
+  const [data4, setData4] = useState([]);
+  const [data5, setData5] = useState([]);
   const [saved, setSaved] = useState(0);
 
 
 
   //Variables 
   let DiaClave;
+  let DiaClaveFS;
+
   let totalSche;
+  let totalScheFS;
+
   let totalGP;
+  let totalGPFS;
+
   let actual;
+  let actualFS;
   
 
   //----------------------------------------------------------------------------------------------------------
@@ -69,9 +78,26 @@ const getAllRotationsManager= async () => {
     .then((response) => setData3(response.data));
 }
 
+//Traer rotations
+const getRotations= async () => {
+    
+  return await axios
+    .get("http://localhost:3000/api/rotations/")
+    .then((response) => setData4(response.data));
+}
+
+//Traer todos los registros de rotationsManagerFS
+const getAllRotationsManagerFS= async () => {
+    
+  return await axios
+    .get("http://localhost:3000/api/rotationsmanager-fs/")
+    .then((response) => setData5(response.data));
+}
+
 
 /* CONTEXTOS*/
 const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Define un estado para la fecha de la barra
+const [pronosticoTurnos,setPronosticoTurnos] = useContext(PronosticoContext); //
 
 //FUNCIONES
 //----------------------------------------------------------------------------------------------------------------------------------------
@@ -89,7 +115,78 @@ const save = ()=>{
 
  const entre = (idUsuario,FECHAINICIO,FECHAFINAL)=>{
   console.log("LA FECHA ACTUAL CORRESPONDE A LA SEMANA ACTUAL " + new Date(FECHAINICIO).toDateString() + " ---- " + new Date(FECHAFINAL).toDateString())
-  return "Respuesta desde entre"
+  
+  let turno = "";
+
+  //HAGO LA OPERACION PARA TRAER EL TURNO EN EL QUE DEBE ESTAR EL USUARIO EN LA SEMANA QUE ES (ACTUAL) POR QUE ESTA "ENTRE"
+  data2?.map((rotationsManager)=>(
+    idUsuario==rotationsManager.userId && (turno = rotationsManager.SchemaName)
+  ))
+
+  if(turno=="NombreSchema")
+  {
+    turno="No se han asignado rotaciones para este usuario";
+  }
+  
+
+  return turno
+
+}
+
+const ciclo = (totalgrupo,actual,domingos,idGrupo)=>{
+
+  let index = 0;
+  let turno;
+
+  //esta es la operacion que debe devolver el index del schema en el que deberia estar el trabajador
+  for(let i=0; i<=domingos; i++ )
+  {
+    index = actual ++;
+
+    if(index >= totalgrupo)
+    {
+      actual = 1;
+    }
+
+  }
+
+  //Segun el index obtenido busco el nombre del schema y lo muestro 
+  data4?.map((schemas)=>(
+    idGrupo == schemas.Grupo_ID && schemas.Order == index && schemas.Tipo == "Entre Semana" &&
+      (turno = schemas.Nombre)
+    
+  ))
+
+  
+  return turno + "  ----- " + domingos +  ( domingos == "1" ? " Semana" : " Semanas");
+}
+
+const cicloFS = (totalgrupo,actual,domingos,idGrupo)=>{
+
+  let index = 0;
+  let turno;
+
+  //esta es la operacion que debe devolver el index del schema en el que deberia estar el trabajador un fin de semana
+  for(let i=0; i<=domingos; i++ )
+  {
+    index = actual ++;
+
+    if(index >= totalgrupo)
+    {
+      actual = 1;
+    }
+
+  }
+
+  //Segun el index obtenido busco el nombre del schema de fin de semana y lo muestro 
+  data4?.map((schemas)=>(
+    idGrupo == schemas.Grupo_ID && schemas.Order == index && schemas.Tipo == "Fin de Semana" &&
+      (turno = schemas.Nombre)
+    
+  ))
+ 
+   return turno + " ____________________" + "( "+ domingos +  ( domingos == "1" ? " Fin de Semana )" : " Fines de Semana)");
+
 }
 
 const antes = (FECHAINICIO,FECHAFINAL)=>{
@@ -101,17 +198,17 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
 }
 
 
- const despues = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL)=>{
+ const despues = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,idUsuario)=>{
   //para el despues tambien debo contar cuantas semanas han pasado y hacer la operacion correcta simplemete que no debo actualizar nada 
   //en la base de datos si no solo mostrar en que turno estaria el trabajador para esa fecha
 
-  //OBTENGO LA DIFERENCIA EN DIAS DE LA FECHA FUTURA O ACTUAL Y EL DIA CLAVE
+  //OBTENGO LA DIFERENCIA EN DIAS DE LA FECHA FUTURA  Y EL DIA CLAVE
   let fechaInicio = new Date(new Date(DIACLAVE).getTime()).setHours(0,0,0,0);
-  let fechaFin    = new Date(new Date().getTime()).setHours(0,0,0,0);
+  let fechaFin    = new Date(new Date(fechaBarra).getTime()).setHours(0,0,0,0);
 
   let diff = fechaFin - fechaInicio;
   let diasPasados = diff/(1000*60*60*24) // (1000*60*60*24) --> milisegundos -> segundos -> minutos -> horas -> días
-  console.log("Dias pasados "+diasPasados + " -- " + new Date(DIACLAVE).toDateString());  
+  //console.log("Dias pasados "+diasPasados + " -- " + new Date(DIACLAVE).toDateString());  
 
   //ya que tengo los dias que han pasado, debo calcular cuantas semanas han pasado
   let Domingos = 0;
@@ -120,30 +217,84 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
   {
      let fecha = new Date (new Date(DIACLAVE).setHours(0,0,0,0)).setDate(new Date(DIACLAVE).getDate()+index)
      
-     if(new Date(fecha).getUTCDay()==0)
+     if(new Date(fecha).getDay()==0) //cero es el dia domingo
      {
         Domingos++;
      }
 
   }
 
-  console.log("Total Domingos... " + Domingos + " Total Schema.. " + TOTALSCHEMA + " Total Grupo... " + TOTALGP)
 
   //Por ultimo hagao las operaciones para saber en que turno estaria el trabajador en la fecha escogida
-
-  //primero valido si el numero de grupos es igual al numero de schemas
-  if(TOTALSCHEMA > 0 && TOTALGP > 0 && TOTALSCHEMA == TOTALGP )
-  {
+    let pronostico;
+    
     //hago el pronostico 
-    return "Pronostico " + ACTUAL;
-  }
-  
-  else{
-    return "Grupo sin esquemas asignados ";
-  }
+    data2?.map((rotationsManager)=>(
+      idUsuario==rotationsManager.userId && (
+       pronostico=ciclo(rotationsManager.totalGrupo,rotationsManager.actual,Domingos,rotationsManager.groupId)
+      )
+    ))
 
+
+    return pronostico;
+  
+  
   
 }
+
+const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,idUsuario)=>{
+  
+  //PROCEDIMIENTOS PARA ROTACION DE FIN DE SEMANA
+  //----------------------------------------------------------------------------------------------------------------
+
+  //DIACLAVEFS OK
+  //TOTALSCHEMA OK -- PERO DEBO REALIZAR LA TAREA PENDIENTE DEL NOTEPAD (OJO)
+  //TOTALGP OK     -- PERO OJO CON LA TAREA QUE ESTA PENDIENTE DEL NOTEPAD RESPECTO A LA CANTIDAD DE USUARIOS DEL GRUPO
+  //ACTUAL OK
+  //FECHAINICIO OK
+  //FECHAFINAL OK
+
+  let pronostico;
+
+  //OBTENGO LA DIFERENCIA EN DIAS DE LA FECHA FUTURA  Y EL DIA CLAVE
+  let fechaInicio = new Date(new Date(DIACLAVE).getTime()).setHours(0,0,0,0);
+  let fechaFin    = new Date(new Date(fechaBarra).getTime()).setHours(0,0,0,0);
+
+  let diff = fechaFin - fechaInicio;
+  let diasPasados = diff/(1000*60*60*24) // (1000*60*60*24) --> milisegundos -> segundos -> minutos -> horas -> días
+
+  //ya que tengo los dias que han pasado, debo calcular cuantas semanas han pasado
+  let Domingos = 0;
+
+  for (let index = 1; index <= diasPasados; index++) 
+  {
+     let fecha = new Date (new Date(DIACLAVE).setHours(0,0,0,0)).setDate(new Date(DIACLAVE).getDate()+index)
+     
+     if(new Date(fecha).getDay()==0) //cero es el dia domingo
+     {
+        Domingos++;
+     }
+
+  }
+
+
+  //Por ultimo hagao las operaciones para saber en que turno estaria el trabajador en la fecha escogida
+  //hago el pronostico 
+
+  data5?.map((rotationsManagerFS)=>(
+    idUsuario==rotationsManagerFS.userId && (
+     pronostico=cicloFS(rotationsManagerFS.totalGrupo,rotationsManagerFS.actual,Domingos,rotationsManagerFS.groupId)
+    )
+  ))
+
+
+    return pronostico;
+  
+}
+
+
+
+
 
  const Pronostico = (PAYROLLID)=>{
   data2.map((rotationsManager)=>(
@@ -161,6 +312,21 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
   ))
 
 
+  data5.map((rotationsManagerFS)=>(
+    PAYROLLID == rotationsManagerFS.userId  &&  
+
+      //TRAIGO LA INFORMACION NECESARIA DE FIN DE SEMANA PARA LUEGO USARLA
+      //Traigo el dia clave
+      (
+        DiaClaveFS = new Date(rotationsManagerFS.dayKey).setHours(0,0,0,0),
+        totalScheFS = rotationsManagerFS.totalSchema,
+        totalGPFS = rotationsManagerFS.totalGrupo,
+        actualFS = rotationsManagerFS.actual
+      ) 
+      
+  ))
+
+
 
   //OPERACIONES PARA DETERMINAR LOS RANGOS DE LA SEMANA EN QUE SE ENCUENTRA EL TRABAJADOR
   /***************************************************************************************** */
@@ -169,7 +335,7 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
   let daykeyPlus = new Date(DiaClave).setDate(new Date(DiaClave).getDate()+8);
 
   //Traer cual es el nombre del dia "Lunes..martes.." del dayKey  1 Lunes, 2 Martes, 3 Miercoles, 4 Jueves, 5 Viernes, 6 Sabado, 0 Domingo
-  let NombreDia = new Date(DiaClave).getUTCDay();
+  let NombreDia = new Date(DiaClave).getDay();
 
   //Traigo el # del dia "1,3,5" del dayKey
   let diaDayKey = new Date(DiaClave).getDate();
@@ -183,7 +349,7 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
 
    //VALIDACION PARA SABER SI EL DIA DEL (diaclave) ESTA ENTRE SEMANA O FIN DE SEMANA
         //--------------------------------------------------------------------------
-        //Defino la nueva fecha de inicio de semana segun DiaClave
+        //Defino la nueva fecha de inicio de y fin de semana segun DiaClave
         let fechaInicioSemana;
         let fechaFinalSemana;
 
@@ -203,8 +369,11 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
             NombreDia == 0 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate()-6) , fechaFinalSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate()-2)) : null     //Domingo           
 
 
-        //Ya obtenido las fechas de inicio y final de la semana segun el dia clave procedo a operar con la fecha actual según sea el caso "menor,actual,mayor"
-        let fechaActual = new Date().setHours(0,0,0,0);
+        //Ya obtenido las fechas de inicio y final de la semana segun el dia clave procedo a operar con la fecha actual según sea el caso "menor,actual,mayor (antes-entre-despues)" - es necesario recordar
+        //que des alguna de estas tres opciones por el dia actual con respecto al dia clave ejemplo:  si el dia actual es menor que el dia clave entonces se usara la funcion "antes", si el dia actual es
+        //mayor al dia clave, se usara la funcion despues, y si el dia actual corresponde a la semana del dia clave, se usara la funcion "entre"
+        
+        let fechaActual = new Date(fechaBarra).setHours(0,0,0,0);
 
           //validacion 1 (si la fecha actual eesta dentro de del rango de fechas de inicio y final del dia clave)
           fechaActual >= fechaInicioSemana && fechaActual <= fechaFinalSemana 
@@ -218,24 +387,28 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
             fechaActual < fechaInicioSemana
             ?
               //Es MENOR pero debo preguntar si es sabado o domingo para operar segun corresponda
-              new Date().getUTCDay() == 6 || new Date().getUTCDay() == 0 
+              new Date().getDay() == 6 || new Date().getDay() == 0 
               ?
                 console.log("La fecha actual es menor y es fin de semana " + new Date(fechaInicioSemana).toLocaleString() + "--" + new Date(fechaFinalSemana).toLocaleString())
               :
               
-              console.log("La fecha actual es menor y entre semana " + new Date(fechaInicioSemana).toLocaleString() + "--" + new Date(fechaFinalSemana).toLocaleString()) 
-              
+              //console.log("La fecha actual es menor y entre semana " + new Date(fechaInicioSemana).toLocaleString() + "--" + new Date(fechaFinalSemana).toLocaleString()) 
+              respuesta = antes()
               
             : 
               //Es MAYOR pero debo preguntar si es sabado o domingo para operar segun corresponda
               fechaActual > new Date(fechaFinalSemana).setHours(0,0,0,0)  
             &&
-                new Date().getUTCDay() == 6 || new Date().getUTCDay() == 0 
+          
+                new Date().getDay() == 6 || new Date().getDay() == 0 
                  ?
-                   //console.log("La fecha actual es MAYOR y es fin de semana " +  new Date(fechaInicioSemana).toLocaleString() + "--" + new Date(fechaFinalSemana).toLocaleString())
-                   respuesta = "ES FIN DE SEMANA Y ESTA OPERACION ESTA PENDIENTE POR IMPLEMENTAR"
+                   //-------------------------------------------------------------------------------
+                    //ES SABADO O DOMINGO ENTONCES APLICO LA LOGICA PARA FINES DE SEMANA
+                   //-------------------------------------------------------------------------------
+
+                   respuesta = despuesFS(fechaInicioSemana,fechaFinalSemana,DiaClaveFS,totalScheFS,totalGPFS,actualFS,PAYROLLID)
                  : 
-                     respuesta = despues(fechaInicioSemana,fechaFinalSemana,DiaClave,totalSche,totalGP,actual)
+                     respuesta = despues(fechaInicioSemana,fechaFinalSemana,DiaClave,totalSche,totalGP,actual,PAYROLLID)
 
 
             return respuesta;
@@ -253,14 +426,14 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
 
       <ul className="ulEvent">
           <li className={saved == 0 ? "liEventTipe00" : "liEventTipe0"} onClick={() => setModal2(!modal2)}>
-                  <a href="#" className="event">
-                    { /* "Arriba Bogotá  - "  + payrollNombres + " "+ payrollApellidos + " id = " + payrollId + " Grupo " + groupNombre */} 
-
+                  <a href="#" className="event"> 
                     {
                       data2?.map((rotationsManager)=>(
-                        payrollId == rotationsManager.userId && saved == 0 ? Pronostico(payrollId)
-
+                        payrollId == rotationsManager.userId && saved == 0 
+                        
+                        ? Pronostico(payrollId)
                         :  payrollId == rotationsManager.userId && saved == 1 && rotationsManager.SchemaName
+                        
                       ))
                     }
                   </a>
@@ -356,6 +529,15 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
     getAllRotationsManager();
   }, []);
 
+  useEffect(() => {
+    getAllRotationsManagerFS();
+  }, []);
+
+
+  useEffect(() => {
+    getRotations();
+  }, []);
+
   useEffect(()=>{
     //alert("Exacto");
   },[fechaBarra])
@@ -386,7 +568,7 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
             <div className="hol" key={payroll._id}>
               {
                      
-                   payroll.grupoID == group._id ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres, payroll.apellidos) : null
+                   payroll.grupoID == group._id && payroll.activo == true ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres, payroll.apellidos) : null
               
               }
             </div>
@@ -404,13 +586,16 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
         </div>
       ))}
 
-<div className="sectionSave">
+     <div className="sectionSave">
         <div className={saved ? "circleSaved" : "circle"} onClick={save}>
           Save
         </div>
       </div>
 
+     
+
       <div className="pr">
+     
         {
 
           new Date(fechaBarra).getDay() == 1 ? "Lunes " + new Date(fechaBarra).getDate()  + " de " + mes(new Date(fechaBarra).getMonth()) + " del " + new Date(fechaBarra).getFullYear() 
@@ -430,7 +615,9 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
           : null
           
         }
+        
       </div>
+      
     </>
   );
 }

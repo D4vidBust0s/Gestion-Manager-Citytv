@@ -28,6 +28,7 @@ import Recess from './pages/Recess/recess';
 import Licenses from './pages/Licenses/Licenses';
 import Breaks from './pages/Breaks/breaks';
 import Balancer from './pages/Balancer/balancer';
+import UserBalancer from './pages/UserBalancers/userBalancer';
 
 /* Dependencias */
 import axios from "axios";
@@ -35,6 +36,7 @@ import axios from "axios";
 
 /* Contextos */
 import { FechaBarraProvider } from './context/FechaBarraProvider';
+import { PronosticoTurnosProvider } from './context/PronosticoTurnosProvider';
 
 /* Variables */
 
@@ -365,6 +367,7 @@ useEffect(()=>{
 
   return (
     
+    <PronosticoTurnosProvider>
     <FechaBarraProvider>
     <BrowserRouter>
       <div className="Container">
@@ -390,12 +393,14 @@ useEffect(()=>{
             <Route path="/licenses" element={<Licenses />} />
             <Route path="/breaks" element={<Breaks />} />
             <Route path="/balancer" element={<Balancer />} />
+            <Route path="/user-balancers" element={<UserBalancer />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
       </div>
     </BrowserRouter>
     </FechaBarraProvider>
+    </PronosticoTurnosProvider>
     
   );
 }

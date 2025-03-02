@@ -366,7 +366,7 @@ const testBreaks = (pid)=>{
 
 
     return <ul className="ulMain" key={pid}>
-      <li className={permissions == 1 ? "liMain-var1" :  incapacitado == 1 ? "liMain-var2" : licensia == 1 ? "liMain-var3" : vacaciones == 1 ? "liMain-var4" : breaks == 1 ? "liMain-var5" : "liMain"} key={pid} onClick={() => verificar(pid,pn,pa,subgrupo,cargo,pg,grupoid) }>
+      <li className={permissions == 1 ? "liMain-var1" :  incapacitado == 1 ? "liMain-var2" : licensia == 1 ? "liMain-var3" : vacaciones == 1 ? "liMain-var4" : breaks == 1 ? "liMain-var5" : cargo == "USERBALANCER" ? "liMain-var6": "liMain"} key={pid} onClick={() => verificar(pid,pn,pa,subgrupo,cargo,pg,grupoid) }>
         {pn +" "+pa}
       </li>
     </ul>
@@ -456,7 +456,7 @@ const testBreaks = (pid)=>{
                     <div className="hol" key={payroll._id}>
                       {
                              
-                           payroll.grupoID == group._id ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres,payroll.cargo,payroll.apellidos,payroll.subGrupo,payroll.grupoID) : null
+                           payroll.grupoID == group._id && payroll.activo == true ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres,payroll.cargo,payroll.apellidos,payroll.subGrupo,payroll.grupoID) : null
                           
                       }
                        

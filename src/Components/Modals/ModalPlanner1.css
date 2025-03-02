@@ -435,8 +435,10 @@
     font-size: 1rem;
     padding: .5rem;
     position: absolute;
-    margin-top: -2.9rem;
-    margin-left: -1.5rem;
+    margin-top: -2.5rem;
+    text-align: center;
+    background: #00094B;
+    width: 90%;
 }
 
 .lista{
@@ -629,4 +631,62 @@
 
 .liListaItemActual{
     color: #EB464B;
+}
+
+
+
+
+
+.seccionButons2{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    margin-top: -9%;
+   
+    
+    .containerSingleButtom{
+        background: #547725;
+        padding: .2rem;
+        border-radius: .5rem;
+        box-shadow: .2rem .2rem .8rem #545454;
+
+      
+
+        .img-butons{
+            height: 3rem;
+            width: 3.5rem;
+            
+        }
+        
+    }
+
+
+    .containerSingleButtom:hover{
+        cursor: pointer;
+        transform: scale(1.1);
+    }
+
+    .containerSingleButtomDel{
+        background: #EB464B;
+        padding: .2rem;
+        border-radius: .5rem;
+        box-shadow: .2rem .2rem .8rem #545454;
+
+      
+
+        .img-butons{
+            height: 3rem;
+            width: 3.5rem;
+            
+        }
+        
+    }
+
+    .containerSingleButtomDel:hover{
+        cursor: pointer;
+        transform: scale(1.1);
+    }
+
+   
 }

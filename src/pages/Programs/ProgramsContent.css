@@ -115,6 +115,11 @@
         }
     }
 
+    .horarios
+    {
+        width: 60%;
+        display: flex;
+    }
     .ulHorarios{
         width: 60%;
         padding: 0rem .5rem 2rem .5rem
@@ -123,13 +128,13 @@
 
 
 
-.sectionList{
+.sectionLt{
     height: 90%;
     width: 35%;
     padding: 1.5rem;
-    border-left: 1px solid #545454;
+    border-left: 1px solid #ce1414;
     padding: 1.5rem 2rem;
-    overflow: auto;
+    overflow: hidden;
     margin-left: -10%;
 
     .ListLI{
@@ -138,7 +143,7 @@
     }
 
     .ListLI:hover{
-        transform: scale(1.05);
+        transform: scale(.9);
         cursor: pointer;
     }
 
@@ -149,4 +154,42 @@
         
     }
 
+    .cabezal{
+        margin-bottom: 2px;
+        color: #ce1414;
+    }
+
+}
+
+.cabezal2{
+    color: #ce1414;
+    margin-bottom: 2px;
+    margin-top: 8px;
+    
+
+}
+
+.sub1{
+    height: 40%;
+    overflow: auto;
+}
+
+.sub2{
+    height: 40%;
+    overflow: auto;
+}
+
+
+
+.TipoEvent{
+ width:auto;
+ display: flex;
+ flex-direction: column;
+ width: 100%;
+ font-weight: 600;
+}
+
+.check{
+   
+    background-color: #00094B;
 }

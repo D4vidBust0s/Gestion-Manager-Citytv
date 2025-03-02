@@ -23,6 +23,7 @@ import Delete from '../../assets/trash.svg'
 
 export default function PayrollManagerContent() {
 
+   
 // estado para la ventana modal de agregar usuario
   const [modal1, setModal1] = useState(false); 
 
@@ -32,6 +33,9 @@ export default function PayrollManagerContent() {
   //Estado para el payroll completo
    //Estados para los grupos
    const [data2, setData2] = useState([]);
+
+  //Estados para recuperar la informacion de un trabajador
+  const [data3, setData3] = useState([]);
 
   //Estado para la persona seleccionada
   const [selectPerson, setSelectPerson] = useState("-----");
@@ -44,7 +48,8 @@ export default function PayrollManagerContent() {
 
   //Estado para definir si se va a agregar editar o eliminar
   const [operation, setOperation]= useState("0");
- 
+
+  
   //FUNCIONES
   //Funcion que obtiene la data de la api - listado de grupos
   const obtenerListadoGrupos = async () => {
@@ -53,25 +58,15 @@ export default function PayrollManagerContent() {
       .then((response) => setData(response.data));
   };
 
-  useEffect(() => {
-   obtenerListadoGrupos();
- }, []);
-
-
-  //Funcion que obtiene la data de la api - listado todos los usurios del sistema
-  const obtenerListadoPayroll = async () => {
-    return await axios
-      .get("http://localhost:3000/api/payroll")
-      .then((response) => setData2(response.data));
+ //Funcion para obtener la data de  la persona
+ const obtenerSinglePayroll = async () => {
+  return await axios
+    .get("http://localhost:3000/api/payroll/"+selectPersonId)
+    .then((response) => setData3(response.data))
   };
-
-  useEffect(() => {
-   obtenerListadoPayroll();
- }, []);
 
 
  //Funcion para actualizar el Usuario seleccionado en el label de la parte inferior
-
  const operationPerson = (id,name, apellido,idGroup,e) =>{
    setSelectPerson(name + " " + apellido);
    setSelectPersonId(id);
@@ -102,18 +97,38 @@ const addPerson = () =>{
 
  //Funcion para editar el usuario seleccionado
  const EditPerson = () =>{
-   //alert(selectPersonId);
-   if(selectPersonId)
-   {
-    setModal1(!modal1);
-    setOperation(1);
-   }
+
+  if (selectPerson == "-----" ) {
+    toast.error("Para editar una persona del listado, primero debe seleccionarla dando clic");
+  } 
+
+  else{
+    if(selectPersonId)
+        {
+          setModal1(!modal1);
+          obtenerSinglePayroll();
+          setOperation(1);
+        }
+  }
+   
  };
+
+ //eliminar Registro completo en rotations manager
+ const deleteFromRm = async ()=>{
+
+    await axios.delete("http://localhost:3000/api/rotationsmanager/delsimplereg/" + selectPersonId);
+ }
+
+ //eliminar Registro completo en rotations manager
+ const deleteFromRmFS = async ()=>{
+
+  await axios.delete("http://localhost:3000/api/rotationsmanager-fs/delsimplereg/" + selectPersonId);
+}
 
 
    //Eliminar grupo
    const deletePerson = async () => {
-    if (selectPerson == "-----" || selectPerson == "") {
+    if (selectPerson == "-----" ) {
       toast.error("Para eliminar una persona del listado, primero debe seleccionarla dando clic");
     } 
     else 
@@ -141,18 +156,21 @@ const addPerson = () =>{
 
   const EliminarPerson = async ()=>{
 
-    await axios.delete("http://localhost:3000/api/payroll/" + selectPersonId);
-      toast.error("No ha seleccionado ninguna persona para eliminar");
-
-      obtenerListadoGrupos();
-
-      toast.error("Usuario eliminado del sistema correctamente");
-      obtenerListadoPayroll();
-      setSelectPerson("");
+    await axios.delete("http://localhost:3000/api/payroll/" + selectPersonId)
+    .then((response) => obtenerListadoGrupos())
+    .then((response) => setSelectPerson("-----"))
+    .then((response) => obtenerListadoPayroll())
+    .then((response) => deleteFromRm())
+    .then((response) => deleteFromRmFS())
+    .then((response) => toast.error("Usuario eliminado del sistema correctamente"))
+    
   }
 
   //Funcion que obtiene la data de la api - listado de grupos
   const showUsersGroup = async (groupID,e) => {
+
+    //reinicio el nombre del usuario previamente seleccionado
+    setSelectPerson("-----");
 
      //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
      if (e.target.classList=="contentForma") 
@@ -176,11 +194,38 @@ const addPerson = () =>{
   };
 
 
+  
+
+
+
+
+
+  useEffect(() => {
+    obtenerListadoGrupos();
+  }, []);
+ 
+ 
+   //Funcion que obtiene la data de la api - listado todos los usurios del sistema
+   const obtenerListadoPayroll = async () => {
+     return await axios
+       .get("http://localhost:3000/api/payroll")
+       .then((response) => setData2(response.data));
+   };
+ 
+   useEffect(() => {
+    obtenerListadoPayroll();
+  }, []);
 
   return (
     <>
     <Toaster />
-    {createPortal(<ModalBase1 estado={modal1} cambiarEstado={setModal1} title="Gestión del personal" content={<ModalPayrollManager id={selectPersonId} op={operation} GrupoID={selectPersonIdgroup}/>}/>,document.querySelector('#portal'))}
+    {createPortal(<ModalBase1 estado={modal1} 
+                              cambiarEstado={setModal1} 
+                              title="Gestión del personal" 
+                              content={<ModalPayrollManager 
+                              id={selectPersonId} 
+                              op={operation} 
+                              idGrupo ={selectPersonIdgroup}/>}/>,document.querySelector('#portal'))}
 
       <div className="contenPAYROLL">
       <h3 className="subTitulo1">Grupos o Áreas </h3>
@@ -221,11 +266,13 @@ const addPerson = () =>{
 
             {
                data2.map((payroll,index)=>(
+
+                payroll.cargo != "USERBALANCER" ?
                 <div className="sb" key={index}>
                   <div className="subGrupo">{payroll.subGrupo}</div>
-                   <li className='ListLI' key={payroll._id} onClick={(e)=> operationPerson(payroll._id,payroll.nombres,payroll.apellidos,payroll.grupoID,e)}>{payroll.nombres} {payroll.apellidos}</li>
+                   <li className={payroll.activo==false?'ListLI2':'ListLI'} key={payroll._id} onClick={(e)=> operationPerson(payroll._id,payroll.nombres,payroll.apellidos,payroll.grupoID,e)}>{payroll.nombres} {payroll.apellidos}</li>
                 </div>
-                
+                :null
                ))
             } 
           </ul>

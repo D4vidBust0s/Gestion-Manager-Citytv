@@ -240,6 +240,15 @@ function Sidebar() {
                   Manager
                 </Link>
               </li>
+
+              <li className="list__inside">
+                <Link
+                  to="user-balancers"
+                  className="nav__link nav__link--inside"
+                >
+                  User Balancers 
+                </Link>
+              </li>
             </ul>
           </li>
 

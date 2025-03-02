@@ -145,6 +145,25 @@
         transform: scale(1.05);
         cursor: pointer;
     }
+
+    .ListLI2{
+        border-bottom: 1px solid #701CF5;
+        padding: .18rem 0 .18rem 0;
+        width: 100%;
+        padding-left: .5rem;
+        color: #EB464B;
+        font-weight: 600;
+        
+    }
+
+    .ListLI2:hover{
+        transform: scale(1.05);
+        cursor: pointer;
+    }
+
+    
+
+   
 }
 
 .person{

@@ -189,6 +189,27 @@
 
         /* ----------------------------------------------------------------------------------------------------------------- */
 
+        /* estilos para personal USERBALANCERS */
+
+        .liMain-var6{
+            color: #DADADA;
+            width: 100%;
+            border-bottom: 1px solid #545454;
+            font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            height: 1.61rem;
+            padding-top: 4.5px;
+            background:  #000000;
+            font-weight: 700;
+            
+        }
+
+        .liMain-var6:hover{
+            cursor: pointer;
+              
+        }
+
+        /* ----------------------------------------------------------------------------------------------------------------- */
+
         .separador{
             height: 62px;
         }

@@ -200,5 +200,13 @@
     .etiqueta{
         margin-top: 2rem;
     }
+
+    .userSepia{
+        width: 12rem;
+        height: 12rem;
+        border-radius: 50%;
+        border: 3px solid #EB464B;
+        filter: grayscale(100%);
+    }
    
 }

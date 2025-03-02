@@ -9,7 +9,7 @@ import CameraManSingle from '../../../assets/Cameraman-single.png'
 
 
 // eslint-disable-next-line react/prop-types
-export default function ModalBase1({estado,cambiarEstado,title,content}) {
+export default function ModalBase1({estado,cambiarEstado,title,content,id,op,idGrupo}) {
    
 
   return (

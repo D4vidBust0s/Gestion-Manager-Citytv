@@ -24,11 +24,13 @@ import axios from 'axios';
 
 let aux = 0;
 let aux2 = 0;
+let aux3;
+
 //------------------------------------------------------------------------------------------------------------------------------------
 
-export default function ModalManagerPayroll({id,op,GrupoID}) {
+
+export default function ModalManagerPayroll({id,op,idGrupo}) {
   
- 
 
   /* estados para el datepicker */
   const [startDateNacimiento, setStartDateNacimiento] = useState(new Date());
@@ -41,7 +43,9 @@ export default function ModalManagerPayroll({id,op,GrupoID}) {
    const [dataDos, setDataDos] = useState([]);
 
    //Estado para la palabra activo o inactivo segun el estado
-   const [estado, setEstado] = useState("Activo");
+   const [estado, setEstado] = useState(true);
+
+  
 
 
   /* Referencias */
@@ -73,8 +77,123 @@ export default function ModalManagerPayroll({id,op,GrupoID}) {
   
 
   //-------------------------------------------------------------------------------------------------------
-
   //FUNCIONES
+  //-------------------------------------------------------------------------------------------------------
+
+  //Funcion que obtiene la data de la api - listado de grupos
+  const obtenerListadoGrupos = async () => {
+    return await axios
+      .get("http://localhost:3000/api/groups")
+      .then((response) => setData(response.data));
+  };
+
+
+  //Funcion para modificar el estado activo o inactivo del usuario
+  
+  const modifyEstate = (e) =>{
+
+    if(e.target.value=="true")
+    {
+      setEstado(true);
+    }
+
+    else if(e.target.value=="false"){
+      setEstado(false);
+    }
+    
+   
+
+    
+  }
+  
+  //Funcion para obtener la data de  la persona
+const obtenerSinglePayroll = async () => {
+  return await axios
+    .get("http://localhost:3000/api/payroll/"+id)
+    .then((response) => setDataDos(response.data));
+    
+};
+
+
+  
+   const manipulador1 = (date) =>{
+    aux = 1;
+    setStartDateNacimiento(date)
+   }
+
+   const manupulador2 = (date)=>{
+    aux2 = 1;
+    setStartDateIngreso(date);
+   }
+
+  const enviar = async (usNombre,usApellido,id,grupo,grupoid,scName,scID,ts,tg,ac)=>{
+
+    await axios.post("http://localhost:3000/api/rotationsmanager/", {
+  
+        nombreusuario: usNombre +" "+usApellido,
+        userid: id,
+        groupname: grupo, 
+        groupid: grupoid,
+        schemaname: scName,
+        schemaid: scID,
+        totalschema: ts,
+        totalgroup: tg,
+        actual: ac,
+        dayKey: new Date(),
+      });
+  
+      
+  }
+
+  const enviarFS = async (usNombre,usApellido,id,grupo,grupoid,scName,scID,ts,tg,ac)=>{
+
+    await axios.post("http://localhost:3000/api/rotationsmanager-fs/", {
+  
+        nombreusuario: usNombre +" "+usApellido,
+        userid: id,
+        groupname: grupo, 
+        groupid: grupoid,
+        schemaname: scName,
+        schemaid: scID,
+        totalschema: ts,
+        totalgroup: tg,
+        actual: ac,
+        dayKey: new Date(),
+      });
+  
+      
+  }
+
+  const actualizar = async ()=>{
+
+    return await axios.put("http://localhost:3000/api/rotationsmanager/payroll/" + id, {
+  
+        username: nombresRef.current.value +" "+apellidosRef.current.value,
+        groupname: grupoReF.current.value,
+        groupid: grupoReF.current.value
+        
+      });
+  
+      
+  }
+
+  const actualizarFS = async ()=>{
+
+    return await axios.put("http://localhost:3000/api/rotationsmanager-fs/payroll/" + id, {
+  
+        username: nombresRef.current.value +" "+apellidosRef.current.value,
+        groupname: grupoReF.current.value,
+        groupid: grupoReF.current.value
+        
+      });
+  
+      
+  }
+
+
+  
+
+
   const enviarFormulario = async () => {
 
     /* VALIDACIONES */
@@ -164,10 +283,10 @@ export default function ModalManagerPayroll({id,op,GrupoID}) {
       if(op == 0)
       {
 
-        toast.success("op0 = "+ op);
-        //Se envia la informacion validada al api
-        /*
-        await axios.post("http://localhost:3000/api/payroll/", {
+        //Se envia la informacion validada al api en la collection Payrolls
+        //----------------------------------------------------------------------------------------------------
+
+        return await axios.post("http://localhost:3000/api/payroll/", {
 
           Nombres: nombresRef.current.value,
           Apellidos: apellidosRef.current.value,
@@ -190,54 +309,59 @@ export default function ModalManagerPayroll({id,op,GrupoID}) {
           RH: rhReF.current.value,
           ContactoPrincipal: contactoPrincipalReF.current.value,
           ContactoAux: contactoSecundarioReF.current.value,
-          Activo: estadoReF.current.value,
+          Activo: (estadoReF.current.value == "true" ? true : false),
           Mainplanner: mainplannerRef.current.value,
-          SubGrupo:sbRef.current.value 
-      }); */
+          SubGrupo: parseInt(sbRef.current.value),
 
-
-          toast.success("Usuario agregado correctamente");
-
+      })
+      .then((response) => aux3 = response.data._id)
+      .then((response) => enviar(nombresRef.current.value,apellidosRef.current.value,aux3,grupoReF.current.value,grupoReF.current.value,"------------","------------",0,0,0))
+      .then((response) => enviarFS(nombresRef.current.value,apellidosRef.current.value,aux3,grupoReF.current.value,grupoReF.current.value,"------------","------------",0,0,0))
+      .then((response) => toast.success("Nuevo trabajador agregado al sistema correctamente"))
+     
 
       }
 
       else if (op == 1)
       {
-        toast.success("id "+ id);
+
 
         //Proceso de actualizacion en la api
          await axios.put("http://localhost:3000/api/payroll/" + id, {
 
-          nombres: nombresRef.current.value,
-          apellidos: apellidosRef.current.value,
-          //edad: edadRef.current.value,
-          //fechaDeNacimiento: nacimientoRef.current.input.value,
-          //genero: generoRef.current.value,
-          //estadoCivil: civilRef.current.value,
-          //celularPrioritario: celPrioritarioRef.current.value,
-          //celularAux: celAuxReF.current.value,
-          //telefonoFijo: fijoRef.current.value,
-          //direccionResidencia: dirReF.current.value,
-          //email: emailReF.current.value,
-          //cc: ccReF.current.value,
-          //pasaporte: pasaporteReF.current.value,
-          //tarjetaProfesional: profesionalReF.current.value,
-          cargo: cargoReF.current.value,
-          grupo: grupoReF.current.value,
-          grupoID: grupoReF.current.value,
-          fechaIngreso: ingresoReF.current.input.value,
-          //RH: rhReF.current.value,
-          //contactoPrincipal: contactoPrincipalReF.current.value,
-          //contactoAux: contactoSecundarioReF.current.value,
-          activo: estadoReF.current.value,
-          mainplanner: mainplannerRef.current.value,
-          subGrupo: sbRef.current.value
+          Nombres: nombresRef.current.value,
+          Apellidos: apellidosRef.current.value,
+          Edad: edadRef.current.value,
+          FechaDeNacimiento: new Date (nacimientoRef.current.input.value),
+          Genero: generoRef.current.value,
+          EstadoCivil: civilRef.current.value,
+          CelularPrioritario: celPrioritarioRef.current.value,
+          CelularAux: celAuxReF.current.value,
+          TelefonoFijo: fijoRef.current.value,
+          DireccionResidencia: dirReF.current.value,
+          Email: emailReF.current.value,
+          Cc: ccReF.current.value,
+          Pasaporte: pasaporteReF.current.value,
+          TarjetaProfesional: profesionalReF.current.value,
+          Cargo: cargoReF.current.value,
+          Grupo: grupoReF.current.value,
+          GrupoID: grupoReF.current.value,
+          FechaIngreso: new Date(ingresoReF.current.input.value),
+          Rh: rhReF.current.value,
+          ContactoPrincipal: contactoPrincipalReF.current.value,
+          ContactoAux: contactoSecundarioReF.current.value,
+          Activo: estadoReF.current.value,
+          Mainplanner: mainplannerRef.current.value,
+          SubGrupo: parseInt(sbRef.current.value),
 
-        }); 
+        })
+  
+        .then((response) => actualizar())
+        .then((response) => actualizarFS())
+        .then((response) => toast.success("Usuario en actualizado correctamente"))
+        .then((response) => obtenerSinglePayroll())
 
-
-        toast.success("Usuario en actualizado correctamente");
-        obtenerSinglePayroll();
+        
       }
       
 
@@ -246,82 +370,12 @@ export default function ModalManagerPayroll({id,op,GrupoID}) {
 
   }
 
-  //FUNCIONES
-  //Funcion que obtiene la data de la api - listado de grupos
-  const obtenerListadoGrupos = async () => {
-    return await axios
-      .get("http://localhost:3000/api/groups")
-      .then((response) => setData(response.data));
-  };
-
-
-  //Funcion para modificar el estado activo o inactivo del usuario
-  
-  const modifyEstate = () =>{
-
-    if(estadoReF.current.value=="true")
-    {
-      setEstado("Activo");
-    }
-
-    else if(estadoReF.current.value=="false")
-    {
-      setEstado("Inactivo");
-    }
-   
-  }
   
 
 
-  //Funcion que obtiene la data de una persona por id
- 
-  //Funcion reset formulario
-  const reset =() =>{
    
-      nombresRef.current.value="";
-      apellidosRef.current.value="";
-      edadRef.current.value="";
-      nacimientoRef.current.input.value="";
-      generoRef.current.value="";
-      civilRef.current.value="";
-      celPrioritarioRef.current.value="";
-      celAuxReF.current.value="";
-      fijoRef.current.value="";
-      dirReF.current.value="";
-      emailReF.current.value="";
-      ccReF.current.value="";
-      pasaporteReF.current.value="";
-      profesionalReF.current.value="";
-      cargoReF.current.value="";
-      grupoReF.current.value="";
-      ingresoReF.current.input.value="";
-      rhReF.current.value="";
-      contactoPrincipalReF.current.value="";
-      contactoSecundarioReF.current.value="";
-      //estadoReF.current.value="";
-      //setEstado(estadoReF.current.value="Activo");
-      //mainplannerRef.current.value="";
-      
-  }
-
-   const manipulador1 = (date) =>{
-    aux = 1;
-    setStartDateNacimiento(date)
-   }
-
-   const manupulador2 = (date)=>{
-    aux2 = 1;
-    setStartDateIngreso(date);
-   }
 
 
-   //Funcion para obtener la data de  la persona
-   
-    const obtenerSinglePayroll = async () => {
-      return await axios
-        .get("http://localhost:3000/api/payroll/"+id)
-        .then((response) => setDataDos(response.data));
-    };
 
 
  
@@ -332,56 +386,56 @@ export default function ModalManagerPayroll({id,op,GrupoID}) {
  }, []);
 
  useEffect(() => {
-  
-  if(id){
-    const obtenerSinglePayroll = async () => {
-      return await axios
-        .get("http://localhost:3000/api/payroll/"+id)
-        .then((response) => setDataDos(response.data));
-    };
-  
+  //esta condicional hace que se ejecute unicamente cuando se va a editar un usuario
+  if(op=="1")
+  {
     obtenerSinglePayroll();
-
   }
+    
 
 }, [id]);
 
 useEffect(()=>{
-  nombresRef.current.value=dataDos["nombres"];
-  apellidosRef.current.value=dataDos["apellidos"];
-  edadRef.current.value=dataDos["edad"];
-  nacimientoRef.current.input.value=new Date(dataDos["fechaDeNacimiento"]).toLocaleDateString();
-  setStartDateNacimiento(Date.parse(dataDos["fechaDeNacimiento"]));
-  generoRef.current.value=dataDos["genero"];
-  civilRef.current.value=dataDos["estadoCivil"];
-  celPrioritarioRef.current.value=dataDos["celularPrioritario"];
-  celAuxReF.current.value=dataDos["celularAux"];
-  fijoRef.current.value=dataDos["telefonoFijo"];
-  dirReF.current.value=dataDos["direccionResidencia"];
-  emailReF.current.value=dataDos["email"];
-  ccReF.current.value=dataDos["cc"];
-  pasaporteReF.current.value=dataDos["pasaporte"];
-  profesionalReF.current.value=dataDos["tarjetaProfesional"];
-  cargoReF.current.value=dataDos["cargo"];
-  grupoReF.current.value=dataDos["grupoID"];
-  ingresoReF.current.input.value=new Date(dataDos["fechaIngreso"]).toLocaleDateString();
-  setStartDateIngreso(Date.parse(dataDos["fechaIngreso"]));
-  rhReF.current.value=dataDos["RH"];
-  contactoPrincipalReF.current.value=dataDos["contactoPrincipal"];
-  contactoSecundarioReF.current.value=dataDos["contactoAux"];
-  estadoReF.current.value=dataDos["activo"];
-  setEstado((estadoReF.current.value=dataDos["activo"])==true?"Activo":"Inactivo");
-  mainplannerRef.current.value=dataDos["mainplanner"];
-  sbRef.current.value=dataDos["subGrupo"];
-  aux = 0;
-  aux2 = 0;
+
+  if(op==1)
+  {
+    nombresRef.current.value=dataDos["nombres"];
+    apellidosRef.current.value=dataDos["apellidos"];
+    edadRef.current.value=dataDos["edad"];
+    nacimientoRef.current.input.value=new Date(dataDos["fechaDeNacimiento"]).toString();
+    setStartDateNacimiento(Date.parse(dataDos["fechaDeNacimiento"]));
+    generoRef.current.value=dataDos["genero"];
+    civilRef.current.value=dataDos["estadoCivil"];
+    celPrioritarioRef.current.value=dataDos["celularPrioritario"];
+    celAuxReF.current.value=dataDos["celularAux"];
+    fijoRef.current.value=dataDos["telefonoFijo"];
+    dirReF.current.value=dataDos["direccionResidencia"];
+    emailReF.current.value=dataDos["email"];
+    ccReF.current.value=dataDos["cc"];
+    pasaporteReF.current.value=dataDos["pasaporte"];
+    profesionalReF.current.value=dataDos["tarjetaProfesional"];
+    cargoReF.current.value=dataDos["cargo"];
+    grupoReF.current.value=dataDos["grupoID"];
+    ingresoReF.current.input.value=new Date(dataDos["fechaIngreso"]).toString();
+    setStartDateIngreso(Date.parse(dataDos["fechaIngreso"]));
+    rhReF.current.value=dataDos["RH"];
+    contactoPrincipalReF.current.value=dataDos["contactoPrincipal"];
+    contactoSecundarioReF.current.value=dataDos["contactoAux"];
+    estadoReF.current.value=dataDos["activo"];
+    setEstado(dataDos["activo"]);
+    mainplannerRef.current.value=dataDos["mainplanner"];
+    sbRef.current.value=dataDos["subGrupo"];
+    aux = 0;
+    aux2 = 0;
+  }
+  
 
 },[dataDos]);
 
 useEffect(()=>{
   if(op==0 && aux == 0 && aux2 == 0)
   {
-    reset();
+    //reset();
   }
   
 });
@@ -500,7 +554,7 @@ useEffect(()=>{
                      Teléfono Fijo
                   </div>
                   <div className="columB">
-                  <input type="text" name="e-telFijo" className='input-normal' ref={fijoRef}/>
+                  <input type="text" name="telFijo" className='input-normal' ref={fijoRef}/>
                   </div>
                 </div>
 
@@ -647,18 +701,18 @@ useEffect(()=>{
 
 
             <div className="column3">
-                <img src={Annita} alt="User" className='img-user'/>
-                <img src={Pencil} alt="User" className='img-editPhoto'/>
-                <h3>Anna Brenda Contreras</h3>
-                <div className="estadoUp">
-                  {estado}
+                <img src={Annita} alt="User" className={estado==true ? "img-user" : "userSepia" }/>
+                <img src={Pencil} alt="User" className='img-editPhoto'/>  
+                <h3>{op==0?"----------------------------":dataDos["nombres"] + " " + dataDos["apellidos"]}</h3>
+                <div className={estado==true ? "estadoUp" : "estadoDown" }>
+                  {estado==true?"Activo":"Inactivo"}
                 </div>
 
                 <div className="row2">
                   <div className="columB">
-                  <select name="Estado" className='input-normal2' ref={estadoReF} onChange={modifyEstate} >
-                      <option value={true}>Activo</option>
-                      <option value={false}>Inactivo</option>
+                  <select name="Estado" className='input-normal2' ref={estadoReF}  onChange={(e) => modifyEstate(e)} >
+                      <option  value={"true"}>Activo</option>
+                      <option  value={"false"}>Inactivo</option>
                   </select>
                   </div>
                 </div>
@@ -668,7 +722,7 @@ useEffect(()=>{
                 </div>
                 <div className="row2">
                   <div className="columB">
-                  <select name="Estado" className='input-normal2' ref={mainplannerRef} onChange={modifyEstate} >
+                  <select name="Estado" className='input-normal2' ref={mainplannerRef} >
                       <option value={"Main planner 1"}>Main planner 1</option>
                       <option value={"Main planner 2"}>Main planner 2</option>
                   </select>
@@ -680,7 +734,7 @@ useEffect(()=>{
                 </div>
                 <div className="row2">
                   <div className="columB">
-                  <select name="subgrupo" className='input-normal2' ref={sbRef} onChange={modifyEstate} >
+                  <select name="subgrupo" className='input-normal2' ref={sbRef}>
                       <option value={1}> 1 </option>
                       <option value={2}> 2 </option>
                       <option value={3}> 3 </option>

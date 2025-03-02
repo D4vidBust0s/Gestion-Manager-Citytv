@@ -1,0 +1,75 @@
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+    --Special: #17429e;
+
+}
+.subT{
+   color: #EB464B;
+   margin: 0.6rem 0 1.1rem 0;
+}
+
+.ListUL2{
+    
+    height: 45%;
+    overflow: auto;
+}
+.btns{
+    position: absolute;
+    bottom: 0;
+    margin-bottom: 2rem;
+    width: 10%;
+    margin-left: 22%;
+    display: flex;
+    align-items: center;
+    justify-content: space-around
+    
+}
+
+.mas{
+    background-color: #469624;
+    height: 2.5rem;
+    width: 2.5rem;
+    display: flex;
+    align-items: center;    
+    justify-content: center;
+    padding: 1.8rem;
+    cursor: pointer;
+    border-radius: .5rem;
+}
+
+.mas:hover{
+    transform: scale(1.1);
+}
+
+.menos{
+    background-color: #EB464B;
+    height: 2.5rem;
+    width: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.8rem;
+    cursor: pointer;
+    border-radius: .5rem;
+}
+
+.menos:hover{
+    transform: scale(1.1);
+}
+
+.img-plus{
+   width: auto;
+}
+
+.activo11{
+    background: #547725;
+    color: #DADADA;
+}
