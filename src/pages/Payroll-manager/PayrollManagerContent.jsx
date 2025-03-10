@@ -17,8 +17,8 @@ import Plus from '../../assets/Plus.svg'
 import Edit from '../../assets/pencil.svg'
 import Delete from '../../assets/trash.svg'
 
-/* COMPONENTS */
-
+/* VARIABLES */
+let idGroupGlobal = "";
 
 
 export default function PayrollManagerContent() {
@@ -88,6 +88,37 @@ export default function PayrollManagerContent() {
     }
  };
 
+
+  //Funcion que obtiene la data de la api - listado de grupos
+  const showUsersGroup = async (groupID,e) => {
+
+    //guardo el id de grupo en una variable global para posteriores usos
+    idGroupGlobal = groupID;
+
+    //reinicio el nombre del usuario previamente seleccionado
+    setSelectPerson("-----");
+
+     //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
+     if (e.target.classList=="contentForma") 
+     {
+ 
+       let aux = document.getElementsByClassName("activo");
+ 
+       for (let index = 0; index < aux.length; index++) 
+       {
+         aux[index].classList.remove("activo");
+       }
+ 
+       e.target.classList.add("activo");
+     }
+
+
+    return await axios
+      .get("http://localhost:3000/api/payroll/idGroup/"+groupID)
+      .then((response) => setData2(response.data));
+      
+  };
+
 //funcion que se ejecuta cuando se da click en el boton de agreagar
 const addPerson = () =>{
   setOperation(0);
@@ -119,17 +150,39 @@ const addPerson = () =>{
     await axios.delete("http://localhost:3000/api/rotationsmanager/delsimplereg/" + selectPersonId);
  }
 
- //eliminar Registro completo en rotations manager
+ //eliminar Registro completo en rotations manager fines de semana
  const deleteFromRmFS = async ()=>{
 
   await axios.delete("http://localhost:3000/api/rotationsmanager-fs/delsimplereg/" + selectPersonId);
 }
 
 
+//Funcion que al ser ejecutada me permite actualizar el nuevo numero de usuarios en rotationsmanager y rotationsmangerFS
+const updateTotalGrupo = async ()=>{
+
+  let totalGroupsActual = 0;
+  
+  data2?.map((rm)=>(
+      String(rm.activo) == "true" ? totalGroupsActual ++ :null
+     ));
+
+     totalGroupsActual = totalGroupsActual-1;
+
+      await axios.put("http://localhost:3000/api/rotationsmanager/uptdatetotalgroup/" + idGroupGlobal,{
+        nuevovalor: totalGroupsActual,
+      }); 
+
+      await axios.put("http://localhost:3000/api/rotationsmanager-fs/uptdatetotalgroup/" + idGroupGlobal,{
+        nuevovalor: totalGroupsActual,
+      }); 
+  
+}
+
+
    //Eliminar grupo
    const deletePerson = async () => {
-    if (selectPerson == "-----" ) {
-      toast.error("Para eliminar una persona del listado, primero debe seleccionarla dando clic");
+    if (selectPerson == "-----" || idGroupGlobal == "") {
+      toast.error("Para eliminar una persona del listado, primero debe seleccionar un grupo y luego dar clic en el listado");
     } 
     else 
     {
@@ -156,42 +209,20 @@ const addPerson = () =>{
 
   const EliminarPerson = async ()=>{
 
+    
     await axios.delete("http://localhost:3000/api/payroll/" + selectPersonId)
     .then((response) => obtenerListadoGrupos())
     .then((response) => setSelectPerson("-----"))
     .then((response) => obtenerListadoPayroll())
     .then((response) => deleteFromRm())
     .then((response) => deleteFromRmFS())
-    .then((response) => toast.error("Usuario eliminado del sistema correctamente"))
+    .then((response) => updateTotalGrupo())
+    .then((response) => toast.success("Usuario eliminado del sistema correctamente"))
     
+     
   }
 
-  //Funcion que obtiene la data de la api - listado de grupos
-  const showUsersGroup = async (groupID,e) => {
-
-    //reinicio el nombre del usuario previamente seleccionado
-    setSelectPerson("-----");
-
-     //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
-     if (e.target.classList=="contentForma") 
-     {
  
-       let aux = document.getElementsByClassName("activo");
- 
-       for (let index = 0; index < aux.length; index++) 
-       {
-         aux[index].classList.remove("activo");
-       }
- 
-       e.target.classList.add("activo");
-     }
-
-
-    return await axios
-      .get("http://localhost:3000/api/payroll/idGroup/"+groupID)
-      .then((response) => setData2(response.data));
-      
-  };
 
 
   
