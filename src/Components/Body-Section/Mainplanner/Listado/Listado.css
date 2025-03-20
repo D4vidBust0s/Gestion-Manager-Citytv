@@ -45,15 +45,14 @@
     z-index: 200;
     padding: 2rem  0  2rem  0;
     margin-top: 1.2px;
-    
+      
+}
 
-    .event{
-        text-decoration: none;
-        color: #DADADA;
-        
-        
-    }
-    
+.event{
+  text-decoration: none;
+  color: #DADADA;
+  
+  
 }
 
 .contentListado
@@ -66,9 +65,7 @@
         padding: 2px 0;
         margin-left: 17.1rem;
         height: 23.4px;
-        
-        
-        
+      }  
 
         .ulEvent {
             list-style-type: none; 
@@ -183,7 +180,7 @@
             font-weight: 500;
           }
 
-    }
+    
 
     .separador2{
       height: 1.31px;

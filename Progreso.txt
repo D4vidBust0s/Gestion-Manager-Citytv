@@ -1,0 +1,13 @@
+
+// ARCHIVO QUE DESCRIBE EL PROCESO GENERAL DE LA APLICACION
+--------------------------------------------------------------------------------------------------------------------------------
+
+1) cuando es fin de semana he intento ver una programacion entre semana no me es posible ya que solo me deja ver
+   las rotaciones del fin de semana, debo hacer que sea posible consultar no dependiendo del dia actual.
+
+   [LUGAR : HOME]  
+   [ESTADO : PENDEINTE]
+   [PROGRESO : 0%]
+
+
+2) 

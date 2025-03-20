@@ -28,6 +28,7 @@ export default function Listado() {
   const [data3, setData3] = useState([]);
   const [data4, setData4] = useState([]);
   const [data5, setData5] = useState([]);
+  const [data6, setData6] = useState([]);
   const [saved, setSaved] = useState(0);
 
 
@@ -44,6 +45,10 @@ export default function Listado() {
 
   let actual;
   let actualFS;
+
+  let globalIdGroup;
+  let arrayFijos = [];
+  
   
 
   //----------------------------------------------------------------------------------------------------------
@@ -94,6 +99,14 @@ const getAllRotationsManagerFS= async () => {
     .then((response) => setData5(response.data));
 }
 
+//Traer todos los registros de rotationsManager que sean de un grupo especifico y turno fijo
+const getAllRotationsManagerFijos= async (idGrupo) => {
+    
+  return await axios
+    .get("http://localhost:3000/api/rotationsmanager/fijos/"+idGrupo)
+    .then((response) => setData6(response.data));
+}
+
 
 /* CONTEXTOS*/
 const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Define un estado para la fecha de la barra
@@ -133,33 +146,94 @@ const save = ()=>{
 
 }
 
-const ciclo = (totalgrupo,actual,domingos,idGrupo)=>{
+const ciclo = (totalgrupo,actual,domingos,idGrupo,isFijo,nombre)=>{
 
+ 
   let index = 0;
   let turno;
+  let auxActual = actual;
 
-  //esta es la operacion que debe devolver el index del schema en el que deberia estar el trabajador
-  for(let i=0; i<=domingos; i++ )
+  console.log("---------------------------------------------------------")
+  console.log("Antes----------------------------------------------------")
+  console.log(nombre + "  actual... " + actual + "  index... " + index  + " T-fijos... " + arrayFijos.length) 
+  console.log("---------------------------------------------------------") 
+
+  //Esta es la operacion que debe devolver el index del schema en el que deberia estar el trabajador
+  //-----------------------------------------------------------------------------------------------------------------------------------------------
+  
+  //Numero de semanas transcurridas (actual aumentado progresivamente)
+  for(let i=0; i<=domingos; i++ )                                                      // i = 0   
   {
-    index = actual ++;
+    //Filtrado para saber si es fijo o no
+    if(isFijo==false)
+    {
+        //Numero de turnos fijos del grupo
+        for (let a=0; a < arrayFijos.length; a++) 
+        {
+          console.log("entro al for como: " + arrayFijos[a]);                           // 3 ,             1
+          
+          if(actual != arrayFijos[a])                                                   // 4 - 3           4 - 1
+          {
+            
+              console.log("actual " + actual + " es diferente " +arrayFijos[a]);
+              index = actual+a;                                                         //  4 + 0 = 4      4 +  1 = 5
+             
 
-    if(index >= totalgrupo)
+               if(index > totalgrupo)                                                   //  4 > 6          5 > 6 
+              {
+                index = 1;
+              }
+              
+              console.log("index = " + index);                                         //  index = 4       index = 5
+             
+
+          }
+        }
+
+       
+         console.log(nombre + "  actual... " + actual + "  index... " + index  )       //  4 , 5
+      
+    }
+
+    
+
+    else{
+      index = auxActual;
+      console.log("es fijo");
+      console.log(nombre + "  actual... " + actual + "  index... " + index  ) 
+    }
+    
+    //Limpiamos el array para que no se acumule
+    arrayFijos=[];
+    actual++;
+
+    if(actual > totalgrupo)                                                  
     {
       actual = 1;
     }
 
   }
+  
 
   //Segun el index obtenido busco el nombre del schema y lo muestro 
-  data4?.map((schemas)=>(
+  data4?.map((schemas)=>
+  (
     idGrupo == schemas.Grupo_ID && schemas.Order == index && schemas.Tipo == "Entre Semana" &&
       (turno = schemas.Nombre)
     
   ))
 
-  
-  return turno + "  ----- " + domingos +  ( domingos == "1" ? " Semana" : " Semanas");
+  //para el proceso de turno fijo debo validar si isfijo == a true, false o undefined  
+  return turno + "  ----- " + domingos +  ( domingos == "1" ? " Semana " + (isFijo == true ? " ------ Trabajador con turno fijo ------" : isFijo == false || isFijo == undefined ? "" : null ): " Semanas " + (isFijo == true ? " ------ Trabajador con turno fijo ------" : isFijo == false  ? "" : null ));
 }
+
+
+
+
+
+
+
+
 
 const cicloFS = (totalgrupo,actual,domingos,idGrupo)=>{
 
@@ -225,13 +299,14 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
   }
 
 
+
   //Por ultimo hagao las operaciones para saber en que turno estaria el trabajador en la fecha escogida
     let pronostico;
     
     //hago el pronostico 
     data2?.map((rotationsManager)=>(
       idUsuario==rotationsManager.userId && (
-       pronostico=ciclo(rotationsManager.totalGrupo,rotationsManager.actual,Domingos,rotationsManager.groupId)
+       pronostico=ciclo(rotationsManager.totalGrupo,rotationsManager.actual,Domingos,rotationsManager.groupId,rotationsManager.fijo,rotationsManager.userName)
       )
     ))
 
@@ -306,10 +381,18 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
         DiaClave = new Date(rotationsManager.dayKey).setHours(0,0,0,0),
         totalSche = rotationsManager.totalSchema,
         totalGP = rotationsManager.totalGrupo,
-        actual = rotationsManager.actual
+        actual = rotationsManager.actual,
+        globalIdGroup = rotationsManager.groupId
       ) 
       
   ))
+
+  //creo un nuevo arreglo con los datos de turnos fijos para enviarlos a ciclo
+    data2?.map((RM)=>(
+      RM.groupId == globalIdGroup && RM.fijo == true 
+      ? arrayFijos.push(RM.actual)
+      :null
+   ))
 
 
   data5.map((rotationsManagerFS)=>(
@@ -421,8 +504,11 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
 
   const exist = (payrollId,payrollGrupo,groupNombre,payrollNombres,payrollApellidos) =>{
 
+    
+
     return <div className="contentListado">
       <Toaster />
+     
 
       <ul className="ulEvent">
           <li className={saved == 0 ? "liEventTipe00" : "liEventTipe0"} onClick={() => setModal2(!modal2)}>
@@ -565,10 +651,10 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
            {
             //Ciclo que trae todos los usuarios del sistema 
            data1?.map((payroll)=>(
+
             <div className="hol" key={payroll._id}>
               {
-                     
-                   payroll.grupoID == group._id && payroll.activo == true ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres, payroll.apellidos) : null
+                   payroll.grupoID == group._id && payroll.activo == true ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres, payroll.apellidos): null
               
               }
             </div>
