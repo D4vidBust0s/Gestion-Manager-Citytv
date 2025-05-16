@@ -3,7 +3,7 @@ import './Barra.css'
 
 /* IMAGENES */
 import tropa from '../../../../assets/tropa.png';
-//import flecha from '../../../../assets/arrow.svg'
+import target from '../../../../assets/target.svg'
 
 /* DEPENDENCIAS */
 import {useState, useEffect, useContext} from 'react'
@@ -367,6 +367,19 @@ const testBreaks = (pid)=>{
 
     return <ul className="ulMain" key={pid}>
       <li className={permissions == 1 ? "liMain-var1" :  incapacitado == 1 ? "liMain-var2" : licensia == 1 ? "liMain-var3" : vacaciones == 1 ? "liMain-var4" : breaks == 1 ? "liMain-var5" : cargo == "USERBALANCER" ? "liMain-var6": "liMain"} key={pid} onClick={() => verificar(pid,pn,pa,subgrupo,cargo,pg,grupoid) }>
+        {
+          data7?.map((rm)=>(
+            rm.userId == pid && rm.fijo == true 
+            ?
+
+            <span key={rm._id}> 
+              <img src={target} alt="fijo" className='target'/>
+            </span> 
+            
+            : null
+          ))
+        }
+        
         {pn +" "+pa}
       </li>
     </ul>

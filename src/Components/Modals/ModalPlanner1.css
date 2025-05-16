@@ -478,6 +478,28 @@
   
 }
 
+.indicador3{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #00094B;
+    color: #D9D9D9;
+    padding: .5rem;
+    font-size: .8rem;
+    margin-top: -10%;
+    border-radius: 5px;
+    border: #D9D9D9 1px solid;
+    width: 70%;
+  
+}
+
+.liListaItem2{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
 .periodo{
     position: absolute;
     width: 100%;
@@ -689,4 +711,20 @@
     }
 
    
+}
+
+.tipo-turno{
+    background-color: #000000;
+    width: 30%;
+    margin-top: -1.5%;
+    font-size: .7rem;
+    border-radius: 2px 2px 0 0;
+}
+
+.turno-fijo{
+    background-color: #547725;
+    width: 30%;
+    margin-top: -1.5%;
+    font-size: .7rem;
+    border-radius: 2px 2px 0 0;
 }

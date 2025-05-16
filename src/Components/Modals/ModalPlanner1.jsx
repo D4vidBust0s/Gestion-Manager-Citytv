@@ -10,6 +10,7 @@ import Pencil from '../../assets/pencil.svg'
 import Plus from '../../assets/Plus.svg'
 import Trash from '../../assets/trash.svg'
 
+
 import Balanza from '../../assets/balanza.png'
 import Regalo from '../../assets/regalo.svg'
 import Calendario from '../../assets/calendario.png'
@@ -31,6 +32,9 @@ let fullBreaks  = 0;
 let fullIncapacitys   = 0;
 let fullRecess  = 0;
 let fullLicenses   = 0;
+
+let globalIdGroup;
+let arrayVariables = [];
 
 let totalGrupo = 0;
 let totalSchema = 0;
@@ -271,10 +275,7 @@ const getAllRotationsManager= async () => {
 
   const del = ()=>{
 
-    if (confirm("¿Realmente desea eliminar el turno? presione aceptar para eliminarlo") == true) 
-    {
-      toast.success("Turno eliminado");
-    } 
+   toast.error("quiere eliminar?");
     
   }
 
@@ -684,43 +685,90 @@ const getAllRotationsManager= async () => {
   }
 
 
-  const ciclo = (totalgrupo,actual,domingos,idGrupo)=>{
+  const ciclo = (totalgrupo,actual,domingos,idGrupo,isFijo,nombre)=>{
 
     let index = 0;
-    let turno;
-  
-    //esta es la operacion que debe devolver el index del schema en el que deberia estar el trabajador
-    for(let i=0; i<=domingos; i++ )
+    let turno = "";
+    
+    //ordenamos de menor a mayor el array de turnos variables
+    arrayVariables.sort(function(a,b){return a-b})
+    
+    
+    //Numero de semanas transcurridas (actual aumentado progresivamente)
+    for(let i=0; i<domingos; i++ )                                                     
     {
-      index = actual ++;
-  
-      if(index >= totalgrupo)
+      //Procedimiento exclusivo para los turnos que NO son fijos 
+      if(isFijo == false)  
       {
-        actual = 1;
+      
+        let contador = 1;
+        for (let a = 0; a < arrayVariables.length; a++)
+        {
+          if (contador == arrayVariables.length) 
+          {
+            index = arrayVariables[0];
+            a = arrayVariables.length;
+            actual = index;
+          }
+  
+          else{
+            if (actual == arrayVariables[a]) 
+            {
+              index = arrayVariables[a+1];
+              a = arrayVariables.length;
+              actual=index;
+            }
+          }
+  
+          contador++;
+          
+        }
+       
       }
   
-    }
+      //Procedimiento exclusivo para los turnos que SI son fijos 
+      else if(isFijo == true)
+      {
+          index=actual;
+      }
   
-    //Segun el index obtenido busco el nombre del schema y lo muestro 
-    data9?.map((schemas)=>(
+      else{
+        console.log("isfijo no se definio");
+      }
+  
+      
+  
+    }
+    
+  
+    arrayVariables=[]; 
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    //-------------------------------------------------------------------------------------------------------------------------------
+       //Segun el index obtenido busco el nombre del schema y lo muestro 
+    //-------------------------------------------------------------------------------------------------------------------------------
+    data9?.map((schemas)=>
+    (
       idGrupo == schemas.Grupo_ID && schemas.Order == index && schemas.Tipo == "Entre Semana" &&
         (turno = schemas.Nombre)
       
     ))
   
-    /*
-    setPronosticoTurnos([
-      ...pronosticoTurnos,
-      { idgrupo: idGrupo, semanas: domingos}
-    ])
-    */
+    
   
-   
-  
-    return turno + "  ----- " + domingos +  ( domingos == "1" ? " Semana" : " Semanas");
+    //para el proceso de turno fijo debo validar si isfijo == a true, false o undefined  
+    return turno;  /*+ "  ----- " + (domingos == 0 ? "Semana actual" :  domingos == 1 ? domingos +" Semana " : domingos + " Semanas ");*/
   }
 
-  const Pronostico = (PAYROLLID)=>{
+  const Pronostico = (PAYROLLID)=>{ 
     data10.map((rotationsManager)=>(
       PAYROLLID == rotationsManager.userId  &&  
   
@@ -730,10 +778,18 @@ const getAllRotationsManager= async () => {
           DiaClave = new Date(rotationsManager.dayKey).setHours(0,0,0,0),
           totalSche = rotationsManager.totalSchema,
           totalGP = rotationsManager.totalGrupo,
-          actual = rotationsManager.actual
+          actual = rotationsManager.actual,
+          globalIdGroup = rotationsManager.groupId
         ) 
         
     ))
+
+    //creo un nuevo arreglo con los datos de turnos variables para enviarlos a ciclo, y excluyo el actual 0 que es para las personas desactivadas
+    data10?.map((RM)=>(
+      RM.groupId == globalIdGroup && RM.fijo == false && RM.actual != 0
+      ? arrayVariables.push(RM.actual) 
+      :null
+   ))
 
    
   
@@ -815,7 +871,7 @@ const getAllRotationsManager= async () => {
                      //console.log("La fecha actual es MAYOR y es fin de semana " +  new Date(fechaInicioSemana).toLocaleString() + "--" + new Date(fechaFinalSemana).toLocaleString())
                      respuesta = "ES FIN DE SEMANA Y ESTA OPERACION ESTA PENDIENTE POR IMPLEMENTAR"
                    : 
-                       respuesta = despues(fechaInicioSemana,fechaFinalSemana,DiaClave,totalSche,totalGP,actual,PAYROLLID)
+                     respuesta = despues(fechaInicioSemana,fechaFinalSemana,DiaClave,totalSche,totalGP,actual,PAYROLLID)
   
   
               return respuesta;
@@ -836,7 +892,7 @@ const getAllRotationsManager= async () => {
   }
 
 
-  const despues = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,iduser)=>{
+  const despues = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,idUsuario)=>{
     //para el despues tambien debo contar cuantas semanas han pasado y hacer la operacion correcta simplemete que no debo actualizar nada 
     //en la base de datos si no solo mostrar en que turno estaria el trabajador para esa fecha
   
@@ -862,29 +918,23 @@ const getAllRotationsManager= async () => {
   
     }
   
-    console.log("Total Domingos... " + Domingos + " Total Schema.. " + TOTALSCHEMA + " Total Grupo... " + TOTALGP)
+    
   
     //Por ultimo hagao las operaciones para saber en que turno estaria el trabajador en la fecha escogida
   
     //primero valido si el numero de grupos es igual al numero de schemas
-    if(TOTALSCHEMA > 0 && TOTALGP > 0 && TOTALSCHEMA == TOTALGP )
-    {
+  
       let pronostico;
       
       //hago el pronostico 
       data10?.map((rotationsManager)=>(
-        iduser==rotationsManager.userId && (
-         pronostico=ciclo(rotationsManager.totalGrupo,rotationsManager.actual,Domingos,rotationsManager.groupId)
+        idUsuario==rotationsManager.userId && (
+          pronostico=ciclo(rotationsManager.totalGrupo,rotationsManager.actual,Domingos,rotationsManager.groupId,rotationsManager.fijo,rotationsManager.userName)
         )
       ))
   
   
       return pronostico;
-    }
-    
-    else{
-      return "No se han asiganado rotaciones ";
-    }
   
     
   }
@@ -1076,7 +1126,7 @@ const getAllRotationsManager= async () => {
                   <ul>
                     {
                       data8?.map((item)=>(
-                        item.grupo == gp ? <li className={nombres == item.nombres + " " + item.apellidos ? 'liListaItemActual' : 'liListaItem'} key={item._id}>{item.nombres + "  " + item.apellidos} <span className='indicador'>75</span><progress value={75} max={100} className='progress'/></li>:null
+                        item.grupo == gp && item.activo == true ? <li className={nombres == item.nombres + " " + item.apellidos ? 'liListaItemActual' : 'liListaItem'} key={item._id}>{item.nombres + "  " + item.apellidos} <span className='indicador'>75</span><progress value={75} max={100} className='progress'/></li>:null
                         
                       ))
                     }
@@ -1097,7 +1147,7 @@ const getAllRotationsManager= async () => {
                             IDGLOBAL = payroll._id,
 
                             data10?.map((rotationsManager)=>(
-                              IDGLOBAL == rotationsManager.userId && rotationsManager.groupId == gpid ? 
+                              IDGLOBAL == rotationsManager.userId && rotationsManager.groupId == gpid && payroll.activo == true ? 
                               
                               <li className={IDGLOBAL == rotationsManager.
                                 userId ? 'liListaItemActual' : 'liListaItem'} key={rotationsManager._id}>
@@ -1239,12 +1289,15 @@ const getAllRotationsManager= async () => {
                     data10?.map((rotationsManager)=>(
                       iduser == rotationsManager.userId && rotationsManager.groupId == gpid ? 
                       
-                      <li className={iduser == rotationsManager.
-                        userId ? 'liListaItemActual' : 'liListaItem'} key={rotationsManager._id}>
-                        {rotationsManager.userName}
-                          <span className='indicador2'>
-                          {Pronostico(iduser)}
-                        </span>
+                      <li className='liListaItem2' key={rotationsManager._id}>
+                          <span className='indicador3'>
+                            {Pronostico(iduser)}
+                          </span>
+                          <span className={rotationsManager.fijo==true ? 'turno-fijo' : 'tipo-turno'}>
+                            {
+                              rotationsManager.fijo==true ? "TURNO FIJO" :"Turno normal"
+                            }
+                          </span>
                      </li>
         
                       :  null

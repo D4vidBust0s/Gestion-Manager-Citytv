@@ -30,6 +30,7 @@ export default function Listado() {
   const [data5, setData5] = useState([]);
   const [data6, setData6] = useState([]);
   const [saved, setSaved] = useState(0);
+  const [semanasP, setSemanasP] = useState("----------");
 
 
 
@@ -47,7 +48,9 @@ export default function Listado() {
   let actualFS;
 
   let globalIdGroup;
-  let arrayFijos = [];
+  let arrayVariables = [];
+
+  let globalDomingos;
   
   
 
@@ -142,80 +145,80 @@ const save = ()=>{
   }
   
 
-  return turno
+  return turno + "  ----- " + "Semana actual"
 
 }
 
 const ciclo = (totalgrupo,actual,domingos,idGrupo,isFijo,nombre)=>{
 
- 
   let index = 0;
-  let turno;
-  let auxActual = actual;
-
-  console.log("---------------------------------------------------------")
-  console.log("Antes----------------------------------------------------")
-  console.log(nombre + "  actual... " + actual + "  index... " + index  + " T-fijos... " + arrayFijos.length) 
-  console.log("---------------------------------------------------------") 
-
-  //Esta es la operacion que debe devolver el index del schema en el que deberia estar el trabajador
-  //-----------------------------------------------------------------------------------------------------------------------------------------------
+  let turno = "";
+  
+  //ordenamos de menor a mayor el array de turnos variables
+  arrayVariables.sort(function(a,b){return a-b})
+  
   
   //Numero de semanas transcurridas (actual aumentado progresivamente)
-  for(let i=0; i<=domingos; i++ )                                                      // i = 0   
+  for(let i=0; i<domingos; i++ )                                                     
   {
-    //Filtrado para saber si es fijo o no
-    if(isFijo==false)
+    //Procedimiento exclusivo para los turnos que NO son fijos 
+    if(isFijo == false)  
     {
-        //Numero de turnos fijos del grupo
-        for (let a=0; a < arrayFijos.length; a++) 
+    
+      let contador = 1;
+      for (let a = 0; a < arrayVariables.length; a++)
+      {
+        if (contador == arrayVariables.length) 
         {
-          console.log("entro al for como: " + arrayFijos[a]);                           // 3 ,             1
-          
-          if(actual != arrayFijos[a])                                                   // 4 - 3           4 - 1
+          index = arrayVariables[0];
+          a = arrayVariables.length;
+          actual = index;
+        }
+
+        else{
+          if (actual == arrayVariables[a]) 
           {
-            
-              console.log("actual " + actual + " es diferente " +arrayFijos[a]);
-              index = actual+a;                                                         //  4 + 0 = 4      4 +  1 = 5
-             
-
-               if(index > totalgrupo)                                                   //  4 > 6          5 > 6 
-              {
-                index = 1;
-              }
-              
-              console.log("index = " + index);                                         //  index = 4       index = 5
-             
-
+            index = arrayVariables[a+1];
+            a = arrayVariables.length;
+            actual=index;
           }
         }
 
-       
-         console.log(nombre + "  actual... " + actual + "  index... " + index  )       //  4 , 5
-      
+        contador++;
+        
+      }
+     
     }
 
-    
+    //Procedimiento exclusivo para los turnos que SI son fijos 
+    else if(isFijo == true)
+    {
+        index=actual;
+    }
 
     else{
-      index = auxActual;
-      console.log("es fijo");
-      console.log(nombre + "  actual... " + actual + "  index... " + index  ) 
+      console.log("isfijo no se definio");
     }
-    
-    //Limpiamos el array para que no se acumule
-    arrayFijos=[];
-    actual++;
 
-    if(actual > totalgrupo)                                                  
-    {
-      actual = 1;
-    }
+    
 
   }
   
 
-  //Segun el index obtenido busco el nombre del schema y lo muestro 
+  arrayVariables=[]; 
+
+
+
+
+
+
+
+
+
+
+  //-------------------------------------------------------------------------------------------------------------------------------
+     //Segun el index obtenido busco el nombre del schema y lo muestro 
+  //-------------------------------------------------------------------------------------------------------------------------------
   data4?.map((schemas)=>
   (
     idGrupo == schemas.Grupo_ID && schemas.Order == index && schemas.Tipo == "Entre Semana" &&
@@ -223,8 +226,10 @@ const ciclo = (totalgrupo,actual,domingos,idGrupo,isFijo,nombre)=>{
     
   ))
 
+  
+
   //para el proceso de turno fijo debo validar si isfijo == a true, false o undefined  
-  return turno + "  ----- " + domingos +  ( domingos == "1" ? " Semana " + (isFijo == true ? " ------ Trabajador con turno fijo ------" : isFijo == false || isFijo == undefined ? "" : null ): " Semanas " + (isFijo == true ? " ------ Trabajador con turno fijo ------" : isFijo == false  ? "" : null ));
+  return turno;  /*+ "  ----- " + (domingos == 0 ? "Semana actual" :  domingos == 1 ? domingos +" Semana " : domingos + " Semanas ");*/
 }
 
 
@@ -294,11 +299,12 @@ const antes = (FECHAINICIO,FECHAFINAL)=>{
      if(new Date(fecha).getDay()==0) //cero es el dia domingo
      {
         Domingos++;
+        globalDomingos=Domingos;
      }
 
   }
 
-
+  
 
   //Por ultimo hagao las operaciones para saber en que turno estaria el trabajador en la fecha escogida
     let pronostico;
@@ -387,10 +393,10 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
       
   ))
 
-  //creo un nuevo arreglo con los datos de turnos fijos para enviarlos a ciclo
+  //creo un nuevo arreglo con los datos de turnos variables para enviarlos a ciclo, y excluyo el actual 0 que es para las personas desactivadas
     data2?.map((RM)=>(
-      RM.groupId == globalIdGroup && RM.fijo == true 
-      ? arrayFijos.push(RM.actual)
+      RM.groupId == globalIdGroup && RM.fijo == false && RM.actual != 0
+      ? arrayVariables.push(RM.actual)
       :null
    ))
 
@@ -631,7 +637,7 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
   return (
     <>
      
-
+      
       {createPortal(
         <ModalPlanner2 estado={modal2} cambiarEstado={setModal2} />,
         document.querySelector("#portal")
@@ -670,7 +676,12 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
 
 
         </div>
+
       ))}
+
+      <div className="semanasPasadas">
+        {globalDomingos + " Semanas"}
+      </div>
 
      <div className="sectionSave">
         <div className={saved ? "circleSaved" : "circle"} onClick={save}>
@@ -703,6 +714,8 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
         }
         
       </div>
+
+      
       
     </>
   );
