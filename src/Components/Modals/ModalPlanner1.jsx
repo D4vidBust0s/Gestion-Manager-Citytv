@@ -9,13 +9,15 @@ import Clock from '../../assets/bx-time-five.svg'
 import Pencil from '../../assets/pencil.svg'
 import Plus from '../../assets/Plus.svg'
 import Trash from '../../assets/trash.svg'
+import Clean from '../../assets/brush.svg'
 
 
 import Balanza from '../../assets/balanza.png'
-import Regalo from '../../assets/regalo.svg'
+import cafe from '../../assets/coffee.svg'
 import Calendario from '../../assets/calendario.png'
 import Ok from '../../assets/Ok.svg'
-import Clock2 from '../../assets/clock.svg'
+import documento from '../../assets/document.svg'
+import capas from '../../assets/capas.svg'
 
 /* Import dependencies */
 import { useEffect, useRef, useState, useContext } from 'react';
@@ -65,6 +67,7 @@ const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Define un es
   const [data8, setData8] = useState([]);
   const [data9, setData9] = useState([]);
   const [data10, setData10] = useState([]);
+  const [showNotas, setShowNotas] = useState(false);
  
 
   const [startHour, setStartHour] = useState(new Date());
@@ -268,10 +271,8 @@ const getAllRotationsManager= async () => {
       
   }
 
-  const edit = ()=>{
+  
 
-    toast.success("Turno actualizado");
-  }
 
   const del = ()=>{
 
@@ -869,7 +870,7 @@ const getAllRotationsManager= async () => {
                   new Date().getUTCDay() == 6 || new Date().getUTCDay() == 0 
                    ?
                      //console.log("La fecha actual es MAYOR y es fin de semana " +  new Date(fechaInicioSemana).toLocaleString() + "--" + new Date(fechaFinalSemana).toLocaleString())
-                     respuesta = "ES FIN DE SEMANA Y ESTA OPERACION ESTA PENDIENTE POR IMPLEMENTAR"
+                     respuesta = "FS PENDIENTE POR IMPLEMENTAR"
                    : 
                      respuesta = despues(fechaInicioSemana,fechaFinalSemana,DiaClave,totalSche,totalGP,actual,PAYROLLID)
   
@@ -949,6 +950,11 @@ const getAllRotationsManager= async () => {
 
   const clean = ()=>{
     toast.success("Aqui se limpiaria la lista para hacerla desde cero");
+  }
+
+  const edit = ()=>{
+
+    toast.success("Turno actualizado");
   }
  
 
@@ -1107,8 +1113,22 @@ const getAllRotationsManager= async () => {
                 </h5>
               </div>
             </div>
-
+                  
           <div className="cuerpoModal">
+
+            <div className={showNotas == true ? "notasShow" : "notasHide"}>
+              <h3 className='notas-title'>
+                Notas para {nombres} <br />
+                _____________________________________________________
+              </h3>
+
+              <p className='notas-contenido'>
+                  Lorem, ipsum dolor sit amet consectetur adipisicing elit. 
+                  Veniam, ipsum! Quis illum reprehenderit, sequi voluptatem tempore aliquam aut. 
+                  Officia reprehenderit dolorem laudantium! Tempore deserunt vel dignissimos optio animi eveniet at.
+              </p>
+            </div>
+
           <div className="close2" onClick={() => cambiarEstado(!estado)}>X</div>
 
           {/*SECCION # 1*/}
@@ -1173,10 +1193,22 @@ const getAllRotationsManager= async () => {
             
             {/*SECCION # 2 */}
             <div className="acciones">
+              <div className="leftTime">
+                Time-Pre
+                <input type="number" className='leftTime-input' placeholder='minutos'/>
+              </div>
+
+              <div className="rightTime">
+                Time-Post
+                <input type="number" className='leftTime-input' placeholder='minutos'/>
+              </div>
+
               <div className="titulo">
                 <h2>ACCIONES</h2>
               </div>
               <div className="mainContainer">
+              
+
                 <h3 className="subTitulo">PROGRAMA - REQUERIMIENTO</h3>
                 <h5 className='tipo'>Programa</h5>
                 <select name="turnoSeleccionado" className='selectedBox' ref={pgmRef} onChange={reset1}>
@@ -1243,6 +1275,7 @@ const getAllRotationsManager= async () => {
 
                 <h3 className="subTitulo">OBSERVACIONES</h3>
                 <textarea name="observaciones"  className='observaciones' ref={observationRef} defaultValue={obs}></textarea>
+                
               </div>
 
               <div className="seccionButons">
@@ -1273,7 +1306,7 @@ const getAllRotationsManager= async () => {
     
               <ul className="ulLista">
 
-                { /*
+                { 
                   data1?.map((shift)=>(
                    
                     <li className="liItem" onClick={(e)=>updateAcciones(shift.Tipo,shift.Evento,shift.Observacion,shift.Start,shift.End,e)}  key={shift._id} ref={pruebaRef}>
@@ -1281,10 +1314,10 @@ const getAllRotationsManager= async () => {
                         {shift.Evento}
                       <span className="hFinal">{extraerHora(shift.End)}</span>
                     </li>
-                  )) 
-                  */
+                  ))
+                  } 
 
-
+{
                   
                     data10?.map((rotationsManager)=>(
                       iduser == rotationsManager.userId && rotationsManager.groupId == gpid ? 
@@ -1292,12 +1325,13 @@ const getAllRotationsManager= async () => {
                       <li className='liListaItem2' key={rotationsManager._id}>
                           <span className='indicador3'>
                             {Pronostico(iduser)}
-                          </span>
-                          <span className={rotationsManager.fijo==true ? 'turno-fijo' : 'tipo-turno'}>
+                            <span className={rotationsManager.fijo==true ? 'turno-fijo' : 'tipo-turno'}>
                             {
                               rotationsManager.fijo==true ? "TURNO FIJO" :"Turno normal"
                             }
                           </span>
+                          </span>
+                          
                      </li>
         
                       :  null
@@ -1311,22 +1345,30 @@ const getAllRotationsManager= async () => {
 
               </ul>
               <div className="seccionButons2">
+              <div className="containerSingleButtom">
+                <span className='noti'>
+                  3
+                </span>
+                  <img src={documento} alt="pencil" className='img-butons' onClick={()=>setShowNotas(!showNotas)}/>
+                </div>
                 <div className="containerSingleButtom">
-                  <img src={Clock2} alt="pencil" className='img-butons' onClick={edit}/>
+                  <img src={capas} alt="pencil" className='img-butons' onClick={edit}/>
                 </div>
                 <div className="containerSingleButtom">
                  <img src={Ok} alt="plus" className='img-butons' onClick={ok}/>
                 </div>
                 <div className="containerSingleButtom">
-                 <img src={Regalo} alt="plus" className='img-butons' onClick={regalo}/>
+                 <img src={cafe} alt="plus" className='img-butons' onClick={regalo}/>
                 </div>
                 <div className="containerSingleButtomDel">
-                 <img src={Trash} alt="trash" className='img-butons' onClick={clean}/>
+                 <img src={Clean} alt="trash" className='img-butons' onClick={clean}/>
                 </div>
               </div>
             </div>
 
           </div>
+
+         
 
           <div className='aux1'>
            <div className="aux1_title">

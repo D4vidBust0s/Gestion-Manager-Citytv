@@ -212,6 +212,12 @@ function Sidebar() {
                 </Link>
               </li>
 
+              <li className="list__inside">
+                <Link to="/notes" className="nav__link nav__link--inside">
+                  Notas
+                </Link>
+              </li>
+
               
             </ul>
           </li>
