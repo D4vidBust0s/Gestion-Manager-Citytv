@@ -146,8 +146,8 @@ export default function ProgramsContent() {
           setCheckSecondary(response.data.Type=="Secondary"?true:false)
       );
     setId(id);
-    console.log("start:"+startDate);
-    console.log("end:"+endDate);
+   // console.log("start:"+startDate);
+    //console.log("end:"+endDate);
 
      //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
      if (e.target.classList=="ListLI") 
@@ -210,8 +210,8 @@ export default function ProgramsContent() {
         sabado: checkSabado,
         domingo: checkDomingo,
         descripcion: description,
-        start: startDate,
-        end: endDate,
+        start: startDate.toString(),
+        end: endDate.toString(),
         type: refMain.current.checked ? "Main" : "Secondary" ,
       });
       
@@ -326,8 +326,8 @@ export default function ProgramsContent() {
         Sabado: checkSabado,
         Domingo: checkDomingo,
         descripcion: description,
-        Start: startDate,
-        End: endDate,
+        Start: startDate.toString(),
+        End: endDate.toString(),
         Type: refMain.current.checked ? "Main" : "Secondary" ,
       });
 
@@ -393,7 +393,7 @@ export default function ProgramsContent() {
               showTimeSelectOnly
               timeIntervals={5}
               timeCaption="Inicio"
-              dateFormat="HH:mm"
+              dateFormat="h:mm aa"
               ref={refStart}
             />
 
@@ -406,7 +406,7 @@ export default function ProgramsContent() {
               showTimeSelectOnly
               timeIntervals={5}
               timeCaption="Final"
-              dateFormat="HH:mm"
+              dateFormat="h:mm aa"
               ref={refEnd}
             />
           </div>

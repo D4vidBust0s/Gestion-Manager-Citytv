@@ -10,4 +10,17 @@
    [PROGRESO : 0%]
 
 
-2) 
+2) Estoy trayendo la hora de inicio en el modalplanner1 para ir sumando los tiempoos de los turnos segun
+   rotacion, pero no logro hacer una suma correcta de todos los tiempos, teniendo en cuenta el tipo de
+   evento, por ejemplo un Null, un program, o un Custom
+
+   [LUGAR : CITY]  
+   [ESTADO : COMPLETO]
+   [PROGRESO : 100%]
+
+3) Ahora debo actualizar la seccion FULLTIME en la parte inferior derecha del modalPlanner 1, debo sumar y concatenar
+   el tiempo de cada evento segun corresponda.
+
+   [LUGAR : CITY]  
+   [ESTADO : PENDIENTE]
+   [PROGRESO : 0%]

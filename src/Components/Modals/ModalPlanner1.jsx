@@ -27,6 +27,7 @@ import {Toaster, toast} from 'react-hot-toast';
 
 
 import { FechaBarraContext } from '../../context/FechaBarraProvider';
+import { Link } from 'react-router-dom'
 
 /* VARIABLES */
 let fullPermisions = 0;
@@ -40,6 +41,8 @@ let arrayVariables = [];
 
 let totalGrupo = 0;
 let totalSchema = 0;
+let auxOut = new Date();
+let fullTime = 0;
 
 //Variables 
 let DiaClave;
@@ -47,6 +50,8 @@ let totalSche;
 let totalGP;
 let actual;
 let IDGLOBAL;
+let IDSCHEMAGLOBAL;
+let HORAINGLOBAL;
 
 export default function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color,gp,gpid}) {
 
@@ -67,6 +72,7 @@ const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Define un es
   const [data8, setData8] = useState([]);
   const [data9, setData9] = useState([]);
   const [data10, setData10] = useState([]);
+  const [data11, setData11] = useState([]);
   const [showNotas, setShowNotas] = useState(false);
  
 
@@ -182,6 +188,14 @@ const getAllRotationsManager= async () => {
     .get("http://localhost:3000/api/rotationsmanager/")
     .then((response) => setData10(response.data));
 }
+
+  //Traer todos los registros Stacks
+  const getAllStacks= async () => {
+    
+    return await axios
+      .get("http://localhost:3000/api/stacks/")
+      .then((response) => setData11(response.data));
+  }
 
 
 
@@ -686,7 +700,7 @@ const getAllRotationsManager= async () => {
   }
 
 
-  const ciclo = (totalgrupo,actual,domingos,idGrupo,isFijo,nombre)=>{
+  const ciclo = (totalgrupo,actual,domingos,idGrupo,isFijo,nombre,sid)=>{
 
     let index = 0;
     let turno = "";
@@ -759,7 +773,7 @@ const getAllRotationsManager= async () => {
     data9?.map((schemas)=>
     (
       idGrupo == schemas.Grupo_ID && schemas.Order == index && schemas.Tipo == "Entre Semana" &&
-        (turno = schemas.Nombre)
+        (turno = schemas.Nombre, IDSCHEMAGLOBAL = schemas._id )
       
     ))
   
@@ -903,7 +917,7 @@ const getAllRotationsManager= async () => {
   
     let diff = fechaFin - fechaInicio;
     let diasPasados = diff/(1000*60*60*24) // (1000*60*60*24) --> milisegundos -> segundos -> minutos -> horas -> días
-    console.log("Dias pasados "+diasPasados + " -- " + new Date(DIACLAVE).toDateString());  
+    //console.log("Dias pasados "+diasPasados + " -- " + new Date(DIACLAVE).toDateString());  
   
     //ya que tengo los dias que han pasado, debo calcular cuantas semanas han pasado
     let Domingos = 0;
@@ -930,7 +944,7 @@ const getAllRotationsManager= async () => {
       //hago el pronostico 
       data10?.map((rotationsManager)=>(
         idUsuario==rotationsManager.userId && (
-          pronostico=ciclo(rotationsManager.totalGrupo,rotationsManager.actual,Domingos,rotationsManager.groupId,rotationsManager.fijo,rotationsManager.userName)
+          pronostico=ciclo(rotationsManager.totalGrupo,rotationsManager.actual,Domingos,rotationsManager.groupId,rotationsManager.fijo,rotationsManager.userName,rotationsManager.schemaId)
         )
       ))
   
@@ -956,6 +970,120 @@ const getAllRotationsManager= async () => {
 
     toast.success("Turno actualizado");
   }
+
+  const getDurationprogram = (start, end) =>{
+    let diferencia;
+    var fechaInicio = new Date(start).getTime();
+    var fechaFin    = new Date(end).getTime();
+
+    diferencia = fechaFin - fechaInicio;
+    return  (diferencia/1000)/60;
+
+  }
+
+  const resolver = (id,tipo,idPrograma,duracion,orden,valor)=>{
+
+    
+
+    if(id == "Null-30")
+    {
+    
+        //Sumo tiempos
+        auxOut = new Date(new Date(HORAINGLOBAL).setMinutes(new Date(HORAINGLOBAL).getMinutes() + 30)).getTime();
+        HORAINGLOBAL = new Date(auxOut);
+        auxOut = new Date(auxOut).toLocaleTimeString();
+        
+        
+        return <span className='nulo'>{"Null-30"}</span>
+    }
+
+    else if(id == "Turno Custom" || tipo == "Custom")
+    {
+
+       //Sumo tiempos
+       auxOut = new Date(new Date(HORAINGLOBAL).setMinutes(new Date(HORAINGLOBAL).getMinutes() + parseInt(duracion))).getTime();
+       HORAINGLOBAL = new Date(auxOut);
+       auxOut = new Date(auxOut).toLocaleTimeString();
+
+       //return <span className='Tcustom'>{idPrograma + " (" + parseInt(duracion) + " Minutos)"}</span>
+       return <span className='Tcustom'>{idPrograma} <span className='customDuration'>{ " (" + parseInt(duracion) + " Minutos)"}</span></span>
+    }
+
+    else if(id == "TimeOut")
+    {
+      
+
+        //Sumo tiempos
+        auxOut = new Date(new Date(HORAINGLOBAL).setMinutes(new Date(HORAINGLOBAL).getMinutes() + parseInt(valor))).getTime();
+        HORAINGLOBAL = new Date(auxOut);
+        auxOut = new Date(auxOut).toLocaleTimeString();
+
+        return "TimeOut " + valor + " Minutos";
+    }
+
+    else if(tipo == "Secondary")
+    {
+      
+      let PGM;
+      let DURACION;
+
+       data?.map((pgm)=>(
+        pgm._id == idPrograma && (PGM = pgm.nombre, DURACION = getDurationprogram(pgm.Start,pgm.End))
+       ))
+
+       //Sumo tiempos
+       auxOut = new Date(new Date(HORAINGLOBAL).setMinutes(new Date(HORAINGLOBAL).getMinutes() + parseInt(DURACION))).getTime();
+       HORAINGLOBAL = new Date(auxOut);
+       auxOut = new Date(auxOut).toLocaleTimeString();
+       
+       return <span className='TSecondary'>{PGM}<span className='SecondaryDuration'>{" (" +DURACION + " Minutos)"}</span></span>
+    }
+
+    else if(tipo == "Programa")
+    {
+
+      let PGM;
+      let DURACION;
+
+       data?.map((pgm)=>(
+        pgm._id == idPrograma && (PGM = pgm.nombre, DURACION = getDurationprogram(pgm.Start,pgm.End))
+       ))
+
+       //Sumo tiempos
+       auxOut = new Date(new Date(HORAINGLOBAL).setMinutes(new Date(HORAINGLOBAL).getMinutes() + parseInt(DURACION))).getTime();
+       HORAINGLOBAL = new Date(auxOut);
+       auxOut = new Date(auxOut).toLocaleTimeString();
+
+       return <span className='TProgram'>{PGM}<span className='pgmDuration'>{" (" +DURACION + " Minutos)"}</span></span> 
+      
+    }
+
+    else{
+
+      return "ERROR TURNO NO ESPECIFICADO";
+    }
+
+    
+  }
+
+   const devolverIN = ()=>{
+    let respuesta;
+    let fecha;
+
+    data9?.map((rotations)=>(
+      rotations._id == IDSCHEMAGLOBAL && (respuesta = rotations.HoraInicio, HORAINGLOBAL = rotations.HoraInicio )
+    ))
+
+    respuesta = new Date(respuesta).getTime();
+    respuesta = new Date(respuesta).toLocaleTimeString();
+  
+    return respuesta;
+   }
+
+   
+
+
+   
  
 
    /* *********************************************************************************************************************** */
@@ -1012,6 +1140,9 @@ const getAllRotationsManager= async () => {
   getAllRotationsManager();
  },[])
 
+ useEffect(()=>{
+  getAllStacks();
+ },[])
  
 
 
@@ -1302,9 +1433,46 @@ const getAllRotationsManager= async () => {
             <div className="list-turnos">
               <div className="titulo">
                 <h2>TURNOS PROGRAMADOS</h2>
+                <p className='name-turno-rotacion'>{Pronostico(iduser)}</p>
+                
               </div>
-    
-              <ul className="ulLista">
+
+              
+
+              {/* ANTES QUE NADA DEBO VALIDAR SI YA HAY O NO UNA PROGRAMACION GUARDADA PARA EL USUARIO  */}
+
+              {
+                data1.length == 0 
+                ?
+                
+                
+                <ul className="ulLista-rotation">
+                  <span className='horaIN'>{devolverIN()}</span>
+                  {
+                    data11?.map((stack)=>(
+                  
+                  stack.ID_esquema == IDSCHEMAGLOBAL ? 
+                  (
+                    <li className="liItem-rotation" onClick={(e)=>updateAcciones()}   ref={pruebaRef} key={stack._id}>
+                     
+                      {resolver(stack.ID_programa,stack.Type,stack.ID_programa,stack.Duration,stack.Order,stack.Value)}
+                      
+                    </li>
+                  )
+
+                  : null
+                  
+                  
+                ))
+                }
+                <span className='horaOUT'>{auxOut}</span>
+                  </ul>
+                  
+                
+                    
+                : 
+
+                <ul className="ulLista">
 
                 { 
                   data1?.map((shift)=>(
@@ -1315,35 +1483,17 @@ const getAllRotationsManager= async () => {
                       <span className="hFinal">{extraerHora(shift.End)}</span>
                     </li>
                   ))
-                  } 
+                } 
 
-{
-                  
-                    data10?.map((rotationsManager)=>(
-                      iduser == rotationsManager.userId && rotationsManager.groupId == gpid ? 
-                      
-                      <li className='liListaItem2' key={rotationsManager._id}>
-                          <span className='indicador3'>
-                            {Pronostico(iduser)}
-                            <span className={rotationsManager.fijo==true ? 'turno-fijo' : 'tipo-turno'}>
-                            {
-                              rotationsManager.fijo==true ? "TURNO FIJO" :"Turno normal"
-                            }
-                          </span>
-                          </span>
-                          
-                     </li>
-        
-                      :  null
-                    ))
-                  
-
-
-
-
-                }
+                
 
               </ul>
+              }
+    
+              
+
+
+
               <div className="seccionButons2">
               <div className="containerSingleButtom">
                 <span className='noti'>
@@ -1456,7 +1606,7 @@ const getAllRotationsManager= async () => {
             Full Time
            </div>
            <div className="aux1_label">
-            07:30
+            {fullTime}
            </div>
           </div>
         </div>
