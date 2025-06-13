@@ -62,7 +62,7 @@
         background:#dadada18;
         border-bottom: 1px solid #545454;
         width: 92%;
-        padding: 2px 0;
+        padding: 0;
         margin-left: 17.1rem;
         height: 23.4px;
       }  
@@ -159,6 +159,17 @@
             background:#000000;
             transform: scale(1.02);
             cursor: pointer;
+          }
+
+          .liEventTipe000 {
+            float: left;
+            background:#4d6103;
+            height: 1.25rem;
+            border-left: 1px solid #000000;
+            width: 2880px;
+
+            display: flex;
+            align-items: center;
           }
 
 
@@ -272,6 +283,14 @@
   color: #DADADA;
   text-align: center;
   border-radius: 5px 5px 0 0;
+}
+
+.prueba{
+  position: absolute;
+  margin-top: -30px;
+  color: #DADADA;
+  background-color: #000000;
+  
 }
 
 

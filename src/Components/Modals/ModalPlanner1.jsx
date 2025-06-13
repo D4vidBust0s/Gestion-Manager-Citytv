@@ -19,13 +19,15 @@ import Ok from '../../assets/Ok.svg'
 import documento from '../../assets/document.svg'
 import capas from '../../assets/capas.svg'
 
+
+
 /* Import dependencies */
 import { useEffect, useRef, useState, useContext } from 'react';
 import DatePicker from 'react-datepicker';
 import axios from 'axios';
 import {Toaster, toast} from 'react-hot-toast';
 
-
+//Contextos
 import { FechaBarraContext } from '../../context/FechaBarraProvider';
 import { Link } from 'react-router-dom'
 
@@ -41,7 +43,7 @@ let arrayVariables = [];
 
 let totalGrupo = 0;
 let totalSchema = 0;
-let auxOut = new Date();
+let auxOut;
 let fullTime = 0;
 
 //Variables 
@@ -74,6 +76,7 @@ const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Define un es
   const [data10, setData10] = useState([]);
   const [data11, setData11] = useState([]);
   const [showNotas, setShowNotas] = useState(false);
+
  
 
   const [startHour, setStartHour] = useState(new Date());
@@ -88,6 +91,8 @@ const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Define un es
   const [event, setEvent] = useState("---------------------------------");
   const [custom, setCustom] = useState("");
   const [obs, setObs] = useState("");
+
+  const [pr,setPr]= useState(0);
 
   //Referencias
   const pgmRef = useRef();
@@ -954,21 +959,32 @@ const getAllRotationsManager= async () => {
     
   }
 
-  const ok = ()=>{
-    toast.success("Aqui se acepta el turno sugerido por rotaciones");
+  const ok = ()=>{ 
+    toast.success("....");
   }
 
+  
   const regalo = ()=>{
-    toast.success("Aqui se otorgaria un descanso al trabajador");
+    //Asignamos un descanso al trabajador
+    toast.success("Se asignó un descanso al trabajador");
   }
 
   const clean = ()=>{
-    toast.success("Aqui se limpiaria la lista para hacerla desde cero");
+    toast.success("Limpieza de lista ejecutado correctamente");
+    setData11([]);
+    setData9([]);
+    auxOut = "--:--:--";
   }
 
   const edit = ()=>{
 
     toast.success("Turno actualizado");
+  }
+
+  const stack = ()=>{
+    toast.success("Stack según turno actualizado");
+    getAllStacks();
+    traerRotations();
   }
 
   const getDurationprogram = (start, end) =>{
@@ -1054,7 +1070,7 @@ const getAllRotationsManager= async () => {
        HORAINGLOBAL = new Date(auxOut);
        auxOut = new Date(auxOut).toLocaleTimeString();
 
-       return <span className='TProgram'>{PGM}<span className='pgmDuration'>{" (" +DURACION + " Minutos)"}</span></span> 
+       return <span className='TProgram'>{PGM + " "}<span className='pgmDuration'>{" (" + DURACION + " Minutos)"}</span></span> 
       
     }
 
@@ -1080,9 +1096,43 @@ const getAllRotationsManager= async () => {
     return respuesta;
    }
 
+   const fullTime = () =>{
+
+    
+    let dr=0;
+    let D= 10;
+    
+
+    data11?.map((stack)=>(
+
+      data?.map((pgm)=>(
+        pgm._id == stack.ID_programa && ( D = getDurationprogram(pgm.Start,pgm.End))
+       )),
+
+      stack.ID_esquema == IDSCHEMAGLOBAL 
+      ?
+        stack.ID_programa == "Null-30" ? dr = dr + 30 : 
+
+        stack.ID_programa == "Turno Custom" || stack.Type == "Custom" ? dr = dr + parseInt(stack.Duration) : 
+
+        stack.ID_programa == "TimeOut" ? dr = dr + parseInt(stack.Value) : 
+
+        stack.Type == "Secondary" ? dr = dr + parseInt(D) :
+
+        stack.Type == "Programa" ? dr = dr + parseInt(D) : null
+
+       
+
+      :
+      null
+    ))
+
+    return dr; 
+  }
    
+  
 
-
+ 
    
  
 
@@ -1150,9 +1200,7 @@ const getAllRotationsManager= async () => {
     <>
     <Toaster />
       {estado && (
-        <div 
-          className="container-modal1"
-        >
+        <div className="container-modal1">
           
           {/*CABECERA */}
           <div className="cabecera">
@@ -1300,13 +1348,13 @@ const getAllRotationsManager= async () => {
                             data10?.map((rotationsManager)=>(
                               IDGLOBAL == rotationsManager.userId && rotationsManager.groupId == gpid && payroll.activo == true ? 
                               
-                              <li className={IDGLOBAL == rotationsManager.
-                                userId ? 'liListaItemActual' : 'liListaItem'} key={rotationsManager._id}>
-                                {rotationsManager.userName}
-                                  <span className='indicador2'>
+                              <li className={nombres == payroll.nombres + " " + payroll.apellidos ? 'liListaItemActual' : 'liListaItem'} key={payroll._id}>{payroll.nombres + "  " + payroll.apellidos}
+                                <span className='indicador2'>
                                   {Pronostico(IDGLOBAL)}
                                 </span>
-                             </li>
+
+                              </li>
+                              
                 
                               :  null
                             ))
@@ -1326,7 +1374,7 @@ const getAllRotationsManager= async () => {
             <div className="acciones">
               <div className="leftTime">
                 Time-Pre
-                <input type="number" className='leftTime-input' placeholder='minutos'/>
+                <input type="number" className='leftTime-input' placeholder='minutos' />
               </div>
 
               <div className="rightTime">
@@ -1447,7 +1495,7 @@ const getAllRotationsManager= async () => {
                 
                 
                 <ul className="ulLista-rotation">
-                  <span className='horaIN'>{devolverIN()}</span>
+                  <span className='horaIN'>{devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN() }</span>
                   {
                     data11?.map((stack)=>(
                   
@@ -1465,7 +1513,7 @@ const getAllRotationsManager= async () => {
                   
                 ))
                 }
-                <span className='horaOUT'>{auxOut}</span>
+                <span className='horaOUT'>{auxOut == "Invalid Date" ? "--:--:--" : auxOut }</span>
                   </ul>
                   
                 
@@ -1502,7 +1550,7 @@ const getAllRotationsManager= async () => {
                   <img src={documento} alt="pencil" className='img-butons' onClick={()=>setShowNotas(!showNotas)}/>
                 </div>
                 <div className="containerSingleButtom">
-                  <img src={capas} alt="pencil" className='img-butons' onClick={edit}/>
+                  <img src={capas} alt="pencil" className='img-butons' onClick={stack}/>
                 </div>
                 <div className="containerSingleButtom">
                  <img src={Ok} alt="plus" className='img-butons' onClick={ok}/>
@@ -1606,7 +1654,8 @@ const getAllRotationsManager= async () => {
             Full Time
            </div>
            <div className="aux1_label">
-            {fullTime}
+            {fullTime() + " Minutos"}
+            <p className='aux_label-1'>{(fullTime()/60).toFixed(1) + " Horas"}</p>
            </div>
           </div>
         </div>
@@ -1618,5 +1667,3 @@ const getAllRotationsManager= async () => {
     </>
   );
 }
-
- 

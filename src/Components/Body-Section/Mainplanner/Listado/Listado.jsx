@@ -31,6 +31,7 @@ export default function Listado() {
   const [data6, setData6] = useState([]);
   const [saved, setSaved] = useState(0);
   const [semanasP, setSemanasP] = useState("----------");
+  const [informador, setInformador] = useState(0);
 
 
 
@@ -517,7 +518,7 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
      
 
       <ul className="ulEvent">
-          <li className={saved == 0 ? "liEventTipe00" : "liEventTipe0"} onClick={() => setModal2(!modal2)}>
+          <li className={saved == 0 ? "liEventTipe000" : "liEventTipe0"} onClick={() => setModal2(!modal2)}>
                   <a href="#" className="event"> 
                     {
                       data2?.map((rotationsManager)=>(
@@ -692,7 +693,7 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
      
 
       <div className="pr">
-     
+           <div className="prueba">Prueba context {informador}</div>
         {
 
           new Date(fechaBarra).getDay() == 1 ? "Lunes " + new Date(fechaBarra).getDate()  + " de " + mes(new Date(fechaBarra).getMonth()) + " del " + new Date(fechaBarra).getFullYear() 

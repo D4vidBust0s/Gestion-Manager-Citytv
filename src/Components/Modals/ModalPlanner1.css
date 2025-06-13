@@ -610,13 +610,21 @@
 }
 
 .aux1_label{
+    display: flex;
+    flex-direction: column;
     color: #000000;
     height: 80%;
     display: flex;
     justify-content: center;
     align-items: center;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-    font-size: 2rem;
+    font-size: 1.5rem;
+}
+
+.aux_label-1{
+    color: #000000;
+    font-weight: 900;
+    font-size: 1.2rem;
 }
 
 .inspectorContainer{
@@ -909,12 +917,18 @@
 .pgmDuration{
     color: #DADADA;
     font-size: .7rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
 }
 
 .SecondaryDuration{
     color: #EB464B;
     font-size: .7rem;
     font-weight: 600;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
 }
 
 .customDuration{

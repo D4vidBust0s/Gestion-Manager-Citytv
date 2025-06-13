@@ -22,5 +22,13 @@
    el tiempo de cada evento segun corresponda.
 
    [LUGAR : CITY]  
+   [ESTADO : COMPLETO]
+   [PROGRESO : 100%]
+
+4) Procedemos con una parte muy importante. a medida que se valide y asigne un turno para un trabajador, debe guardarse en la db 
+   y por medio de un contexto notificar al listado que hubo un cambio y renderizar nuevamente segun corresponda, a medida que
+   se hace esta tarea el item del listado cambia a verde de fondo y se agrega el stack aprobado en modal1
+
+   [LUGAR : CITY]  
    [ESTADO : PENDIENTE]
    [PROGRESO : 0%]
