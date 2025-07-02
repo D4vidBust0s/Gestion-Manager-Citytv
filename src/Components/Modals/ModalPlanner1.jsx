@@ -27,9 +27,9 @@ import DatePicker from 'react-datepicker';
 import axios from 'axios';
 import {Toaster, toast} from 'react-hot-toast';
 
-//Contextos
+//Import Contextos
 import { FechaBarraContext } from '../../context/FechaBarraProvider';
-import { Link } from 'react-router-dom'
+import { PronosticoContext } from '../../context/PronosticoTurnosProvider'
 
 /* VARIABLES */
 let fullPermisions = 0;
@@ -55,10 +55,13 @@ let IDGLOBAL;
 let IDSCHEMAGLOBAL;
 let HORAINGLOBAL;
 
+let validador = 0;
+
 export default function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color,gp,gpid}) {
 
 /* CONTEXTOS*/
-const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Define un estado para la fecha de la barra
+const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext);  //Define un estado para la fecha de la barra
+const [idUsuario,setIdUsuario,agregarTurno,idTurno,setIdTurno,nombreCompleto,setNombreCompleto,subG,setSubG,fechaActiva,setFechaActiva,start,setStart,end,setEnd,nombreEvento,setNombreEvento,clr,setClr,observacion,setObservacion] = useContext(PronosticoContext);
 
 
   //Estados
@@ -960,7 +963,43 @@ const getAllRotationsManager= async () => {
   }
 
   const ok = ()=>{ 
-    toast.success("....");
+
+    //Validamos que tipo de agregado es, si es del stack sugerido o uno custom (0 => sugerido, 1 => custom)
+    if(validador == 0)
+    {
+      if(observationRef.current.value=="")
+      {observationRef.current.value = "-----"}
+
+      agregarTurno(iduser,IDSCHEMAGLOBAL,nombres,subGrupo,fechaPlaner,startHour,EndHour,Pronostico(iduser),"Brown",observationRef.current.value);
+        toast.success("Estack Sugerido");
+    }
+
+    else if(validador == 1){
+      toast.success("Estack CUSTOM");
+    }
+
+    else{
+        toast.error("NO SE PUDO DEFINIR EL TIPO DE OPERACION QUE SE DESEA REALIZAR");
+    }
+
+
+
+    setIdUsuario(iduser);
+    setIdTurno(IDSCHEMAGLOBAL);
+    setNombreCompleto(nombres);
+    setSubG(subGrupo);
+    setFechaActiva(new Date(fechaPlaner).toString());
+    setStart(new Date(startHour).toString());
+    setEnd(new Date(EndHour).toString());
+    setNombreEvento(Pronostico(iduser));
+    setClr("Brown");
+    setObservacion(observationRef.current.value);
+
+    agregarTurno(iduser,IDSCHEMAGLOBAL,nombres,subGrupo,fechaPlaner,startHour,EndHour,Pronostico(iduser),"Brown",observationRef.current.value);
+
+
+    //-----------------------------------------------------------------------------------------------------------------------
+    //toast.success("Turno aprobado");
   }
 
   
@@ -974,6 +1013,7 @@ const getAllRotationsManager= async () => {
     setData11([]);
     setData9([]);
     auxOut = "--:--:--";
+    validador = 1;
   }
 
   const edit = ()=>{
@@ -985,6 +1025,7 @@ const getAllRotationsManager= async () => {
     toast.success("Stack según turno actualizado");
     getAllStacks();
     traerRotations();
+    validador = 0;
   }
 
   const getDurationprogram = (start, end) =>{
@@ -1313,7 +1354,7 @@ const getAllRotationsManager= async () => {
           {/*SECCION # 1*/}
             <div className="list-turnos">
               <div className="titulo">
-                <h2>INFORMACION</h2>
+                <h2>INFORMACION {observacion}</h2>
               </div>
 
              

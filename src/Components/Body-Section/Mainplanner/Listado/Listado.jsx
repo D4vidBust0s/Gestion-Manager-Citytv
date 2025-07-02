@@ -29,7 +29,7 @@ export default function Listado() {
   const [data4, setData4] = useState([]);
   const [data5, setData5] = useState([]);
   const [data6, setData6] = useState([]);
-  const [saved, setSaved] = useState(0);
+  const [saved, setSaved] = useState(false);
   const [semanasP, setSemanasP] = useState("----------");
   const [informador, setInformador] = useState(0);
 
@@ -52,6 +52,9 @@ export default function Listado() {
   let arrayVariables = [];
 
   let globalDomingos;
+
+
+
   
   
 
@@ -114,11 +117,12 @@ const getAllRotationsManagerFijos= async (idGrupo) => {
 
 /* CONTEXTOS*/
 const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Define un estado para la fecha de la barra
-const [pronosticoTurnos,setPronosticoTurnos] = useContext(PronosticoContext); //
+const [idUsuario,setIdUsuario,agregarTurno,idTurno,setIdTurno,nombreCompleto,setNombreCompleto,subG,setSubG,fechaActiva,setFechaActiva,start,setStart,end,setEnd,nombreEvento,setNombreEvento,clr,setClr,observacion,setObservacion] = useContext(PronosticoContext); //
 
 //FUNCIONES
 //----------------------------------------------------------------------------------------------------------------------------------------
 const save = ()=>{
+  setSaved(!saved)
   toast.success("Maiplanner Guardado.. OPERACION PENDIENTE");
 }
 
@@ -375,7 +379,9 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
 }
 
 
-
+const tareaStack = (id)=>{
+  return id
+}
 
 
  const Pronostico = (PAYROLLID)=>{
@@ -509,28 +515,30 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
  /* ********************************************************************************************************************* */
 
 
-  const exist = (payrollId,payrollGrupo,groupNombre,payrollNombres,payrollApellidos) =>{
+  const exist = (payrollId) =>{
 
     
 
     return <div className="contentListado">
-      <Toaster />
      
-
       <ul className="ulEvent">
-          <li className={saved == 0 ? "liEventTipe000" : "liEventTipe0"} onClick={() => setModal2(!modal2)}>
+          <li className={saved == false ? "liEventTipe0" : "liEventTipe000"} onClick={() => setModal2(!modal2)}>
                   <a href="#" className="event"> 
                     {
                       data2?.map((rotationsManager)=>(
-                        payrollId == rotationsManager.userId && saved == 0 
+                        payrollId == rotationsManager.userId && saved == true 
                         
                         ? Pronostico(payrollId)
-                        :  payrollId == rotationsManager.userId && saved == 1 && rotationsManager.SchemaName
+
+                        
+                        : payrollId == rotationsManager.userId && saved == false && tareaStack(rotationsManager.SchemaName) 
                         
                       ))
                     }
                   </a>
            </li>
+
+           
       </ul>
     </div>
     
@@ -659,9 +667,10 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
             //Ciclo que trae todos los usuarios del sistema 
            data1?.map((payroll)=>(
 
-            <div className="hol" key={payroll._id}>
+            <div className="cnt-turno" key={payroll._id}>
+                <div className="algo"></div>
               {
-                   payroll.grupoID == group._id && payroll.activo == true ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres, payroll.apellidos): null
+                   payroll.grupoID == group._id && payroll.activo == true ?  exist(payroll._id): null
               
               }
             </div>
@@ -693,7 +702,7 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
      
 
       <div className="pr">
-           <div className="prueba">Prueba context {informador}</div>
+           <div className="prueba">Prueba context {observacion}</div>
         {
 
           new Date(fechaBarra).getDay() == 1 ? "Lunes " + new Date(fechaBarra).getDate()  + " de " + mes(new Date(fechaBarra).getMonth()) + " del " + new Date(fechaBarra).getFullYear() 

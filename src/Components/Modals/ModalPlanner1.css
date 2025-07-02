@@ -749,7 +749,7 @@
         padding: .2rem;
         border-radius: .5rem;
         box-shadow: .2rem .2rem .8rem #545454;
-
+        position: relative;
       
 
         .img-butons{

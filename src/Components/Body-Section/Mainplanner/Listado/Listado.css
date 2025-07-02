@@ -48,13 +48,6 @@
       
 }
 
-.event{
-  text-decoration: none;
-  color: #DADADA;
-  
-  
-}
-
 .contentListado
     {
         display: flex;
@@ -65,6 +58,7 @@
         padding: 0;
         margin-left: 17.1rem;
         height: 23.4px;
+       
       }  
 
         .ulEvent {
@@ -72,7 +66,7 @@
             overflow: hidden;
             color: #DADADA;
             margin-top: 0px;
-            
+          
           }
 
           .liEvent {
@@ -110,13 +104,12 @@
           .liEventTipe0 {
             float: left;
             background:#545454;
-            height: 1.25rem;
+            height: 1.45rem;
             border-left: 1px solid #000000;
-            width: 660px;
-
+            width: 300px;
             display: flex;
-            justify-content: center;
-            align-items: center;
+           
+            
           }
 
           .liEventTipe0:hover{
@@ -163,20 +156,26 @@
 
           .liEventTipe000 {
             float: left;
-            background:#4d6103;
-            height: 1.25rem;
+            background:#26610d;
+            height: 1.45rem;
             border-left: 1px solid #000000;
             width: 2880px;
-
             display: flex;
-            align-items: center;
           }
 
 
           /*----------------------------------------------------------*/
 
           .event{
+            position: relative;
             padding: 0 35px;
+            text-decoration: none;
+            color: #DADADA;
+            background: #000000;
+            display: flex;
+            align-items: center;
+            font-size: .9rem;
+            font-weight: 500;
           }
           
 
@@ -185,12 +184,7 @@
             transform: scale(1.01);
           }
 
-          a{
-            color: #DADADA;
-            font-size: .8rem;
-            font-weight: 500;
-          }
-
+         
     
 
     .separador2{
@@ -293,8 +287,24 @@
   
 }
 
+.cnt-turno{
+  background-color: #DADADA;
+}
 
+.itms{
+  background: #851e1e;
+  z-index: 500;
+}
 
+.algo{
+  margin-left: 240px;
+  position: absolute;
+  background: #851e1e;
+  z-index: 500;
+  width: 12px;
+  height: 22px;
+  border-radius: 0 4px 4px 0;
+}
 
 
 
