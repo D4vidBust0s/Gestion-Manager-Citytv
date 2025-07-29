@@ -13,19 +13,14 @@ export const PronosticoContext = createContext(null)
 export const PronosticoTurnosProvider = ({children}) => {
 
   
-
-    const [idUsuario,setIdUsuario] = useState("--------------");
-    const [sv,setSv] = useState(false);
+    const [auxiliar,setAuxiliar] = useState(false);
 
  
 
   return (
     
     <PronosticoContext.Provider 
-    value={[idUsuario,
-            setIdUsuario,
-            sv,
-            setSv
+    value={[auxiliar,setAuxiliar
             ]}>
       {children}
     </PronosticoContext.Provider>

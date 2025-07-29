@@ -30,5 +30,19 @@
    se hace esta tarea el item del listado cambia a verde de fondo y se agrega el stack aprobado en modal1
 
    [LUGAR : CITY]  
-   [ESTADO : PENDIENTE]
-   [PROGRESO : 0%]
+   [ESTADO : HAY VAMOS]
+   [PROGRESO : 50%]
+
+   primero que todo actualice el dia a 23....
+  perfecto ya tiene cara esto, estoy en la parte de representar en el listado los turnos programados, ya quedo color, nombre, ahora
+  quede en definir las anchuras, debo segun corresponda, traer la duracion del programa y convertirlo a pixeles, y este valor
+  colocarlo como width del evento.
+
+  queda posicionarlo que creo que es un poco mas conplejo, ya que hay que jugar con el margin-left de cada item, e ir sumando
+  pixeles segun corresponda y partiendo de la hora clave convertida en pixeles. en todo caso vamos bien y me felicito esta muy
+  chevere y ya tiene cara bendiciones y exitos y progreso en la siguiente session. voy a guardar en git el avance
+
+  ok muy bien anombre, ancho , color todo ya se esta representando en el listado. queda pendiente solo
+  el posicionamieno y para ello en el metodo "magic" linea 620 de listado.jsx queda ya una variable, llamada "fecha inicio"
+  que es la variable que trae la hora desde donde nace el primer evento, para que desde esta empiece a correr el resto
+

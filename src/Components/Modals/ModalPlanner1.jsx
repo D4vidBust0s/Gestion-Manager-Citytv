@@ -56,12 +56,15 @@ let IDSCHEMAGLOBAL;
 let HORAINGLOBAL;
 
 let validador = 0;
+let inicioMain;
+let startEvent;
+let endtEvent;
 
 export default function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color,gp,gpid}) {
 
 /* CONTEXTOS*/
 const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext);  //Define un estado para la fecha de la barra
-const [idUsuario,setIdUsuario,agregarTurno,idTurno,setIdTurno,nombreCompleto,setNombreCompleto,subG,setSubG,fechaActiva,setFechaActiva,start,setStart,end,setEnd,nombreEvento,setNombreEvento,clr,setClr,observacion,setObservacion] = useContext(PronosticoContext);
+const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
 
 
   //Estados
@@ -215,19 +218,21 @@ const getAllRotationsManager= async () => {
 
 
 
-  const crear = async (ID_User,NombreUser,SubGrupo,FechaActiva,Start,End,Evento,Color,Tipo,Observacion)=>{
+  const crear = async (IDUSER,NOMBRES,INDEX,ID_PROGRAMA,EVENT_ID,COLOR,OBSERVACION,FECHA_CLAVE,ID_SCHEMA,INICIO_MAIN,TIPO)=>{
 
     await axios.post("http://localhost:3000/api/shifts/", {
-      idUser: ID_User,
-      nombreUser: NombreUser,
-      subGrupo: SubGrupo,
-      fechaActiva: FechaActiva,
-      start: Start,
-      end: End,
-      evento: Evento,
-      color: Color,
-      tipo: Tipo,
-      observacion: Observacion
+      idUser: IDUSER,
+      nombres: NOMBRES,
+      index: INDEX,
+      idPrograma: ID_PROGRAMA,
+      eventId: EVENT_ID,
+      color: COLOR,
+      observacion: OBSERVACION,
+      fechaClave: FECHA_CLAVE,
+      idSchema: ID_SCHEMA,
+      inicioMain: INICIO_MAIN,
+      tipo: TIPO
+
     });
 
     obtenerListadoTurnos();
@@ -236,7 +241,6 @@ const getAllRotationsManager= async () => {
       customRef.current.value="";
       observationRef.current.value="";
 
-     
   }
 
 
@@ -970,6 +974,10 @@ const getAllRotationsManager= async () => {
     
   }
 
+  const getInicio = ()=>{
+
+  }
+
   const ok = ()=>{ 
 
     //Validamos que tipo de agregado es, si es del stack sugerido o uno custom (0 => sugerido, 1 => custom)
@@ -983,14 +991,28 @@ const getAllRotationsManager= async () => {
       //agregarTurno(iduser,IDSCHEMAGLOBAL,nombres,subGrupo,fechaPlaner,startHour,EndHour,Pronostico(iduser),"Brown",observationRef.current.value);
       
         
-      data11.map((item)=>(item.ID_esquema == IDSCHEMAGLOBAL ?
-         crear(iduser,nombres,0,new Date(fechaPlaner),startHour,EndHour,item.ID_programa,"Brown","tipo",observationRef.current.value) : null))
+      data11.map((stacks,index)=>(stacks.ID_esquema == IDSCHEMAGLOBAL 
+        ?
+         crear(iduser,
+          nombres,
+          index,
+          stacks.ID_programa,
+          stacks._id,
+          "Brown",
+          observationRef.current.value,
+          new Date(fechaPlaner),
+          stacks.ID_esquema,
+          inicioMain,
+          stacks.Type,
+
+         )
+        : null))
         
 
 
 
-
-        toast.success("Estack Sugerido");
+         setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+         toast.success("Estack Sugerido");
     }
 
     else if(validador == 1){
@@ -1003,7 +1025,7 @@ const getAllRotationsManager= async () => {
 
 
 
-    setIdUsuario(iduser);
+    //setIdUsuario(iduser);
     //setIdTurno(IDSCHEMAGLOBAL);
     //setNombreCompleto(nombres);
     //setSubG(subGrupo);
@@ -1150,9 +1172,11 @@ const getAllRotationsManager= async () => {
       rotations._id == IDSCHEMAGLOBAL && (respuesta = rotations.HoraInicio, HORAINGLOBAL = rotations.HoraInicio )
     ))
 
-    respuesta = new Date(respuesta).getTime();
+    respuesta = new Date(respuesta);
+    inicioMain = respuesta;
     respuesta = new Date(respuesta).toLocaleTimeString();
   
+    
     return respuesta;
    }
 
@@ -1377,7 +1401,7 @@ const getAllRotationsManager= async () => {
           {/*SECCION # 1*/}
             <div className="list-turnos">
               <div className="titulo">
-                <h2>INFORMACION {observacion}</h2>
+                <h2>INFORMACION</h2>
               </div>
 
              
@@ -1517,7 +1541,7 @@ const getAllRotationsManager= async () => {
 
 
                 <h3 className="subTitulo">OBSERVACIONES</h3>
-                <textarea name="observaciones"  className='observaciones' ref={observationRef} defaultValue={obs}></textarea>
+                <textarea name="observaciones" className='observaciones' ref={observationRef} defaultValue={obs}></textarea>
                 
               </div>
 
@@ -1560,6 +1584,7 @@ const getAllRotationsManager= async () => {
                 
                 <ul className="ulLista-rotation">
                   <span className='horaIN'>{devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN() }</span>
+
                   {
                     data11?.map((stack)=>(
                   

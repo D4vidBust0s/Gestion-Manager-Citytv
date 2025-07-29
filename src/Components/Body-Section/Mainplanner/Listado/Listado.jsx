@@ -1,7 +1,9 @@
 /* ESTILOS */
 import  './Listado.css'
 
-
+//Imagenes 
+import savedNull from '/src/assets/save-null.png';
+import savedOk from '/src/assets/save-ok.png';
 
 /* COMPONENTES MODALES*/
 import ModalPlanner2 from "../../../Modals/ModalPlanner2";
@@ -30,6 +32,8 @@ export default function Listado() {
   const [data5, setData5] = useState([]);
   const [data6, setData6] = useState([]);
   const [data7, setData7] = useState([]);
+  const [data8, setData8] = useState([]);
+  const [data9, setData9] = useState([]);
   const [saved, setSaved] = useState(false);
   const [semanasP, setSemanasP] = useState("----------");
   const [informador, setInformador] = useState(0);
@@ -122,16 +126,30 @@ const obtenerListadoTurnosFull = async () => {
     .then((response) => setData7(response.data));
 };
 
+//Trae todos los programas definidos en el sistema
+const obtenerListadoPrograms = async () => {
+  return await axios
+    .get("http://localhost:3000/api/programs")
+    .then((response) => setData8(response.data));
+};
+
+ //Traer todos los registros Stacks
+ const getAllStacks= async () => {
+    
+  return await axios
+    .get("http://localhost:3000/api/stacks/")
+    .then((response) => setData9(response.data));
+}
+
 
 /* CONTEXTOS*/
 const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Define un estado para la fecha de la barra
-const [idUsuario,setIdUsuario,agregarTurno,idTurno,setIdTurno,nombreCompleto,setNombreCompleto,subG,setSubG,fechaActiva,setFechaActiva,start,setStart,end,setEnd,nombreEvento,setNombreEvento,clr,setClr,observacion,setObservacion] = useContext(PronosticoContext); //
+const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
 
 //FUNCIONES
 //----------------------------------------------------------------------------------------------------------------------------------------
 const save = ()=>{
-  setSaved(!saved)
-  toast.success("Maiplanner Guardado.. OPERACION PENDIENTE");
+  setSaved(!saved);
 }
 
 
@@ -387,8 +405,20 @@ const despuesFS = (FECHAINICIO,FECHAFINAL,DIACLAVE,TOTALSCHEMA,TOTALGP,ACTUAL,id
 }
 
 
-const tareaStack = (id)=>{
-  return id
+const getStack = ()=>{
+  return "Si hay datos";
+}
+
+
+const noStack = ()=>{
+  return "-------- Sin Definir --------" ;
+}
+
+
+
+const tareaStack = (nombreEsquema,payrollID)=>{
+ return nombreEsquema
+
 }
 
 
@@ -522,49 +552,269 @@ const tareaStack = (id)=>{
  /* END - OPERACIONES PARA LA GESTION DE TURNOS  */
  /* ********************************************************************************************************************* */
 
+ const getColorPrimary = (nombreEvent)=>{
+  let color;
+
+    data8?.map((programas)=>(
+      programas._id == nombreEvent && (color = programas.Color)
+    ))
+
+    return color;
+ }
+
+
+ const getNombre = (nombreEvent)=>{
+  let nombre;
+
+    data8?.map((programas)=>(
+      programas._id == nombreEvent && (nombre = programas.nombre)
+    ))
+
+    return nombre;
+ }
+
+
+
+
+
+
+  let mainColor = "white";
+  let nombreEvento = "---------";
+  let anchoEvent = "0";
+  let inicio = "";
+
+ const getDurationCustom = (idEvent) =>{
+
+  
+  data9?.map((stacks)=>(
+    stacks._id == idEvent && (anchoEvent = stacks.Duration+"px")
+  )) 
+
+  return anchoEvent;
+
+ }
+
+ const getDurationprogram = (start, end) =>{
+  let diferencia;
+  var fechaInicio = new Date(start).getTime();
+  var fechaFin    = new Date(end).getTime();
+
+  diferencia = fechaFin - fechaInicio;
+  return  (diferencia/1000)/60;
+
+}
+
+const getDurationPGM = (idEvent) =>{
+  
+      let DURACION;
+
+       data8?.map((pgm)=>(
+        pgm._id == idEvent && ( DURACION = getDurationprogram(pgm.Start,pgm.End))
+       ))
+
+      return (DURACION * 60)/30 ;
+       
+}
+
+
+ const magic = (nombreEvent,idEvent,tipo,horaInicio)=>{
+
+    let fechaInicio = new Date(horaInicio);
+
+
+
+
+  //Primero traigo el color que le corresponde segun el id de evento y tipo
+  if(tipo == "Null")
+  {
+      mainColor = "#747474"
+  }
+
+  else if(tipo == "Custom")
+  {
+      mainColor = "#0c0c0c"
+  }
+
+  else if(tipo == "Secondary")
+  {
+      mainColor = "#b0ffad"
+  }
+
+  else if(tipo == "Programa")
+  {
+      mainColor = getColorPrimary(nombreEvent);
+  }
+
+
+  //procedemos a traer el nombre del evento
+
+  if(tipo == "Null")
+  {
+      nombreEvento = ""
+  }
+
+  else if(tipo == "Custom")
+  {
+      nombreEvento = nombreEvent;
+  }
+
+  else if(tipo == "Secondary")
+  {
+      nombreEvento = getNombre(nombreEvent)
+  }
+
+  else if(tipo == "Programa")
+  {
+    nombreEvento = getNombre(nombreEvent);
+  }
+
+
+  //Definimos las anchuras de cada evento segun corresponda
+
+  if(tipo == "Null")
+  {
+      anchoEvent = "60px";
+  }
+
+  else if(tipo == "Custom")
+  {
+    anchoEvent = getDurationCustom(idEvent);
+  }
+
+  else if(tipo == "Secondary")
+  {
+    anchoEvent = getDurationPGM(nombreEvent)+"px";
+  }
+
+  else if(tipo == "Programa")
+  {
+    anchoEvent = getDurationPGM(nombreEvent)+"px";
+  }
+
+
+
+
+  
+    return  <li style={
+      {
+        float: "left",
+        background: "#545454",
+        height: "1.45rem",
+        borderLeft: "1px solid #000000",
+        width: anchoEvent,
+        display: "flex"
+      }
+      } onClick={() => setModal2(!modal2)}>
+
+      <a href="#" style={
+        anchoEvent == "60px" || anchoEvent == "120px" 
+        ?
+      {
+          position:'relative',
+          padding: '0 2px',
+          textDecoration: 'none',
+          color: tipo == "Custom" ? "#DADADA" : '#000000' ,
+          background: mainColor,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          fontSize: ".6rem",
+          fontWeight: "900",
+          width: anchoEvent,
+          
+      }: 
+      
+      {
+        position:'relative',
+          padding: '0 2px',
+          textDecoration: 'none',
+          color: tipo == "Custom" ? "#DADADA" : '#000000' ,
+          background: mainColor,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          fontSize: ".9rem",
+          fontWeight: "900",
+          width: anchoEvent,
+      }} >
+
+
+             {nombreEvento}
+      </a>
+      </li>
+ }
+
 
   const exist = (payrollId) =>{
 
-    
-
     return <div className="contentListado">
 
-{
+{                    //Este bloque es para identificar con un color verde si el item se ha guardado o no
                      data7?.map((shift)=>(
-                      payrollId == shift.ID_User 
+                      shift.ID_user == payrollId && (new Date(shift.Fecha_clave).toLocaleDateString() == new Date(fechaBarra).toLocaleDateString()) 
                       
                         
-                      ?  <div className="estadoTurnoOk" key={shift._id}></div>
+                      
+                      ?   <> <div className="estadoTurnoOk" key={shift._id}></div>
+
+                            <ul className="ulEvent">
+                              {
+                                saved == false
+                                 ?
+                                    <li className={saved == false ? "liEventTipe0" : "liEventTipe000"} onClick={() => setModal2(!modal2)}>
+                                      
+                                        {magic(shift.Event_name,shift.ID_event,shift.Type,shift.Inicio_main) }
+                                      
+                                    </li>
+
+                                 : null
+                              }
+                              
+                            </ul>
+                          </>
 
                       
-                      :  <div className="estadoTurnoNone" key={shift._id}></div>
+                      :  null 
                       ))
                        
                         
                       
                     }
 
+      {
+        saved == true ?
 
-     
-      <ul className="ulEvent">
+        <ul className="ulEvent">
           <li className={saved == false ? "liEventTipe0" : "liEventTipe000"} onClick={() => setModal2(!modal2)}>
                   <a href="#" className="event"> 
                     {
+                      
                       data2?.map((rotationsManager)=>(
                         payrollId == rotationsManager.userId && saved == true 
                         
                         ? Pronostico(payrollId)
 
                         
-                        : payrollId == rotationsManager.userId && saved == false && tareaStack(rotationsManager.SchemaName) 
+                        : 
+                        //payrollId == rotationsManager.userId && saved == false && rotationsManager.SchemaName
+                        null
                         
                       ))
+                        
                     }
+
                   </a>
            </li>
 
            
       </ul>
+        :null
+      }
+     
+      
+
+
+      
     </div>
     
   };
@@ -640,33 +890,41 @@ const tareaStack = (id)=>{
 
   useEffect(() => {
     obtenerListadoGrupos();
-  }, []);
+  }, [auxiliar]);
 
 
   useEffect(() => {
     getRules();
-  }, []);
+  }, [auxiliar]);
 
   useEffect(() => {
     getPeople();
-  }, []);
+  }, [auxiliar]);
 
   useEffect(() => {
     getAllRotationsManager();
-  }, []);
+  }, [auxiliar]);
 
   useEffect(() => {
     getAllRotationsManagerFS();
-  }, []);
+  }, [auxiliar]);
 
 
   useEffect(() => {
     getRotations();
-  }, []);
+  }, [auxiliar]);
 
   useEffect(()=>{
     obtenerListadoTurnosFull();
-  },[])
+  },[auxiliar])
+
+  useEffect(()=>{
+    obtenerListadoPrograms();
+  },[auxiliar])
+
+  useEffect(()=>{
+    getAllStacks();
+  },[auxiliar])
   
   return (
     <>
@@ -719,15 +977,18 @@ const tareaStack = (id)=>{
       </div>
 
      <div className="sectionSave">
+      <div className="disket">
+        <img src={savedOk} alt="disket" className='savedNull'/>
+      </div>
         <div className={saved ? "circleSaved" : "circle"} onClick={save}>
-          Saved
+        {saved ? "Rotations" : "Prog"} 
         </div>
       </div>
 
      
 
       <div className="pr">
-           <div className="prueba">Prueba context {observacion}</div>
+           <div className="prueba">{/*Prueba context {String(auxiliar)}*/}</div>
         {
 
           new Date(fechaBarra).getDay() == 1 ? "Lunes " + new Date(fechaBarra).getDate()  + " de " + mes(new Date(fechaBarra).getMonth()) + " del " + new Date(fechaBarra).getFullYear() 

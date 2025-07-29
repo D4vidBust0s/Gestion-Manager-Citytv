@@ -29,6 +29,7 @@ export default function ProgramsContent() {
 
   //Estados para los programs
   const [data, setData] = useState([]);
+  const [color, setColor] = useState(null);
 
   /* Estados para los dias de la semana */
   const [checkLunes, setCheckLunes] = useState(false);
@@ -143,7 +144,8 @@ export default function ProgramsContent() {
 
           setDescription(response.data.descripcion) +
           setCheckMain(response.data.Type=="Main"?true:false) +
-          setCheckSecondary(response.data.Type=="Secondary"?true:false)
+          setCheckSecondary(response.data.Type=="Secondary"?true:false) +
+          setColor(response.data.Color)
       );
     setId(id);
    // console.log("start:"+startDate);
@@ -213,6 +215,7 @@ export default function ProgramsContent() {
         start: startDate.toString(),
         end: endDate.toString(),
         type: refMain.current.checked ? "Main" : "Secondary" ,
+        col: color,
       });
       
       obtenerListadoPrograms();
@@ -329,6 +332,7 @@ export default function ProgramsContent() {
         Start: startDate.toString(),
         End: endDate.toString(),
         Type: refMain.current.checked ? "Main" : "Secondary" ,
+        Color: color,
       });
 
       obtenerListadoPrograms();
@@ -375,13 +379,23 @@ export default function ProgramsContent() {
               <li><input type="checkbox" ref={refDomingo} name='Domingo' id='7' checked={checkDomingo} onChange={handleOnChangeDomingo}/> Domingo</li>
              
             </ul>
-
+          
             <div className="TipoEvent">
               <div><input type="checkbox" name="Main Program" id="1" checked={checkMain} className='check' ref={refMain} onChange={handleOnChangeMain}/> Main  </div>
               <div><input type="checkbox" name="Secondary Program" id="2" checked={checkSecondary} className='check' ref={refSecondary} onChange={handleOnChangeSecondary}/> Secondary </div>
             </div>
+
+            <div className="color">
+              <h3 className="subTitulo2">Color</h3>
+              <input type="color" value={color} onChange={e => setColor(e.target.value)} />
+            </div>
+            
           </div>
 
+          
+
+        
+         
           
           <div className="contentSectionTime">
             <img src={Clock} alt="Clock Start" className="imgTime" />
