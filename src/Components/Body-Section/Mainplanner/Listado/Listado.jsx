@@ -29,6 +29,7 @@ export default function Listado() {
   const [data4, setData4] = useState([]);
   const [data5, setData5] = useState([]);
   const [data6, setData6] = useState([]);
+  const [data7, setData7] = useState([]);
   const [saved, setSaved] = useState(false);
   const [semanasP, setSemanasP] = useState("----------");
   const [informador, setInformador] = useState(0);
@@ -113,6 +114,13 @@ const getAllRotationsManagerFijos= async (idGrupo) => {
     .get("http://localhost:3000/api/rotationsmanager/fijos/"+idGrupo)
     .then((response) => setData6(response.data));
 }
+
+//Funcion que obtiene la data de la api - listado de turnos segun id y fecha especifica
+const obtenerListadoTurnosFull = async () => {
+  return await axios
+    .get("http://localhost:3000/api/shifts/full")
+    .then((response) => setData7(response.data));
+};
 
 
 /* CONTEXTOS*/
@@ -520,6 +528,23 @@ const tareaStack = (id)=>{
     
 
     return <div className="contentListado">
+
+{
+                     data7?.map((shift)=>(
+                      payrollId == shift.ID_User 
+                      
+                        
+                      ?  <div className="estadoTurnoOk" key={shift._id}></div>
+
+                      
+                      :  <div className="estadoTurnoNone" key={shift._id}></div>
+                      ))
+                       
+                        
+                      
+                    }
+
+
      
       <ul className="ulEvent">
           <li className={saved == false ? "liEventTipe0" : "liEventTipe000"} onClick={() => setModal2(!modal2)}>
@@ -640,8 +665,8 @@ const tareaStack = (id)=>{
   }, []);
 
   useEffect(()=>{
-    //alert("Exacto");
-  },[fechaBarra])
+    obtenerListadoTurnosFull();
+  },[])
   
   return (
     <>
@@ -695,7 +720,7 @@ const tareaStack = (id)=>{
 
      <div className="sectionSave">
         <div className={saved ? "circleSaved" : "circle"} onClick={save}>
-          Save
+          Saved
         </div>
       </div>
 

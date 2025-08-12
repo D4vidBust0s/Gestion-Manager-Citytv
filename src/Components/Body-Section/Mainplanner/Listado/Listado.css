@@ -296,10 +296,20 @@
   z-index: 500;
 }
 
-.algo{
-  margin-left: 240px;
+.estadoTurnoNone{
+  margin-left: 0;
   position: absolute;
   background: #851e1e;
+  z-index: 500;
+  width: 12px;
+  height: 22px;
+  border-radius: 0 4px 4px 0;
+}
+
+.estadoTurnoOk{
+  margin-left: 0;
+  position: absolute;
+  background: #26610d;
   z-index: 500;
   width: 12px;
   height: 22px;

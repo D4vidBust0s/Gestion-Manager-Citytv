@@ -78,6 +78,7 @@ const [idUsuario,setIdUsuario,agregarTurno,idTurno,setIdTurno,nombreCompleto,set
   const [data9, setData9] = useState([]);
   const [data10, setData10] = useState([]);
   const [data11, setData11] = useState([]);
+  const [data12, setData12] = useState([]);
   const [showNotas, setShowNotas] = useState(false);
 
  
@@ -204,6 +205,13 @@ const getAllRotationsManager= async () => {
       .get("http://localhost:3000/api/stacks/")
       .then((response) => setData11(response.data));
   }
+
+  //Funcion que obtiene todos los shifts
+  const obtenerListadoTurnosFull = async () => {
+    return await axios
+      .get("http://localhost:3000/api/shifts")
+      .then((response) => setData12(response.data));
+  };
 
 
 
@@ -967,10 +975,21 @@ const getAllRotationsManager= async () => {
     //Validamos que tipo de agregado es, si es del stack sugerido o uno custom (0 => sugerido, 1 => custom)
     if(validador == 0)
     {
+      obtenerListadoTurnos();
+
       if(observationRef.current.value=="")
       {observationRef.current.value = "-----"}
 
-      agregarTurno(iduser,IDSCHEMAGLOBAL,nombres,subGrupo,fechaPlaner,startHour,EndHour,Pronostico(iduser),"Brown",observationRef.current.value);
+      //agregarTurno(iduser,IDSCHEMAGLOBAL,nombres,subGrupo,fechaPlaner,startHour,EndHour,Pronostico(iduser),"Brown",observationRef.current.value);
+      
+        
+      data11.map((item)=>(item.ID_esquema == IDSCHEMAGLOBAL ?
+         crear(iduser,nombres,0,new Date(fechaPlaner),startHour,EndHour,item.ID_programa,"Brown","tipo",observationRef.current.value) : null))
+        
+
+
+
+
         toast.success("Estack Sugerido");
     }
 
@@ -985,17 +1004,17 @@ const getAllRotationsManager= async () => {
 
 
     setIdUsuario(iduser);
-    setIdTurno(IDSCHEMAGLOBAL);
-    setNombreCompleto(nombres);
-    setSubG(subGrupo);
-    setFechaActiva(new Date(fechaPlaner).toString());
-    setStart(new Date(startHour).toString());
-    setEnd(new Date(EndHour).toString());
-    setNombreEvento(Pronostico(iduser));
-    setClr("Brown");
-    setObservacion(observationRef.current.value);
+    //setIdTurno(IDSCHEMAGLOBAL);
+    //setNombreCompleto(nombres);
+    //setSubG(subGrupo);
+    //setFechaActiva(new Date(fechaPlaner).toString());
+    //setStart(new Date(startHour).toString());
+    //setEnd(new Date(EndHour).toString());
+    //setNombreEvento(Pronostico(iduser));
+    //setClr("Brown");
+    //setObservacion(observationRef.current.value);
 
-    agregarTurno(iduser,IDSCHEMAGLOBAL,nombres,subGrupo,fechaPlaner,startHour,EndHour,Pronostico(iduser),"Brown",observationRef.current.value);
+    //agregarTurno(iduser,IDSCHEMAGLOBAL,nombres,subGrupo,fechaPlaner,startHour,EndHour,Pronostico(iduser),"Brown",observationRef.current.value);
 
 
     //-----------------------------------------------------------------------------------------------------------------------
@@ -1233,6 +1252,10 @@ const getAllRotationsManager= async () => {
 
  useEffect(()=>{
   getAllStacks();
+ },[])
+
+ useEffect(()=>{
+  obtenerListadoTurnosFull();
  },[])
  
 
@@ -1561,22 +1584,27 @@ const getAllRotationsManager= async () => {
                     
                 : 
 
-                <ul className="ulLista">
-
-                { 
-                  data1?.map((shift)=>(
-                   
-                    <li className="liItem" onClick={(e)=>updateAcciones(shift.Tipo,shift.Evento,shift.Observacion,shift.Start,shift.End,e)}  key={shift._id} ref={pruebaRef}>
-                      <span className="hInicio">{extraerHora(shift.Start)}</span>
-                        {shift.Evento}
-                      <span className="hFinal">{extraerHora(shift.End)}</span>
+                <ul className="ulLista-rotation-ok">
+                  <span className='horaIN'>{devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN() }</span>
+                  {
+                    data11?.map((stack)=>(
+                  
+                  stack.ID_esquema == IDSCHEMAGLOBAL ? 
+                  (
+                    <li className="liItem-rotation" onClick={(e)=>updateAcciones()}   ref={pruebaRef} key={stack._id}>
+                     
+                      {resolver(stack.ID_programa,stack.Type,stack.ID_programa,stack.Duration,stack.Order,stack.Value)}
+                      
                     </li>
-                  ))
-                } 
+                  )
 
-                
-
-              </ul>
+                  : null
+                  
+                  
+                ))
+                }
+                <span className='horaOUT'>{auxOut == "Invalid Date" ? "--:--:--" : auxOut }</span>
+                  </ul>
               }
     
               
