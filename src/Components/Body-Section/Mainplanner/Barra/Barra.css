@@ -74,9 +74,26 @@
             padding-top: 4.5px;
             
         }
+
+        .liMain2{
+            width: 100%;
+            border-bottom: 1px solid #545454;
+            font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            height: 1.61rem;
+            padding-top: 4.5px;
+            
+        }
+
         .liMain:hover{
             cursor: pointer;
             background:#701CF5;
+            color: #DADADA;
+            font-weight: 700;
+        }
+
+        .liMain2:hover{
+            cursor: pointer;
+            background:#6b000e;
             color: #DADADA;
             font-weight: 700;
         }
@@ -235,3 +252,5 @@
     border: 0; 
    
   }
+
+  

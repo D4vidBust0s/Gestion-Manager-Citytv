@@ -343,7 +343,7 @@ const addStack6= async () => {
       type: "TimeOut",
       order:data13.length+1,
       idprograma: "TimeOut",
-      value: timeOutRef.current.value
+      valor: timeOutRef.current.value,
     }), obtenerStacksByIdEsquema(idRegUniversal),timeOutRef.current.value="0"
 }
 
@@ -1593,11 +1593,11 @@ const addSt= async (tipo,orden,idPGM,valor,duracion) => {
   const timeOut = ()=>{
     if(idRegES=="" || idRegES==undefined)
     {
-      toast.error("Para agregar un Null al stack primeramente debe haber seleccionado un grupo y posteriormente un esquema");
+      toast.error("Para agregar un TimeOut al stack primeramente debe haber seleccionado un grupo y posteriormente un esquema");
     }
 
     
-    else if(timeOutRef.current.value=="")
+    else if(timeOutRef.current.value=="" || timeOutRef.current.value==0)
     {
       toast.error("Debe especificar un tiempo en minutos");
       timeOutRef.current.focus();

@@ -37,6 +37,7 @@ import axios from "axios";
 /* Contextos */
 import { FechaBarraProvider } from './context/FechaBarraProvider';
 import { PronosticoTurnosProvider } from './context/PronosticoTurnosProvider';
+import { AuxSustitutionsProvider } from './context/AuxSustitutionsProvider';
 
 /* Variables */
 
@@ -366,7 +367,7 @@ useEffect(()=>{
 // ***************************************************************************************************************
 
   return (
-    
+    <AuxSustitutionsProvider>
     <PronosticoTurnosProvider>
     <FechaBarraProvider>
     <BrowserRouter>
@@ -401,7 +402,7 @@ useEffect(()=>{
     </BrowserRouter>
     </FechaBarraProvider>
     </PronosticoTurnosProvider>
-    
+    </AuxSustitutionsProvider>
   );
 }
 

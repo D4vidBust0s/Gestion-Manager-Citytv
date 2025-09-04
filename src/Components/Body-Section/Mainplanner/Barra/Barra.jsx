@@ -17,6 +17,7 @@ import ModalPlanner1 from "../../../Modals/ModalPlanner1";
 import ModalPlanner3 from "../../../Modals/ModalPlanner3";
 import toast from 'react-hot-toast';
 import { FechaBarraContext } from '../../../../context/FechaBarraProvider';
+import { AuxSustitutions} from '../../../../context/AuxSustitutionsProvider';
 
 //Variables Globales
 let permissions = 0;           // Permisos - Permissions         -- color Amarillo
@@ -41,7 +42,7 @@ let verifyVacaciones = 0;         //Vacaciones o Recess
 let verifyLicensia = 0;           //Licensias
 let verifyBreaks = 0;             //Breaks
 
-
+let auxi = 0;
 
 
 
@@ -53,6 +54,9 @@ export default function Barra() {
   //CONTEXTOS
   const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Este contexto hace referencia a la fecha que se selecciona 
                                                                     //en la barra del mainplanner
+
+  const [Aux,setAux] = useContext(AuxSustitutions); //Este contexto referencia un estado que avisa si hubo un cambio
+                                                                    //para volver a llamar las sustituciones nuevamente
   
 //estado para la ventana modal1 
  const [modal1, setModal1] = useState(false); 
@@ -68,6 +72,7 @@ export default function Barra() {
  const [data5, setData5] = useState([]);
  const [data6, setData6] = useState([]);
  const [data7, setData7] = useState([]);
+ const [data8, setData8] = useState([]);
 
  const [nombre, setNombre] = useState("");
  const [cargo, setCargo] = useState("");
@@ -139,6 +144,13 @@ export default function Barra() {
     .get("http://localhost:3000/api/rotationsmanager")
     .then((response) => setData7(response.data));
   }
+
+  //Funcion que obtiene la data de la api - listado Substitutions
+  const getSubstitutions = async () => {
+  return await axios
+    .get("http://localhost:3000/api/substitutions/")
+    .then((response) => setData8(response.data));
+};
 
 
   const semanasAlDia = (ID_Usuario,Nombre,Apellido)=>{
@@ -352,6 +364,39 @@ const testBreaks = (pid)=>{
 
 }
 
+const noExist = () =>{
+  auxi++
+  return <ul  key={auxi}>
+      {
+        data1.length == auxi &&  
+        <>
+          <li className="liMain2">----------</li>
+          <li className="liMain2">----------</li>
+          <li className="liMain2">----------</li>
+        </>
+      }
+           
+        </ul>
+ }
+
+ const traerRemplazo = (pid,grupoid) =>{
+  let respuesta = " / ---------------";
+
+  if(permissions == 1 || incapacitado == 1 || licensia == 1 || vacaciones == 1 || breaks == 1)
+  {
+    data8?.map(
+      (sustituciones)=>(sustituciones.ID_grupo_der == grupoid && new Date(fechaBarra).toISOString() == sustituciones.Fecha_dia && sustituciones.ID_user_main == pid ? respuesta = " / " +sustituciones.NombreLeft : null)
+      )
+  } 
+
+  else {
+    respuesta = "";
+  }
+
+
+  return respuesta;
+
+ }
  
 
 
@@ -380,7 +425,7 @@ const testBreaks = (pid)=>{
           ))
         }
         
-        {pn +" "+pa}
+        {pn +" "+pa + traerRemplazo(pid,grupoid)}
       </li>
     </ul>
 
@@ -392,11 +437,11 @@ const testBreaks = (pid)=>{
 
   useEffect(() => {
     obtenerListadoGrupos();
-  }, []);
+  }, [Aux]);
 
   useEffect(() => {
     getPeople();
-  }, []);
+  }, [Aux]);
 
 
   useEffect(() => {
@@ -425,6 +470,10 @@ const testBreaks = (pid)=>{
     getRotationsmanager();
   },[])
 
+  useEffect(()=>{
+    getSubstitutions();
+  },[Aux])
+
 
   
  
@@ -444,10 +493,10 @@ const testBreaks = (pid)=>{
 
         
       <div className="barra">
-      
         <img src={tropa} alt="tropa" className="imgTropa" />
         <div className="content-listado">
         <div className="calendar">
+        
         <DatePicker
           className="picker"
           selected={startDate}
@@ -455,13 +504,15 @@ const testBreaks = (pid)=>{
           showMonthDropdown
         />
       </div>
+
+      
   
           {
             //Ciclo que trae el numero de grupos del sistema
             data?.map((group)=>(
-              
+              auxi = 0,
 
-                <div className="hola" key={group._id}>
+                <div key={group._id}>
                   {
                     
                     //Ciclo que trae todos los usuarios del sistema 
@@ -469,16 +520,17 @@ const testBreaks = (pid)=>{
                     <div className="hol" key={payroll._id}>
                       {
                              
-                           payroll.grupoID == group._id && payroll.activo == true ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres,payroll.cargo,payroll.apellidos,payroll.subGrupo,payroll.grupoID) : null
+                           payroll.grupoID == group._id && payroll.activo == true ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres,payroll.cargo,payroll.apellidos,payroll.subGrupo,payroll.grupoID) : noExist()
                           
                       }
                        
-                    </div>
+                  </div>
                   ))
                   
                   }
                   <div className="separador"></div>
-                </div>
+                </div>  
+
                 
             ))
             

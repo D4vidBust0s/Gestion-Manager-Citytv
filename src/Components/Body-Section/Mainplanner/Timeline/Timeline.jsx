@@ -232,8 +232,8 @@ export default function Timeline() {
             <p className="box__item_2">17:30</p>
           </div>
           <div className="lineTime__box">
-            <p className="box__item">17:30</p>
-            <p className="box__item_2">18:00</p>
+            <p className="box__item_2">17:30</p>
+            <p className="box__item">18:00</p>
           </div>
           <div className="lineTime__box">
             <p className="box__item">18:00</p>

@@ -988,8 +988,6 @@ const getAllRotationsManager= async () => {
       if(observationRef.current.value=="")
       {observationRef.current.value = "-----"}
 
-      //agregarTurno(iduser,IDSCHEMAGLOBAL,nombres,subGrupo,fechaPlaner,startHour,EndHour,Pronostico(iduser),"Brown",observationRef.current.value);
-      
         
       data11.map((stacks,index)=>(stacks.ID_esquema == IDSCHEMAGLOBAL 
         ?
@@ -1004,6 +1002,7 @@ const getAllRotationsManager= async () => {
           stacks.ID_esquema,
           inicioMain,
           stacks.Type,
+          stacks.Value,
 
          )
         : null))
@@ -1385,7 +1384,7 @@ const getAllRotationsManager= async () => {
 
             <div className={showNotas == true ? "notasShow" : "notasHide"}>
               <h3 className='notas-title'>
-                Notas para {nombres} <br />
+                Notas para <span className='nombreTitulo'>{nombres}</span> <br /> 
                 _____________________________________________________
               </h3>
 
@@ -1393,6 +1392,7 @@ const getAllRotationsManager= async () => {
                   Lorem, ipsum dolor sit amet consectetur adipisicing elit. 
                   Veniam, ipsum! Quis illum reprehenderit, sequi voluptatem tempore aliquam aut. 
                   Officia reprehenderit dolorem laudantium! Tempore deserunt vel dignissimos optio animi eveniet at.
+                 
               </p>
             </div>
 

@@ -38,6 +38,10 @@
    height: auto;
 }
 
+.imgCargos:hover{
+  cursor:pointer;
+}
+
 .mainListados{
     display: flex;
     flex-direction: column;
@@ -101,19 +105,7 @@
             float: left;
           }
           
-          /*
-          .liEventTipe0 {
-            float: left;
-            background:#545454;
-            height: 1.45rem;
-            border-left: 1px solid #000000;
-            width: 60px;
-            display: flex;
-           
-            
-          }
-
-          */
+          
 
           .liEventTipe0:hover{
             background:#000000;
@@ -344,5 +336,222 @@
   width: 18px;
   margin-right: 15px;
 }
+
+.contentListado2{
+  
+        display: flex;
+        align-items: center;
+        background:#dadada18;
+        border-bottom: 1px solid #545454;
+        width: 92%;
+        padding: 0;
+        margin-left: 17.1rem;
+        height: 22.82px;
+       
+      }  
+
+
+.changeGroups{
+  width: 64.2%;
+  height: 100vh;
+  background: #DADADA;
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 1000;
+  margin-top: 7%;
+  padding: 1rem;
+  transform: translateX(100%);
+}
+
+.mostrar{
+  width: 64.2%;
+  height: 100vh;
+  background: #DADADA;
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 1000;
+  margin-top: 7%;
+  padding: 1rem;
+  transform: translateX(0);
+}
+
+.changeGroups_name{
+  color: #EB464B;
+  padding-left: .5rem;
+}
+
+.changeGroups_logo{
+  height: 50px;
+  width: 50px;
+}
+
+.cabezal{
+  display: flex;
+  background: #545454;
+  align-items: center;
+  padding: .5rem;
+  border-radius: .5rem;
+}
+
+.sectionListPayroll_titulo{
+  color: var(--Secondary);
+  font-weight: 800;
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.sectionListPayroll_titulo2{
+  color: var(--Secondary);
+  font-weight: 800;
+  position: relative;
+  margin-bottom: 2rem;
+  margin-top: 2rem;
+}
+
+.balancer{
+  border-bottom: 1px solid #701CF5;
+        padding: .18rem 0 .18rem 0;
+        width: 100%;
+        padding-left: .5rem;
+        color: #DADADA;
+        font-weight: 600;
+        background: #000000;
+}
+
+.balancer2{
+  border-bottom: 1px solid #701CF5;
+        padding: .18rem 0 .18rem 0;
+        width: 100%;
+        padding-left: .5rem;
+        color: #DADADA;
+        font-weight: 600;
+        background: #000000;
+}
+
+.balancer:hover{
+  transform: scale(1.05);
+  cursor: pointer;
+}
+
+.cuadroReport{
+  background: #00094B;
+  width: 100%;
+  position: relative;
+  color: #DADADA;
+  display: flex;
+  padding: .5rem;
+
+}
+.col1{
+  width: 50%;
+}
+
+.col2{
+   width: 50%;
+}
+
+.ulTabla{
+  width: 100%;
+  background: white;
+  padding: .2rem;
+}
+
+.liTabla{
+  display: flex;
+  width: 100%;
+}
+
+.liTabla:hover{
+  transform: scale(1.01);
+  background: #00094B;
+  color: #DADADA;
+}
+
+.litablaLeft{
+  width: 50%;
+  padding: .15rem;
+  font-size: .8rem;
+  display: flex;
+  align-items: center;
+  
+}
+
+.litablaRight{
+  width: 50%;
+  padding: .15rem;
+  font-size: .8rem;
+  display: flex;
+  align-items: center;
+}
+
+.btnDelItem{
+  background-color: #EB464B;
+  cursor: pointer;
+}
+
+.active3{
+  position: relative;
+  background-color: #547725;
+  color: #DADADA;
+  
+}
+
+.ListLI22{
+  border-bottom: 1px solid #701CF5;
+  padding: .18rem 0 .18rem 0;
+  width: 100%;
+  padding-left: .5rem;
+  font-weight: 100;
+  
+}
+
+.ListLI22:hover{
+  transform: scale(1.05);
+  cursor: pointer;
+}
+
+.content-btn-volador{
+  background: #547725;
+  position: fixed;
+  right: 31.6%;
+  top: 70%;
+  z-index: 1000;
+  width: 95px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  border-radius: 5px;
+}
+
+.content-btn-volador:hover{
+  transform: scale(1.05);
+  cursor: pointer;
+}
+
+.botonflecha{
+  width: 25px;
+}
+
+.userder{
+  color: #547725;
+}
+
+.useriz{
+  color: #EB464B;
+}
+
+.litablaLeft:hover{
+  cursor: pointer;
+}
+.fech{
+  color: #000000;
+  font-size: 1.3rem;
+}
+
+
+
+
 
 

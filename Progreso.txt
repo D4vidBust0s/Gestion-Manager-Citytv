@@ -30,19 +30,68 @@
    se hace esta tarea el item del listado cambia a verde de fondo y se agrega el stack aprobado en modal1
 
    [LUGAR : CITY]  
-   [ESTADO : HAY VAMOS]
-   [PROGRESO : 50%]
+   [ESTADO : TERMINADO]
+   [PROGRESO : 100%]
 
-   primero que todo actualice el dia a 23....
-  perfecto ya tiene cara esto, estoy en la parte de representar en el listado los turnos programados, ya quedo color, nombre, ahora
-  quede en definir las anchuras, debo segun corresponda, traer la duracion del programa y convertirlo a pixeles, y este valor
-  colocarlo como width del evento.
+  
+5) Funcionalidad completa del mainplanner
 
-  queda posicionarlo que creo que es un poco mas conplejo, ya que hay que jugar con el margin-left de cada item, e ir sumando
-  pixeles segun corresponda y partiendo de la hora clave convertida en pixeles. en todo caso vamos bien y me felicito esta muy
-  chevere y ya tiene cara bendiciones y exitos y progreso en la siguiente session. voy a guardar en git el avance
+   [LUGAR : CITY]  
+   [ESTADO : PENDIENTE]
+   [PROGRESO : 10%]
 
-  ok muy bien anombre, ancho , color todo ya se esta representando en el listado. queda pendiente solo
-  el posicionamieno y para ello en el metodo "magic" linea 620 de listado.jsx queda ya una variable, llamada "fecha inicio"
-  que es la variable que trae la hora desde donde nace el primer evento, para que desde esta empiece a correr el resto
+   aun que ya esta implementado una gran parte. incluyo en esta etapa toda la funcionalidad, haciendo que el modal planner1
+   se complemete totalmente con el listado. tanto en turnos segun rotacion que ya esta, como en turnos custom y con requeri
+   miento.
+
+   estoy implemetando el cambio de roles de usuarios temporale en lo que he llamado SUSTITUCIONES, ya el sistema es
+   capaz de agregar un usuario de otra area a la base de datos arreglo SUBSTITUTIONS pero falta filtrar los resultados
+   por fecha y grupo para que no muestre todos los datos si no los que corresponden, ademas falta poderlos eliminar
+   y operar segun sea el tipo de operacion por ejemplo si es USRBALANCER debo hacer una operacion especial, ya la parte 
+   grafica esta
+   BENDICIONES EN LA PROXIMA
+
+   ok hoy ya quedo filtrado y ya se puede eliminar, ahora hay que mostrar de una forma diferente el usuario que esta
+   remplazando en el mainplanner barra, por ejemplo con color de fuente de otro color (verde) y si es un user balancer. 
+   mantener el fondo negro pero color de letras verde, luego en la barra mostrar por cada operacion siguiente el trabajador 
+   y al lado el remplazo pero con el color nativo de cada operacion
+
+   - Permiso
+   - Descanso
+   - Incapacidad
+   - Vcacaciones
+   - Licensia
+
+   listo ya aparece su remplazo al lado derecho de estar asiganado de lo contrario muestra "----------------", ahora debo asignar
+   un trabajo a un USERBALANCER, para hacer esto debo validar dos cosas
+
+   1) que el sustituto no este ya asignado en la fecha establecida (Muestro mensaje correspondiente)
+   2) si es un USERBALANCER al que se va a sustituir (asigno el sustituto sin perder los estilos de USERBALANCER)
+
+   QUEDA PENDIENTE ENTONCES PARA MAÑANA SI DIOS NOS LO PERMITE, VALIDAR ESTOS DOS ASPECTOS, ya implemete la busqueda pero no esta
+   funcionando bien ya que estoy validando un arreglo si es mayor a cero pero carga a la segunda vez, asi que mas bien debo
+   validar en el arreglo que trae todos los sustitutos y como ya esta cargado pues simplemete buscar el usuario y si ya esta
+   pues usar la informacion para mostrar el aviso de advertencia de que el usuario para la fecha ya esta asiganado, el usuario de
+   ejemplo es oscar como sustituto en luces rempolazando a erik el 25 de julio.. BENDICIONES
+
+   listo hecho, sin necesidad de la consulta en la base de datos, queda sin usar pero puede ser que la use en otro momento
+   quedo en Data14
+
+   ahora veo que al asignar un sustituto, no se actualiza inmediatamente en la barra asi que hagamoslo
+   (HECHO PAPE...)
+
+
+
+
+   SUBTAREAS
+   0) implemetar cambios de roles en el listado                                                                   (OK) 
+   1) crear stacks actuales para todos los grupos                                                                 (--)
+   2) implementar funciionalidad completa de turnos no programados                                                (--)
+   3) implemetar descanso con un solo boton (la manita)                                                           (--)
+   4) implemetar el balancer en el modal1 y que sea funcional con el de inquiries/balancer                        (--)
+   5) implemetar el Time Remating en modal 1 ya que su hermno FULL time ya esta                                   (--)
+
+   creo que es todo. se deberia pasar a la implemtecion de notas y las otras herramientas del sistema
+
+
 

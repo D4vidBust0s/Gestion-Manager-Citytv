@@ -4,6 +4,8 @@ import  './Listado.css'
 //Imagenes 
 import savedNull from '/src/assets/save-null.png';
 import savedOk from '/src/assets/save-ok.png';
+import trash from '/src/assets/trash.svg';
+import flecha from '/src/assets/arrow3.svg';
 
 /* COMPONENTES MODALES*/
 import ModalPlanner2 from "../../../Modals/ModalPlanner2";
@@ -16,6 +18,8 @@ import axios from 'axios';
 import {toast, Toaster} from 'react-hot-toast'
 import { FechaBarraContext } from '../../../../context/FechaBarraProvider';
 import { PronosticoContext } from '../../../../context/PronosticoTurnosProvider';
+import { AuxSustitutions } from '../../../../context/AuxSustitutionsProvider';
+import Swal from "sweetalert2";
 
 
 
@@ -34,9 +38,40 @@ export default function Listado() {
   const [data7, setData7] = useState([]);
   const [data8, setData8] = useState([]);
   const [data9, setData9] = useState([]);
+  const [data10, setData10] = useState([]);
+  const [data11, setData11] = useState([]);
+  const [data12, setData12] = useState([]);
+  const [data13, setData13] = useState([]);
+  const [data14, setData14] = useState([]);
+
   const [saved, setSaved] = useState(false);
   const [semanasP, setSemanasP] = useState("----------");
   const [informador, setInformador] = useState(0);
+
+  const [idGp, setIdGp] = useState("----------");
+  const [nombreGrupo, setNombreGrupo] = useState("----------");
+  const [logoGrupo, setLogoGrupo] = useState("/src/assets/Default.svg");
+
+  //Estado para la persona seleccionada
+  const [selectPerson, setSelectPerson] = useState("-----");
+
+  //Estado para guardar el id de la persona seleccionada, para usarlo en el momento de actualizacion o eliminacion
+  const [selectPersonId, setSelectPersonId] = useState();
+
+  //Estado para guardar el id del grupo de  la persona seleccionada,
+  const [selectPersonIdgroup, setSelectPersonIdgroup] = useState();
+
+
+  //Estados para el usuario del listado izquierdo
+  const [selectPersonIz, setSelectPersonIz] = useState("-----");
+  const [selectPersonIdIz, setSelectPersonIdIz] = useState("-----");
+  const [selectPersonGroupIz, setSelectPersonGroupIz] = useState("-----");
+
+
+  //Estados para el usuario del listado derecho
+  const [selectPersonDer, setSelectPersonDer] = useState("-----");
+  const [selectPersonIdDer, setSelectPersonIdDer] = useState("-----");
+  const [selectPersonGroupDer, setSelectPersonGroupDer] = useState("-----");
 
 
 
@@ -58,8 +93,8 @@ export default function Listado() {
 
   let globalDomingos;
 
-
-
+  let auxi = 0;
+  let idGroupGlobal = "";
   
   
 
@@ -141,10 +176,25 @@ const obtenerListadoPrograms = async () => {
     .then((response) => setData9(response.data));
 }
 
+ //Funcion que obtiene la data de la api - listado de grupos
+ const obtenerListadoGrupos2 = async () => {
+  return await axios
+    .get("http://localhost:3000/api/groups")
+    .then((response) => setData10(response.data));
+};
+
+//Funcion que obtiene la data de la api - listado Substitutions
+const getSubstitutions = async () => {
+  return await axios
+    .get("http://localhost:3000/api/substitutions/")
+    .then((response) => setData13(response.data));
+};
+
 
 /* CONTEXTOS*/
 const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Define un estado para la fecha de la barra
 const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
+const [Aux,setAux] = useContext(AuxSustitutions); // Permite avisar a la barra que debe ser actualizada
 
 //FUNCIONES
 //----------------------------------------------------------------------------------------------------------------------------------------
@@ -581,13 +631,17 @@ const tareaStack = (nombreEsquema,payrollID)=>{
   let mainColor = "white";
   let nombreEvento = "---------";
   let anchoEvent = "0";
-  let inicio = "";
+  let inicio = 0;
+  let aux=0;
+  
+  let horas = 0;
+  let minutos = 0;
 
  const getDurationCustom = (idEvent) =>{
 
   
   data9?.map((stacks)=>(
-    stacks._id == idEvent && (anchoEvent = stacks.Duration+"px")
+    stacks._id == idEvent && (anchoEvent = (stacks.Duration*60)/30+"px")
   )) 
 
   return anchoEvent;
@@ -616,13 +670,33 @@ const getDurationPGM = (idEvent) =>{
        
 }
 
+const getDurationTimeOut = (id) =>{
+  let DURACION;
+
+  data9?.map((stacks)=>(
+   stacks._id == id && ( DURACION = stacks.Value)
+  ))
+
+   return (DURACION * 60)/30 ;
+}
+
+
+const getHoras = (fecha) =>{
+
+  const horas = new Date(fecha).getHours();
+  return horas;
+}
+
+const getMinutes = (fecha) =>{
+
+  const minutos = new Date(fecha).getMinutes();
+  return minutos;
+}
+
 
  const magic = (nombreEvent,idEvent,tipo,horaInicio)=>{
-
     let fechaInicio = new Date(horaInicio);
-
-
-
+ 
 
   //Primero traigo el color que le corresponde segun el id de evento y tipo
   if(tipo == "Null")
@@ -643,6 +717,13 @@ const getDurationPGM = (idEvent) =>{
   else if(tipo == "Programa")
   {
       mainColor = getColorPrimary(nombreEvent);
+  }
+
+  else if(tipo == "TimeOut")
+  {
+      mainColor = "transparent";
+      //mainColor = "#e481e42a";
+
   }
 
 
@@ -668,6 +749,11 @@ const getDurationPGM = (idEvent) =>{
     nombreEvento = getNombre(nombreEvent);
   }
 
+  else if(tipo == "TimeOut")
+  {
+    nombreEvento = "TimeOut"
+  }
+
 
   //Definimos las anchuras de cada evento segun corresponda
 
@@ -691,6 +777,427 @@ const getDurationPGM = (idEvent) =>{
     anchoEvent = getDurationPGM(nombreEvent)+"px";
   }
 
+  else if(tipo == "TimeOut")
+  {
+    anchoEvent = getDurationTimeOut(idEvent)+"px";
+  }
+
+
+  //Por ultimo definimos la posicion con respecto a la izquierda
+
+  horas =   getHoras(horaInicio);
+  minutos = getMinutes(horaInicio);
+  
+  //Bloque 4
+  //-----------------------------------------------------------------------------
+
+  if(horas == 4 && minutos == 0 && aux == 0)
+  {
+    inicio = 0;
+    aux = 1;
+  }
+
+  else if(horas == 4 && minutos == 30 && aux == 0)
+  {
+    inicio = 120;
+    aux = 1;
+  }
+
+  //Bloque 5
+  //-----------------------------------------------------------------------------
+
+  else if(horas == 5 && minutos == 0 && aux == 0)
+  {
+  
+    inicio = 120;
+    aux = 1;
+  }
+
+  else if(horas == 5 && minutos == 30 && aux == 0)
+  {
+  
+    inicio = 180;
+    aux = 1;
+  }
+
+  //Bloque 6
+  //-----------------------------------------------------------------------------
+
+  else if(horas == 6 && minutos == 0 && aux == 0)
+  {
+  
+    inicio = 240;
+    aux = 1;
+  }
+
+  else if(horas == 6 && minutos == 30 && aux == 0)
+  {
+  
+    inicio = 300;
+    aux = 1;
+  }
+
+  //Bloque 7
+  //-----------------------------------------------------------------------------
+
+  else if(horas == 7 && minutos == 0 && aux == 0)
+  {
+  
+    inicio = 360;
+    aux = 1;
+  }
+
+  else if(horas == 7 && minutos == 30 && aux == 0)
+  {
+  
+    inicio = 420;
+    aux = 1;
+  }
+
+  //Bloque 8
+  //-----------------------------------------------------------------------------
+
+  else if(horas == 8 && minutos == 0 && aux == 0)
+  {
+  
+    inicio = 480;
+    aux = 1;
+  }
+
+  else if(horas == 8 && minutos == 30 && aux == 0)
+  {
+  
+    inicio = 540;
+    aux = 1;
+  }
+
+  //Bloque 9
+  //-----------------------------------------------------------------------------
+
+  else if(horas == 9 && minutos == 0 && aux == 0)
+  {
+  
+    inicio = 600;
+    aux = 1;
+  }
+
+  else if(horas == 9 && minutos == 30 && aux == 0)
+  {
+  
+    inicio = 660;
+    aux = 1;
+  }
+
+   //Bloque 10
+  //-----------------------------------------------------------------------------
+
+  else if(horas == 10 && minutos == 0 && aux == 0)
+  {
+  
+    inicio = 720;
+    aux = 1;
+  }
+
+  else if(horas == 10 && minutos == 30 && aux == 0)
+  {
+  
+    inicio = 780;
+    aux = 1;
+  }
+
+  //Bloque 11
+  //-----------------------------------------------------------------------------
+
+  else if(horas == 11 && minutos == 0 && aux == 0)
+  {
+  
+    inicio = 840;
+    aux = 1;
+  }
+
+  else if(horas == 11 && minutos == 30 && aux == 0)
+  {
+  
+    inicio = 900;
+    aux = 1;
+  }
+
+
+   //Bloque 12
+  //-----------------------------------------------------------------------------
+
+  else if(horas == 12 && minutos == 0 && aux == 0)
+  {
+  
+    inicio = 960;
+    aux = 1;
+  }
+
+  else if(horas == 12 && minutos == 30 && aux == 0)
+  {
+  
+    inicio = 1020;
+    aux = 1;
+  }
+
+
+ //Bloque 13
+ //-----------------------------------------------------------------------------
+
+  else if(horas == 13 && minutos == 0 && aux == 0)
+  { 
+    inicio = 1080;
+    aux =1;
+  }
+
+  else if(horas == 13 && minutos == 30 && aux == 0)
+  {
+  
+    inicio = 1140;
+    aux = 1;
+  }
+
+//Bloque 14
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 14 && minutos == 0 && aux == 0)
+ { 
+   inicio = 1200;
+   aux =1;
+ }
+
+ else if(horas == 14 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 1260;
+   aux = 1;
+ }
+
+ //Bloque 15
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 15 && minutos == 0 && aux == 0)
+ { 
+   inicio = 1320;
+   aux =1;
+ }
+
+ else if(horas == 15 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 1380;
+   aux = 1;
+ }
+
+ //Bloque 16
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 16 && minutos == 0 && aux == 0)
+ { 
+   inicio = 1440;
+   aux =1;
+ }
+
+ else if(horas == 16 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 1500;
+   aux = 1;
+ }
+
+
+ //Bloque 17
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 17 && minutos == 0 && aux == 0)
+ { 
+   inicio = 1560;
+   aux =1;
+ }
+
+ else if(horas == 17 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 1620;
+   aux = 1;
+ }
+
+
+ //Bloque 18
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 18 && minutos == 0 && aux == 0)
+ { 
+   inicio = 1680;
+   aux =1;
+ }
+
+ else if(horas == 18 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 1740;
+   aux = 1;
+ }
+
+
+ //Bloque 19
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 19 && minutos == 0 && aux == 0)
+ { 
+   inicio = 1800;
+   aux =1;
+ }
+
+ else if(horas == 19 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 1860;
+   aux = 1;
+ }
+
+
+ //Bloque 20
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 20 && minutos == 0 && aux == 0)
+ { 
+   inicio = 1920;
+   aux =1;
+ }
+
+ else if(horas == 20 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 1980;
+   aux = 1;
+ }
+
+ //Bloque 21
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 21 && minutos == 0 && aux == 0)
+ { 
+   inicio = 2040;
+   aux =1;
+ }
+
+ else if(horas == 21 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 2100;
+   aux = 1;
+ }
+
+
+ //Bloque 22
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 22 && minutos == 0 && aux == 0)
+ { 
+   inicio = 2160;
+   aux =1;
+ }
+
+ else if(horas == 22 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 2220;
+   aux = 1;
+ }
+
+
+ //Bloque 23
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 23 && minutos == 0 && aux == 0)
+ { 
+   inicio = 2280;
+   aux =1;
+ }
+
+ else if(horas == 23 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 2340;
+   aux = 1;
+ }
+
+ //Bloque 24
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 24 && minutos == 0 && aux == 0)
+ { 
+   inicio = 2400;
+   aux =1;
+ }
+
+ else if(horas == 24 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 2460;
+   aux = 1;
+ }
+
+ //Bloque 1
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 1 && minutos == 0 && aux == 0)
+ { 
+   inicio = 2520;
+   aux =1;
+ }
+
+ else if(horas == 1 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 2580;
+   aux = 1;
+ }
+
+
+ //Bloque 2 
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 1 && minutos == 0 && aux == 0)
+ { 
+   inicio = 2520;
+   aux =1;
+ }
+
+ else if(horas == 1 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 2580;
+   aux = 1;
+ }
+
+ //Bloque 3 
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 1 && minutos == 0 && aux == 0)
+ { 
+   inicio = 2640;
+   aux =1;
+ }
+
+ else if(horas == 1 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 2700;
+   aux = 1;
+ }
+
+
+  else{
+    inicio = 0;
+  }
+
+ 
+
+ 
+
+  
 
 
 
@@ -698,11 +1205,11 @@ const getDurationPGM = (idEvent) =>{
     return  <li style={
       {
         float: "left",
-        background: "#545454",
         height: "1.45rem",
         borderLeft: "1px solid #000000",
         width: anchoEvent,
-        display: "flex"
+        display: "flex",
+        marginLeft: inicio+"px",
       }
       } onClick={() => setModal2(!modal2)}>
 
@@ -742,20 +1249,43 @@ const getDurationPGM = (idEvent) =>{
              {nombreEvento}
       </a>
       </li>
+
+ }
+
+ const noExist = () =>{
+  auxi++
+  return  data1.length == auxi &&   
+            <>
+              <div className="contentListado2">
+              <ul className="ulEvent">--</ul>
+              </div>
+
+              <div className="contentListado2">
+              <ul className="ulEvent">--</ul>
+              </div>
+
+              <div className="contentListado2">
+              <ul className="ulEvent">--</ul>
+              </div>
+            </>
+      
+           
+       
  }
 
 
   const exist = (payrollId) =>{
+    aux = 0
 
     return <div className="contentListado">
 
 {                    //Este bloque es para identificar con un color verde si el item se ha guardado o no
                      data7?.map((shift)=>(
-                      shift.ID_user == payrollId && (new Date(shift.Fecha_clave).toLocaleDateString() == new Date(fechaBarra).toLocaleDateString()) 
+                      shift.ID_user == payrollId && (new Date(shift.Fecha_clave).toLocaleDateString() == new Date(fechaBarra).toLocaleDateString())
                       
                         
                       
-                      ?   <> <div className="estadoTurnoOk" key={shift._id}></div>
+                      ?   <> {/*<div className="estadoTurnoOk" key={shift._id}></div>*/}
 
                             <ul className="ulEvent">
                               {
@@ -763,8 +1293,8 @@ const getDurationPGM = (idEvent) =>{
                                  ?
                                     <li className={saved == false ? "liEventTipe0" : "liEventTipe000"} onClick={() => setModal2(!modal2)}>
                                       
-                                        {magic(shift.Event_name,shift.ID_event,shift.Type,shift.Inicio_main) }
-                                      
+                                        {magic(shift.Event_name,shift.ID_event,shift.Type,shift.Inicio_main)}
+                              
                                     </li>
 
                                  : null
@@ -882,16 +1412,254 @@ const getDurationPGM = (idEvent) =>{
   }
 
 
+  const change = async (idGrupo,nombre,logo) =>{
+
+    setSelectPersonIz("-----");
+    setSelectPersonIdIz("-----");
+    setSelectPersonGroupIz("-----");
+
+    setSelectPersonDer("-----");
+    setSelectPersonIdDer("-----");
+    setSelectPersonGroupDer("-----");
+
+    let aux = document.getElementsByClassName("active2");
+
+    for (let index = 0; index < aux.length; index++) 
+    {
+      aux[index].classList.remove("active2");
+    }
+
+    let aux2 = document.getElementsByClassName("active3");
+
+    for (let index = 0; index < aux2.length; index++) 
+    {
+      aux2[index].classList.remove("active3");
+    }
+
+
+    //getSubstitutions();
+
+
+    setIdGp(idGrupo);
+    setNombreGrupo(nombre);
+    setLogoGrupo(logo);
+
+    let elemento = document.getElementById("miElemento");
+    elemento.classList.toggle("mostrar");
+
+    return await axios
+    .get("http://localhost:3000/api/payroll/idGroup/"+idGrupo)
+    .then((response) => setData12(response.data),getSubstitutions());
+  }
+
+
+//Funcion que obtiene la data de la api - listado de grupos
+const showUsersGroupAux = async (groupID,e) => {
+
+
+  //guardo el id de grupo en una variable global para posteriores usos
+  idGroupGlobal = groupID;
+
+  //reinicio el nombre del usuario previamente seleccionado
+  setSelectPerson("-----");
+
+   //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
+   if (e.target.classList=="contentForma") 
+   {
+
+     let aux = document.getElementsByClassName("activo");
+
+     for (let index = 0; index < aux.length; index++) 
+     {
+       aux[index].classList.remove("activo");
+     }
+
+     e.target.classList.add("activo");
+   }
+
+
+  return await axios
+    .get("http://localhost:3000/api/payroll/idGroup/"+groupID)
+    .then((response) => setData11(response.data));
+    
+};
+
+//Funcion para actualizar usuarioi de la izquierda
+const operationP = (id,name, apellido,idGroup,e) =>{
+
+  setSelectPersonIz(name + " " + apellido);
+  setSelectPersonIdIz(id);
+  setSelectPersonGroupIz(idGroup);
+
+
+   //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
+   if (e.target.classList=="ListLI") 
+   {
+
+     let aux = document.getElementsByClassName("active2");
+
+     for (let index = 0; index < aux.length; index++) 
+     {
+       aux[index].classList.remove("active2");
+     }
+
+     e.target.classList.add("active2");
+   }
+};
+
+//Funcion para usuario remplazo derecha
+const operationP2 = (id,name, apellido,idGroup,e) =>{
+
+  setSelectPersonDer(name + " " + apellido);
+  setSelectPersonIdDer(id);
+  setSelectPersonGroupDer(idGroup);
+
+   //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
+   if (e.target.classList=="ListLI22" || e.target.classList=="balancer") 
+   {
+
+     let aux = document.getElementsByClassName("active3");
+
+     for (let index = 0; index < aux.length; index++) 
+     {
+       aux[index].classList.remove("active3");
+     }
+
+     e.target.classList.add("active3");
+   }
+};
+
+const EliminarItem = async(id) =>{
+  return await axios
+  .delete("http://localhost:3000/api/substitutions/"+id)
+  .then((response) => getSubstitutions(), setAux(!Aux));
+}
+
+ //Funcion que obtiene la data de la api - listado de sustituciones segun id y fecha especifica
+ const search = async (ID,FECHA) => {
+  return await axios
+    .get("http://localhost:3000/api/substitutions/",
+    {
+      params:{
+        id: ID,
+        fecha: new Date(FECHA).toISOString(),
+      }
+    })
+    .then((response) => setData14(response.data));
+
+
+};
+
+const delitem = (id,nombreLeft,nombreRight) =>{
+  Swal.fire({
+    title: "¿Realmente desea eliminar la dupla "+nombreRight+" "+nombreLeft+"?",
+    showDenyButton: true,
+    showCancelButton: true,
+    confirmButtonText: "No",
+    denyButtonText: `Confirmar`,
+    footer: '<h6>Gestión Manager Citytv</h6>',
+    
+  }).then((result) => {
+    /* Read more about isConfirmed, isDenied below */
+    if (result.isConfirmed) {
+      //Swal.fire("Saved!", "", "success");
+    } else if (result.isDenied) 
+    {
+      EliminarItem(id);
+      Swal.fire("Registro eliminado", "", "success");
+    }
+  });
+}
+
+const saveSustitucion = async () =>{
+
+//Creamos el registro en la base de datos
+await axios.post("http://localhost:3000/api/substitutions/", {
+      idUserMain: selectPersonIdDer,
+      idUserSustituto: selectPersonIdIz,
+      nombreLeft: selectPersonIz,
+      nombreRight: selectPersonDer,
+      idGrupoIz: selectPersonGroupIz,
+      idGrupoDer: selectPersonGroupDer,
+      fechaDia: new Date(fechaBarra).setHours(0,0,0,0),
+      operacion: 0,
+    });
+
+    getSubstitutions();
+
+  Swal.fire({
+    title: "<h5>Sustitución realizada con éxito, el trabajador " + "<span class='userder'>"+selectPersonIz+ "</span>"+ " sustituirá a "  +"<span class='useriz'>"+ selectPersonDer+"</span>"+ " en la fecha seleccionada</h5>",
+    //showDenyButton: true,
+    //showCancelButton: true,
+    //confirmButtonText: "No",
+    denyButtonText: `OK`,
+    footer: '<h6>Gestión Manager Citytv</h6>',
+    
+  }).then((result) => {
+    /* Read more about isConfirmed, isDenied below */
+    if (result.isConfirmed) {
+      //Swal.fire("Saved!", "", "success");
+    } else if (result.isDenied) 
+    {
+      EliminarItem();
+      //Swal.fire("Registro eliminado del sistema", "", "success");
+    }
+  });
+}
+
+const asignar = () =>{
+
+  let aux = 0;
+
+  data13?.map((sustitutions)=>(
+    sustitutions.ID_user_sustituto == selectPersonIdIz && sustitutions.Fecha_dia == new Date(fechaBarra).toISOString() && (aux = 1)
+  ))
+
  
 
+  if(selectPersonIdIz == "-----" &&  selectPersonIdDer == "-----")
+  {
+    toast.error("Aún no ha especificado la información de usuarios para el cambio temporal");
+  }
 
+  else if(selectPersonIdIz == selectPersonIdDer)
+  {
+    toast.error("Los usuarios seleccionados son los mismos");
+  }
+
+  else if(selectPersonIdIz == "-----")
+  {
+    toast.error("No ha seleccionado un trabajador de alguno de los grupos");
+  }
+
+  else if(selectPersonIdDer == "-----")
+  {
+    toast.error("No ha seleccionado un trabajador para que sirva de sustituto temporal");
+  }
+
+  else if(aux == 1)
+  {
+    toast.error("El trabajador sustituto " + selectPersonIz + " ya ha sido asignado para esta fecha. ");
+  }
+
+
+  else{
+
+      saveSustitucion();
+      setAux(!Aux);
+  }
+ 
+}
+
+
+
+//************************************************************************************************************* */
  
  
 
   useEffect(() => {
     obtenerListadoGrupos();
   }, [auxiliar]);
-
 
   useEffect(() => {
     getRules();
@@ -925,6 +1693,10 @@ const getDurationPGM = (idEvent) =>{
   useEffect(()=>{
     getAllStacks();
   },[auxiliar])
+
+  useEffect(() => {
+    obtenerListadoGrupos2();
+  }, []);
   
   return (
     <>
@@ -937,10 +1709,11 @@ const getDurationPGM = (idEvent) =>{
       
 
       {data?.map((group) => (
-        
+        auxi = 0,
+
         <div className="mainRow" key={group._id}>
           <div className="ContentImgCargos">
-            <img src={group.logo} alt={group.nombre} className="imgCargos" />
+            <img src={group.logo} alt={group.nombre} className="imgCargos" onClick={()=> change(group._id,group.nombre,group.logo)}/>
           </div>
 
 
@@ -953,7 +1726,7 @@ const getDurationPGM = (idEvent) =>{
             <div className="cnt-turno" key={payroll._id}>
                 <div className="algo"></div>
               {
-                   payroll.grupoID == group._id && payroll.activo == true ?  exist(payroll._id): null
+                   payroll.grupoID == group._id && payroll.activo == true ?  exist(payroll._id): noExist()
               
               }
             </div>
@@ -1011,7 +1784,118 @@ const getDurationPGM = (idEvent) =>{
         
       </div>
 
-      
+      <div className="changeGroups" id='miElemento' >
+        <div className="cabezal">
+          <img src={logoGrupo} alt="logo" className='changeGroups_logo' />
+          <h2 className='changeGroups_name'>{nombreGrupo}</h2>
+        </div>
+
+        {/* GRUPOS O AREAS */}
+        <div className="contenPAYROLL">
+        <div className="sectionAdd">
+    
+          <ul className='ulListado'>
+              {
+                  data10?.map((group)=>(
+                    <li key={group._id} className="contentForma" onClick={(e)=>showUsersGroupAux(group._id,e)}>
+                      <img src={group.logo} alt={group.nombre} className='img-cam'/>
+                      {group.nombre}
+                    </li>
+                  ))
+              }
+
+          </ul>
+        </div>
+
+
+
+         {/* LISTADO PERSONAS DEL GRUPO */}
+        <div className="sectionListPayroll">
+          <ul className='ListUL'>
+
+            {
+               data11.map((payroll,index)=>(
+
+                payroll.cargo != "USERBALANCER" ?
+                <div className="sb" key={index}>
+                  <div className="subGrupo">{payroll.subGrupo}</div>
+                   <li className={payroll.activo==false?'ListLI2':'ListLI'} key={payroll._id} onClick={(e)=> operationP(payroll._id,payroll.nombres,payroll.apellidos,payroll.grupoID,e)}>{payroll.nombres} {payroll.apellidos}</li>
+                </div>
+                :null
+               ))
+            } 
+          </ul>
+        </div>
+
+
+         {/* PERSONAS */}
+        <div className="sectionListPayroll">
+          <div className='sectionListPayroll_titulo'>Personal del grupo</div>
+
+          
+          <ul className='ListUL'>
+
+            {
+               data12.map((payroll,index)=>(
+
+                payroll.cargo  ?
+                <div className="sb" key={index}>
+                  <div className="subGrupo">{payroll.subGrupo}</div>
+                   <li className={payroll.cargo=="USERBALANCER" ?'balancer':'ListLI22'} key={payroll._id} onClick={(e)=> operationP2(payroll._id,payroll.nombres,payroll.apellidos,payroll.grupoID,e)}>{payroll.nombres} {payroll.apellidos}</li>
+                </div>
+                :null
+               ))
+            } 
+          </ul>
+          <div className='sectionListPayroll_titulo2' >Sustituciones temporales <br></br> <h2 className='fech'>{fechaBarra} </h2></div>
+          <div className="cuadroReport">
+            <div className="col1">
+              Trabajador
+            </div>
+            <div className="col2">
+              Sustitución
+            </div>
+              <span>
+                  del
+              </span>
+          </div>
+
+          <ul className='ulTabla'>
+            {
+              data13?.map((substitution)=>(
+                substitution.ID_grupo_der == idGp && substitution.Fecha_dia == new Date(fechaBarra).toISOString()  &&
+
+                <li className="liTabla" key={substitution._id}>
+                  <div className="litablaLeft">
+                    {substitution.NombreRight}
+                  </div>
+
+                  <div className="litablaRight">
+                  {substitution.NombreLeft}
+                  </div>
+
+                  <span className='btnDelItem'>
+                    <img  src={trash} alt="del" onClick={() => delitem(substitution._id,substitution.NombreLeft, substitution.NombreRight)}/>
+                  </span>
+                </li>
+              ))
+            }
+
+
+
+
+                
+
+          </ul>
+        </div>
+      </div>
+
+      <div className="content-btn-volador">
+        <img src={flecha} alt="flecha" className='botonflecha' onClick={() => asignar()}/>
+      </div>
+        
+        
+      </div>
       
     </>
   );
