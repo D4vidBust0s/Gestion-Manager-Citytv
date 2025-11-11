@@ -788,18 +788,86 @@ const getMinutes = (fecha) =>{
   horas =   getHoras(horaInicio);
   minutos = getMinutes(horaInicio);
   
-  //Bloque 4
+  //Bloque 00
   //-----------------------------------------------------------------------------
 
-  if(horas == 4 && minutos == 0 && aux == 0)
+  if(horas == 0 && minutos == 0 && aux == 0)
   {
     inicio = 0;
     aux = 1;
   }
 
+  else if(horas == 0 && minutos == 30 && aux == 0)
+  {
+    inicio = 60;
+    aux = 1;
+  }
+
+  //Bloque 1
+  //-----------------------------------------------------------------------------
+
+  else if(horas == 1 && minutos == 0 && aux == 0)
+  {
+  
+    inicio = 120;
+    aux = 1;
+  }
+
+  else if(horas == 1 && minutos == 30 && aux == 0)
+  {
+  
+    inicio = 180;
+    aux = 1;
+  }
+
+  //Bloque 2
+  //-----------------------------------------------------------------------------
+
+  else if(horas == 2 && minutos == 0 && aux == 0)
+  {
+  
+    inicio = 240;
+    aux = 1;
+  }
+
+  else if(horas == 2 && minutos == 30 && aux == 0)
+  {
+  
+    inicio = 300;
+    aux = 1;
+  }
+
+  //Bloque 3
+  //-----------------------------------------------------------------------------
+
+  else if(horas == 3 && minutos == 0 && aux == 0)
+  {
+  
+    inicio = 360;
+    aux = 1;
+  }
+
+  else if(horas == 3 && minutos == 30 && aux == 0)
+  {
+  
+    inicio = 420;
+    aux = 1;
+  }
+
+  //Bloque 4
+  //-----------------------------------------------------------------------------
+
+  else if(horas == 4 && minutos == 0 && aux == 0)
+  {
+  
+    inicio = 480;
+    aux = 1;
+  }
+
   else if(horas == 4 && minutos == 30 && aux == 0)
   {
-    inicio = 120;
+  
+    inicio = 540;
     aux = 1;
   }
 
@@ -809,31 +877,31 @@ const getMinutes = (fecha) =>{
   else if(horas == 5 && minutos == 0 && aux == 0)
   {
   
-    inicio = 120;
+    inicio = 600;
     aux = 1;
   }
 
   else if(horas == 5 && minutos == 30 && aux == 0)
   {
   
-    inicio = 180;
+    inicio = 660;
     aux = 1;
   }
 
-  //Bloque 6
+   //Bloque 6
   //-----------------------------------------------------------------------------
 
   else if(horas == 6 && minutos == 0 && aux == 0)
   {
   
-    inicio = 240;
+    inicio = 720;
     aux = 1;
   }
 
   else if(horas == 6 && minutos == 30 && aux == 0)
   {
   
-    inicio = 300;
+    inicio = 780;
     aux = 1;
   }
 
@@ -843,79 +911,11 @@ const getMinutes = (fecha) =>{
   else if(horas == 7 && minutos == 0 && aux == 0)
   {
   
-    inicio = 360;
-    aux = 1;
-  }
-
-  else if(horas == 7 && minutos == 30 && aux == 0)
-  {
-  
-    inicio = 420;
-    aux = 1;
-  }
-
-  //Bloque 8
-  //-----------------------------------------------------------------------------
-
-  else if(horas == 8 && minutos == 0 && aux == 0)
-  {
-  
-    inicio = 480;
-    aux = 1;
-  }
-
-  else if(horas == 8 && minutos == 30 && aux == 0)
-  {
-  
-    inicio = 540;
-    aux = 1;
-  }
-
-  //Bloque 9
-  //-----------------------------------------------------------------------------
-
-  else if(horas == 9 && minutos == 0 && aux == 0)
-  {
-  
-    inicio = 600;
-    aux = 1;
-  }
-
-  else if(horas == 9 && minutos == 30 && aux == 0)
-  {
-  
-    inicio = 660;
-    aux = 1;
-  }
-
-   //Bloque 10
-  //-----------------------------------------------------------------------------
-
-  else if(horas == 10 && minutos == 0 && aux == 0)
-  {
-  
-    inicio = 720;
-    aux = 1;
-  }
-
-  else if(horas == 10 && minutos == 30 && aux == 0)
-  {
-  
-    inicio = 780;
-    aux = 1;
-  }
-
-  //Bloque 11
-  //-----------------------------------------------------------------------------
-
-  else if(horas == 11 && minutos == 0 && aux == 0)
-  {
-  
     inicio = 840;
     aux = 1;
   }
 
-  else if(horas == 11 && minutos == 30 && aux == 0)
+  else if(horas == 7 && minutos == 30 && aux == 0)
   {
   
     inicio = 900;
@@ -923,17 +923,17 @@ const getMinutes = (fecha) =>{
   }
 
 
-   //Bloque 12
+   //Bloque 8
   //-----------------------------------------------------------------------------
 
-  else if(horas == 12 && minutos == 0 && aux == 0)
+  else if(horas == 8 && minutos == 0 && aux == 0)
   {
   
     inicio = 960;
     aux = 1;
   }
 
-  else if(horas == 12 && minutos == 30 && aux == 0)
+  else if(horas == 8 && minutos == 30 && aux == 0)
   {
   
     inicio = 1020;
@@ -941,64 +941,64 @@ const getMinutes = (fecha) =>{
   }
 
 
- //Bloque 13
+ //Bloque 9
  //-----------------------------------------------------------------------------
 
-  else if(horas == 13 && minutos == 0 && aux == 0)
+  else if(horas == 9 && minutos == 0 && aux == 0)
   { 
     inicio = 1080;
     aux =1;
   }
 
-  else if(horas == 13 && minutos == 30 && aux == 0)
+  else if(horas == 9 && minutos == 30 && aux == 0)
   {
   
     inicio = 1140;
     aux = 1;
   }
 
-//Bloque 14
+//Bloque 10
  //-----------------------------------------------------------------------------
 
- else if(horas == 14 && minutos == 0 && aux == 0)
+ else if(horas == 10 && minutos == 0 && aux == 0)
  { 
    inicio = 1200;
    aux =1;
  }
 
- else if(horas == 14 && minutos == 30 && aux == 0)
+ else if(horas == 10 && minutos == 30 && aux == 0)
  {
  
    inicio = 1260;
    aux = 1;
  }
 
- //Bloque 15
+ //Bloque 11
  //-----------------------------------------------------------------------------
 
- else if(horas == 15 && minutos == 0 && aux == 0)
+ else if(horas == 11 && minutos == 0 && aux == 0)
  { 
    inicio = 1320;
    aux =1;
  }
 
- else if(horas == 15 && minutos == 30 && aux == 0)
+ else if(horas == 11 && minutos == 30 && aux == 0)
  {
  
    inicio = 1380;
    aux = 1;
  }
 
- //Bloque 16
+ //Bloque 12
  //-----------------------------------------------------------------------------
 
- else if(horas == 16 && minutos == 0 && aux == 0)
+ else if(horas == 12 && minutos == 0 && aux == 0)
  { 
    inicio = 1440;
    aux =1;
  }
 
- else if(horas == 16 && minutos == 30 && aux == 0)
+ else if(horas == 12 && minutos == 30 && aux == 0)
  {
  
    inicio = 1500;
@@ -1006,19 +1006,86 @@ const getMinutes = (fecha) =>{
  }
 
 
+ //Bloque 13
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 13 && minutos == 0 && aux == 0)
+ { 
+   inicio = 1560;
+   aux =1;
+ }
+
+ else if(horas == 13 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 1620;
+   aux = 1;
+ }
+
+
+ //Bloque 14
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 14 && minutos == 0 && aux == 0)
+ { 
+   inicio = 1680;
+   aux =1;
+ }
+
+ else if(horas == 14 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 1740;
+   aux = 1;
+ }
+
+
+ //Bloque 15
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 15 && minutos == 0 && aux == 0)
+ { 
+   inicio = 1800;
+   aux =1;
+ }
+
+ else if(horas == 15 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 1860;
+   aux = 1;
+ }
+
+
+ //Bloque 16
+ //-----------------------------------------------------------------------------
+
+ else if(horas == 16 && minutos == 0 && aux == 0)
+ { 
+   inicio = 1920;
+   aux =1;
+ }
+
+ else if(horas == 16 && minutos == 30 && aux == 0)
+ {
+ 
+   inicio = 1980;
+   aux = 1;
+ }
+
  //Bloque 17
  //-----------------------------------------------------------------------------
 
  else if(horas == 17 && minutos == 0 && aux == 0)
  { 
-   inicio = 1560;
+   inicio = 2040;
    aux =1;
  }
 
  else if(horas == 17 && minutos == 30 && aux == 0)
  {
  
-   inicio = 1620;
+   inicio = 2100;
    aux = 1;
  }
 
@@ -1028,14 +1095,14 @@ const getMinutes = (fecha) =>{
 
  else if(horas == 18 && minutos == 0 && aux == 0)
  { 
-   inicio = 1680;
+   inicio = 2160;
    aux =1;
  }
 
  else if(horas == 18 && minutos == 30 && aux == 0)
  {
  
-   inicio = 1740;
+   inicio = 2220;
    aux = 1;
  }
 
@@ -1045,31 +1112,30 @@ const getMinutes = (fecha) =>{
 
  else if(horas == 19 && minutos == 0 && aux == 0)
  { 
-   inicio = 1800;
+   inicio = 2280;
    aux =1;
  }
 
  else if(horas == 19 && minutos == 30 && aux == 0)
  {
  
-   inicio = 1860;
+   inicio = 2340;
    aux = 1;
  }
-
 
  //Bloque 20
  //-----------------------------------------------------------------------------
 
  else if(horas == 20 && minutos == 0 && aux == 0)
  { 
-   inicio = 1920;
+   inicio = 2400;
    aux =1;
  }
 
  else if(horas == 20 && minutos == 30 && aux == 0)
  {
  
-   inicio = 1980;
+   inicio = 2460;
    aux = 1;
  }
 
@@ -1078,116 +1144,52 @@ const getMinutes = (fecha) =>{
 
  else if(horas == 21 && minutos == 0 && aux == 0)
  { 
-   inicio = 2040;
+   inicio = 2520;
    aux =1;
  }
 
  else if(horas == 21 && minutos == 30 && aux == 0)
  {
  
-   inicio = 2100;
+   inicio = 2580;
    aux = 1;
  }
 
 
- //Bloque 22
+ //Bloque 22 
  //-----------------------------------------------------------------------------
 
  else if(horas == 22 && minutos == 0 && aux == 0)
  { 
-   inicio = 2160;
+   inicio = 2640;
    aux =1;
  }
 
  else if(horas == 22 && minutos == 30 && aux == 0)
  {
  
-   inicio = 2220;
+   inicio = 2700;
    aux = 1;
  }
 
-
- //Bloque 23
+ //Bloque 23 
  //-----------------------------------------------------------------------------
 
  else if(horas == 23 && minutos == 0 && aux == 0)
  { 
-   inicio = 2280;
+   inicio = 2760;
    aux =1;
  }
 
  else if(horas == 23 && minutos == 30 && aux == 0)
  {
  
-   inicio = 2340;
+   inicio = 2820;
    aux = 1;
  }
 
- //Bloque 24
+
  //-----------------------------------------------------------------------------
-
- else if(horas == 24 && minutos == 0 && aux == 0)
- { 
-   inicio = 2400;
-   aux =1;
- }
-
- else if(horas == 24 && minutos == 30 && aux == 0)
- {
- 
-   inicio = 2460;
-   aux = 1;
- }
-
- //Bloque 1
- //-----------------------------------------------------------------------------
-
- else if(horas == 1 && minutos == 0 && aux == 0)
- { 
-   inicio = 2520;
-   aux =1;
- }
-
- else if(horas == 1 && minutos == 30 && aux == 0)
- {
- 
-   inicio = 2580;
-   aux = 1;
- }
-
-
- //Bloque 2 
- //-----------------------------------------------------------------------------
-
- else if(horas == 1 && minutos == 0 && aux == 0)
- { 
-   inicio = 2520;
-   aux =1;
- }
-
- else if(horas == 1 && minutos == 30 && aux == 0)
- {
- 
-   inicio = 2580;
-   aux = 1;
- }
-
- //Bloque 3 
- //-----------------------------------------------------------------------------
-
- else if(horas == 1 && minutos == 0 && aux == 0)
- { 
-   inicio = 2640;
-   aux =1;
- }
-
- else if(horas == 1 && minutos == 30 && aux == 0)
- {
- 
-   inicio = 2700;
-   aux = 1;
- }
-
 
   else{
     inicio = 0;
@@ -1210,6 +1212,7 @@ const getMinutes = (fecha) =>{
         width: anchoEvent,
         display: "flex",
         marginLeft: inicio+"px",
+        
       }
       } onClick={() => setModal2(!modal2)}>
 

@@ -18,6 +18,7 @@ import Calendario from '../../assets/calendario.png'
 import Ok from '../../assets/Ok.svg'
 import documento from '../../assets/document.svg'
 import capas from '../../assets/capas.svg'
+import less from '../../assets/Default.svg'
 
 
 
@@ -26,6 +27,8 @@ import { useEffect, useRef, useState, useContext } from 'react';
 import DatePicker from 'react-datepicker';
 import axios from 'axios';
 import {Toaster, toast} from 'react-hot-toast';
+
+
 
 //Import Contextos
 import { FechaBarraContext } from '../../context/FechaBarraProvider';
@@ -43,7 +46,7 @@ let arrayVariables = [];
 
 let totalGrupo = 0;
 let totalSchema = 0;
-let auxOut;
+let auxOut = "--:--:--";
 let fullTime = 0;
 
 //Variables 
@@ -54,11 +57,15 @@ let actual;
 let IDGLOBAL;
 let IDSCHEMAGLOBAL;
 let HORAINGLOBAL;
+let INDEXGLOBAL;
 
 let validador = 0;
+let validador2 = 0;
+let validador3 = 0;
+let validador4 = 0;
+let validador5 = 0;
 let inicioMain;
-let startEvent;
-let endtEvent;
+let validaUser = 0;
 
 export default function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color,gp,gpid}) {
 
@@ -82,6 +89,8 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [data10, setData10] = useState([]);
   const [data11, setData11] = useState([]);
   const [data12, setData12] = useState([]);
+  const [data13, setData13] = useState([]);
+  const [data14, setData14] = useState([]);
   const [showNotas, setShowNotas] = useState(false);
 
  
@@ -100,6 +109,8 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [obs, setObs] = useState("");
 
   const [pr,setPr]= useState(0);
+  const [showAlert,setShowAlert]= useState(false);
+ 
 
   //Referencias
   const pgmRef = useRef();
@@ -109,6 +120,8 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const endRef = useRef();
   const observationRef = useRef();
   const pruebaRef = useRef();
+
+  const stackRef = useRef();
 
  
   
@@ -212,11 +225,31 @@ const getAllRotationsManager= async () => {
   //Funcion que obtiene todos los shifts
   const obtenerListadoTurnosFull = async () => {
     return await axios
-      .get("http://localhost:3000/api/shifts")
+      .get("http://localhost:3000/api/shifts/full/")
       .then((response) => setData12(response.data));
   };
 
 
+  //Funcion que obtiene la data de la api - listado Substitutions
+const getSubstitutions = async () => {
+  return await axios
+    .get("http://localhost:3000/api/substitutions/")
+    .then((response) => setData13(response.data));
+};
+
+
+ //Funcion que obtiene la data de la api - listado de anotaciones segun id y fecha especifica
+ const getNotatiosIdFecha = async () => {
+  return await axios
+    .get("http://localhost:3000/api/notations/",
+    {
+      params:{
+        id: iduser,
+        fecha: new Date(fechaBarra).toISOString(),
+      }
+    })
+    .then((response) => setData13(response.data));
+};
 
   const crear = async (IDUSER,NOMBRES,INDEX,ID_PROGRAMA,EVENT_ID,COLOR,OBSERVACION,FECHA_CLAVE,ID_SCHEMA,INICIO_MAIN,TIPO)=>{
 
@@ -235,13 +268,49 @@ const getAllRotationsManager= async () => {
 
     });
 
-    obtenerListadoTurnos();
+    obtenerListadoTurnos()
+    obtenerListadoTurnosFull()
+
+    INDEXGLOBAL = INDEX;
 
       //limpiamos los campos
       customRef.current.value="";
       observationRef.current.value="";
 
   }
+
+  const cleanRegistro = async ()=>{
+    //new Date(Fecha_Barra).toISOString()
+
+    return await axios
+    .put("http://localhost:3000/api/shifts/",
+      {   
+        
+        ids: iduser,
+        fch: new Date(fechaBarra).toISOString()
+
+      })
+      .then((response) => obtenerListadoTurnos())
+      .then((response) => obtenerListadoTurnosFull());
+
+      
+      
+
+  };
+
+
+
+  const desabilitar = ()=>{
+    
+    
+       /* valido que el trabajador tenga rotaciones */
+        data10.map((rotationsM)=>(
+          rotationsM.totalGrupo == 0 && rotationsM.userId == iduser &&  (validador5 = 1)
+        ))
+
+  }
+
+
 
 
   const add = ()=>{
@@ -314,9 +383,7 @@ const getAllRotationsManager= async () => {
     
   }
 
-  const turnoFree = ()=>{
 
-  }
 
 
   const updateAcciones = (tipo,evento,obse,start,end,e)=>{
@@ -919,9 +986,10 @@ const getAllRotationsManager= async () => {
   
     //HAGO LA OPERACION PARA TRAER EL TURNO EN EL QUE DEBE ESTAR EL USUARIO EN LA SEMANA QUE ES (ACTUAL) POR QUE ESTA "ENTRE"
     data10?.map((rotationsManager)=>(
-      idUsuario==rotationsManager.userId && (turno = rotationsManager.SchemaName)
+      idUsuario==rotationsManager.userId && (turno = rotationsManager.SchemaName, IDSCHEMAGLOBAL = rotationsManager.schemaId)
     ))
   
+
     return turno
   
   }
@@ -957,8 +1025,6 @@ const getAllRotationsManager= async () => {
   
     //Por ultimo hagao las operaciones para saber en que turno estaria el trabajador en la fecha escogida
   
-    //primero valido si el numero de grupos es igual al numero de schemas
-  
       let pronostico;
       
       //hago el pronostico 
@@ -974,21 +1040,47 @@ const getAllRotationsManager= async () => {
     
   }
 
-  const getInicio = ()=>{
+  
 
-  }
+  const ok =  ()=>{ 
 
-  const ok = ()=>{ 
+    obtenerListadoTurnosFull();
 
     //Validamos que tipo de agregado es, si es del stack sugerido o uno custom (0 => sugerido, 1 => custom)
     if(validador == 0)
     {
-      obtenerListadoTurnos();
+      
+      //valido que no haya un registro realizado previamente 
+      data12.map((shifts)=>(
+        shifts.Fecha_clave == new Date(fechaPlaner).toISOString() && shifts.ID_user == iduser &&  (validador2 = 1)
+      ))
 
-      if(observationRef.current.value=="")
-      {observationRef.current.value = "-----"}
+      /* valido que no se haya asignafdo un descanso al trabajador*/
+      data4.map((breaks)=>(
+        breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser &&  (validador3 = 1)
+      ))
 
-        
+      
+      
+
+      if(validador2 == 1)
+      {
+        setIDUSER(iduser);
+        validador2 = 0;
+        toast.error("Ya se ha guardado el stack sugerido para la fecha actual ");
+      }
+
+      else if(validador3 == 1)
+      {
+        validador3 = 0;
+        toast.error("El Trabajador ya tiene asignado un descanso, para asignar un turno primero elimine el descanso asignado ");
+      }
+
+      else{
+        validador2 = 0;
+        validador3 = 0;
+        setIDUSER(iduser);
+      
       data11.map((stacks,index)=>(stacks.ID_esquema == IDSCHEMAGLOBAL 
         ?
          crear(iduser,
@@ -1006,12 +1098,21 @@ const getAllRotationsManager= async () => {
 
          )
         : null))
+
         
-
-
-
          setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-         toast.success("Estack Sugerido");
+         toast.success("Stack sugerido agregado correctamente");
+         
+
+        }
+      
+
+      if(observationRef.current.value=="")
+        {
+          observationRef.current.value = "-----"
+        }
+
+        
     }
 
     else if(validador == 1){
@@ -1043,17 +1144,91 @@ const getAllRotationsManager= async () => {
   }
 
   
-  const regalo = ()=>{
-    //Asignamos un descanso al trabajador
-    toast.success("Se asignó un descanso al trabajador");
+  const regalo = async ()=>{
+
+
+    //valido que no haya un registro realizado previamente 
+    data12.map((shifts)=>(
+      shifts.Fecha_clave == new Date(fechaPlaner).toISOString() && shifts.ID_user == iduser &&  (validador2 = 1)
+    ))
+
+    /* valido que no se haya asignafdo un descanso al trabajador*/
+    data4.map((breaks)=>(
+      breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser &&  (validador3 = 1)
+    ))
+
+    
+
+    if(validador2 == 1)
+    {
+      setIDUSER(iduser);
+      validador2 = 0;
+      toast.error("El trabajador ya tiene asiganado un turno para la fecha actual, para asignar un descanso, primero elimine el turno asignado")
+    }
+
+    else if(validador3 = 1)
+    {
+      validador3 = 0;
+      toast.error("El trabajador ya tiene asignado un descanso para esta fecha, no es necesario confirmarla")
+    }
+
+    else{
+
+      validador2 = 0;
+
+      //Asignamos un descanso al trabajador
+      await axios.post("http://localhost:3000/api/breaks/", {
+
+          nombre: "Descanso Normal o Genérico",
+          año:new Date(fechaBarra).getFullYear().toString(),
+          fechainicio: new Date(fechaBarra).toISOString(),
+          fechafinal:  new Date(fechaBarra).toISOString(),
+          observacion: "Este es un descanso asignado directamente desde el programador de turnos",
+          estado: true,
+          nombreempleado: nombres,
+          idempleado: iduser,
+      });
+
+      toast.success("Se asignó un descanso al trabajador");
+    }
+
+    
   }
 
   const clean = ()=>{
-    toast.success("Limpieza de lista ejecutado correctamente");
-    setData11([]);
+
+     /* valido que no se haya asignafdo un descanso al trabajador*/
+     data4.map((breaks)=>(
+      breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser &&  (validador3 = 1)
+    ))
+
+    if(validador3 == 1)
+    {
+      validador3 = 0;
+      toast.error("El trabajador ya tiene asignado un descanso para esta fecha, para realizar cualquier otra acción primero elimine el descanso asignado")
+    }
+
+    else{
+      setShowAlert(!showAlert);
+    }
+    
+  }
+
+  
+
+  const confirmacionAlert = () =>{
+
+    //Limpiamos los registros en la base de datos
+    cleanRegistro();
+    
+    setData11([]);  
     setData9([]);
     auxOut = "--:--:--";
     validador = 1;
+    setShowAlert(!showAlert);
+    setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+    
+    toast.success("Limpieza de lista ejecutado correctamente");
   }
 
   const edit = ()=>{
@@ -1062,10 +1237,28 @@ const getAllRotationsManager= async () => {
   }
 
   const stack = ()=>{
-    toast.success("Stack según turno actualizado");
-    getAllStacks();
-    traerRotations();
-    validador = 0;
+
+
+      /* valido que no se haya asignafdo un descanso al trabajador*/
+      data4.map((breaks)=>(
+        breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser &&  (validador3 = 1)
+      ))
+  
+      if(validador3 == 1)
+      {
+        validador3 = 0;
+        toast.error("El trabajador ya tiene asignado un descanso para esta fecha, para realizar cualquier otra acción primero elimine el descanso asignado")
+      }
+
+      else{
+        getAllStacks();
+        traerRotations();
+        validador = 0;
+        toast.success("Stack según turno actualizado");
+      }
+
+
+    
   }
 
   const getDurationprogram = (start, end) =>{
@@ -1214,6 +1407,16 @@ const getAllRotationsManager= async () => {
   }
    
   
+  const traerSustituto = () =>{
+
+    let respuesta = "";
+
+    data13?.map((substitution)=>(
+      substitution.ID_user_main == iduser && substitution.Fecha_dia == new Date(fechaPlaner).toISOString()  ? ( respuesta = " / " + substitution.NombreLeft) : null
+    ))
+
+    return respuesta;
+  }
 
  
    
@@ -1280,8 +1483,16 @@ const getAllRotationsManager= async () => {
  useEffect(()=>{
   obtenerListadoTurnosFull();
  },[])
+
+ useEffect(()=>{
+  getSubstitutions();
+ },[])
  
 
+ useEffect(()=>{
+  getNotatiosIdFecha();
+ }, [IDUSER, FECHA])
+ 
 
   return (
     <>
@@ -1294,7 +1505,7 @@ const getAllRotationsManager= async () => {
             
             <img src={Anita} alt="anita" className="img-Profile" />
             <h3 className="nombre">
-              {nombres}
+              {nombres + traerSustituto()}
               <br />
               <span className="roll">{cargo}</span>
             </h3>
@@ -1382,22 +1593,46 @@ const getAllRotationsManager= async () => {
                   
           <div className="cuerpoModal">
 
+          <div className={showAlert == true ? "alert" : "hideAlert"}>
+            <div className="cierre" onClick={()=>setShowAlert(!showAlert)}>x</div>
+            <div className="alert-conten">
+              ¿Realmente desea limpiar el stack?
+            </div>
+            <div className="alert-subtitulo">
+            Si hay un registro previamente guardado, se perderá
+            </div>
+            <div className="alert-butoms">
+              <div className="btn-no" onClick={()=>setShowAlert(!showAlert)}>NO</div>
+              <div className="btn-confirm" onClick={()=>confirmacionAlert()}>OK</div>
+            </div>
+
+          </div>
+
+
             <div className={showNotas == true ? "notasShow" : "notasHide"}>
               <h3 className='notas-title'>
                 Notas para <span className='nombreTitulo'>{nombres}</span> <br /> 
                 _____________________________________________________
               </h3>
 
-              <p className='notas-contenido'>
-                  Lorem, ipsum dolor sit amet consectetur adipisicing elit. 
-                  Veniam, ipsum! Quis illum reprehenderit, sequi voluptatem tempore aliquam aut. 
-                  Officia reprehenderit dolorem laudantium! Tempore deserunt vel dignissimos optio animi eveniet at.
-                 
-              </p>
+              {
+                data13?.map((anotaciones,index)=>(  
+                  <span className='main-nt' key={anotaciones._id}>
+                    <h5 key={index} className='numero-notas'>{index+1}</h5>
+                    <p className='notas-contenido' key={anotaciones._id}>
+                      {anotaciones.Contenido}
+                    </p>
+                  </span>
+                ))
+              }
+              
             </div>
+
+           
 
           <div className="close2" onClick={() => cambiarEstado(!estado)}>X</div>
 
+         
           {/*SECCION # 1*/}
             <div className="list-turnos">
               <div className="titulo">
@@ -1432,6 +1667,9 @@ const getAllRotationsManager= async () => {
                     {   
                           data8.map((payroll)=>(
                             IDGLOBAL = payroll._id,
+                            validador4 = 0,
+                            validador5 = 0,
+                            desabilitar(),
 
                             data10?.map((rotationsManager)=>(
                               IDGLOBAL == rotationsManager.userId && rotationsManager.groupId == gpid && payroll.activo == true ? 
@@ -1578,20 +1816,41 @@ const getAllRotationsManager= async () => {
               {/* ANTES QUE NADA DEBO VALIDAR SI YA HAY O NO UNA PROGRAMACION GUARDADA PARA EL USUARIO  */}
 
               {
+                /* valido que no se haya asignado un descanso al trabajador*/
+                  data4.map((breaks)=>(
+                    breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser &&  (validador4 = 1)
+                  ))
+              }
+
+              {
                 data1.length == 0 
                 ?
                 
                 
+                
                 <ul className="ulLista-rotation">
-                  <span className='horaIN'>{devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN() }</span>
+
+                  {/* Esta imagen se debe mostrar solo si se asigno un descanso al trabajador*/}
+                  {validador5 == 1 ? <img src={less} alt="coffe"  className='img-coffe'/> : validador4 == 1 && <img src={cafe} alt="coffe"  className='img-coffe'/>}
+                  
+                  
+                  {
+                    validador5 == 0 && validador4 == 0 &&
+                    <span className='horaIN' key={data1.length}>{devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN() }</span>
+                  }
+
+                 
+                  
 
                   {
-                    data11?.map((stack)=>(
+                    
+                    data11?.map((stack)=>( 
                   
-                  stack.ID_esquema == IDSCHEMAGLOBAL ? 
+                  stack.ID_esquema == IDSCHEMAGLOBAL && validador4 == 0 && validador5 == 0 ? 
                   (
+                   
                     <li className="liItem-rotation" onClick={(e)=>updateAcciones()}   ref={pruebaRef} key={stack._id}>
-                     
+                    
                       {resolver(stack.ID_programa,stack.Type,stack.ID_programa,stack.Duration,stack.Order,stack.Value)}
                       
                     </li>
@@ -1602,7 +1861,11 @@ const getAllRotationsManager= async () => {
                   
                 ))
                 }
-                <span className='horaOUT'>{auxOut == "Invalid Date" ? "--:--:--" : auxOut }</span>
+                {
+                  validador5 == 0 && validador4 == 0 &&
+                  <span className='horaOUT'>{auxOut == "Invalid Date" ? "--:--:--" : auxOut }</span>
+                }
+                
                   </ul>
                   
                 
@@ -1612,7 +1875,7 @@ const getAllRotationsManager= async () => {
                 <ul className="ulLista-rotation-ok">
                   <span className='horaIN'>{devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN() }</span>
                   {
-                    data11?.map((stack)=>(
+                    data11?.map((stack)=>( 
                   
                   stack.ID_esquema == IDSCHEMAGLOBAL ? 
                   (
@@ -1636,17 +1899,27 @@ const getAllRotationsManager= async () => {
 
 
 
-              <div className="seccionButons2">
+              <div className={validador5 == 1 ? "seccionButons2-hide" :"seccionButons2"}>
               <div className="containerSingleButtom">
+              {
+                data13 != 0 ?
+
                 <span className='noti'>
-                  3
+                  {data13.length}
                 </span>
+
+                :
+
+                null
+              }
+                
+
                   <img src={documento} alt="pencil" className='img-butons' onClick={()=>setShowNotas(!showNotas)}/>
                 </div>
                 <div className="containerSingleButtom">
-                  <img src={capas} alt="pencil" className='img-butons' onClick={stack}/>
+                  <img src={capas} alt="pencil" className='img-butons' onClick={stack} ref={stackRef}/>
                 </div>
-                <div className="containerSingleButtom">
+                <div className="containerSingleButtomOk">
                  <img src={Ok} alt="plus" className='img-butons' onClick={ok}/>
                 </div>
                 <div className="containerSingleButtom">
@@ -1757,6 +2030,8 @@ const getAllRotationsManager= async () => {
         
 
       )}
+
+     
       
     </>
   );

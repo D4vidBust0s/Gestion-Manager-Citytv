@@ -24,15 +24,16 @@ export default function Timeline() {
       horas = (date.getHours()*60*2);
       horaAux = (date.getHours());
       minutos = (date.getMinutes()*2);
-      suma = horas + minutos-480-25;    /* 480 son los pixeles por 4 horas por el doble de pixeles - y -25 son los pixeles que se restan para que el puntero este en posicion */
+      suma = horas + minutos-25;    /*  -25 son los pixeles que se restan para que el puntero este en posicion correcta*/
       
 
       if(horas == 0)
       {
-        suma = 2373 + minutos;
+        suma = 0 + minutos -25;
         setDesplazamiento(suma+"px");
       }
 
+      /*
       else if(horaAux == 1){
         suma = 2493 + minutos;
         setDesplazamiento(suma+"px");
@@ -47,19 +48,21 @@ export default function Timeline() {
         suma = 2733 + minutos;
         setDesplazamiento(suma+"px");
       }
+      */
 
       else{
         setDesplazamiento(suma+"px");
       }
 
+      /*
       if(horas == 4)
       {
         suma = -25 + minutos;
         setDesplazamiento(suma+"px");
       }
-     
+     */
       
-      /*console.log(suma+"px")*/
+      /*console.log(horas)*/
       
     },1000)
   },[]);
@@ -124,6 +127,38 @@ export default function Timeline() {
         <div className="line"></div>
       </div>
           <div className="lineTime__box">
+            <p className="box__item">00:00</p>
+            <p className="box__item_2">00:30</p>
+          </div>
+          <div className="lineTime__box">
+            <p className="box__item_2">00:30</p>
+            <p className="box__item">01:00</p>
+          </div>
+          <div className="lineTime__box">
+            <p className="box__item">01:00</p>
+            <p className="box__item_2">01:30</p>
+          </div>
+          <div className="lineTime__box">
+            <p className="box__item_2">01:30</p>
+            <p className="box__item">02:00</p>
+          </div>
+          <div className="lineTime__box">
+            <p className="box__item">02:00</p>
+            <p className="box__item_2">02:30</p>
+          </div>
+          <div className="lineTime__box">
+            <p className="box__item_2">02:30</p>
+            <p className="box__item">03:00</p>
+          </div>
+          <div className="lineTime__box">
+            <p className="box__item">03:00</p>
+            <p className="box__item_2">03:30</p>
+          </div>
+          <div className="lineTime__box">
+            <p className="box__item_2">03:30</p>
+            <p className="box__item">04:00</p>
+          </div>
+          <div className="lineTime__box">
             <p className="box__item">04:00</p>
             <p className="box__item_2">04:30</p>
           </div>
@@ -282,38 +317,6 @@ export default function Timeline() {
           <div className="lineTime__box">
             <p className="box__item_2">23:30</p>
             <p className="box__item">00:00</p>
-          </div>
-          <div className="lineTime__box">
-            <p className="box__item">00:00</p>
-            <p className="box__item_2">00:30</p>
-          </div>
-          <div className="lineTime__box">
-            <p className="box__item_2">00:30</p>
-            <p className="box__item">01:00</p>
-          </div>
-          <div className="lineTime__box">
-            <p className="box__item">01:00</p>
-            <p className="box__item_2">01:30</p>
-          </div>
-          <div className="lineTime__box">
-            <p className="box__item_2">01:30</p>
-            <p className="box__item">02:00</p>
-          </div>
-          <div className="lineTime__box">
-            <p className="box__item">02:00</p>
-            <p className="box__item_2">02:30</p>
-          </div>
-          <div className="lineTime__box">
-            <p className="box__item_2">02:30</p>
-            <p className="box__item">03:00</p>
-          </div>
-          <div className="lineTime__box">
-            <p className="box__item">03:00</p>
-            <p className="box__item_2">03:30</p>
-          </div>
-          <div className="lineTime__box">
-            <p className="box__item_2">03:30</p>
-            <p className="box__item">04:00</p>
           </div>
     </div>
   )

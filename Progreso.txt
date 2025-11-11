@@ -78,12 +78,78 @@
    quedo en Data14
 
    ahora veo que al asignar un sustituto, no se actualiza inmediatamente en la barra asi que hagamoslo
-   (HECHO PAPE...)
+   R/ (HECHO PAPE...)
+
+   Bueno todo muy bien, pero en mainplanner, cuando un trabajador se muestra con alguno de los colores que identifica
+   alguno de los estados de ausencia. me muestra una ventana modal con la informacion del evento detallada, pero no me deja programar
+   el turno, por que es la ventana modal de detalle de la ausencia o la ventana modal de programacion de turno
+   R/ (100%)
+
+   no esta trallendo el stack correcto, solo esta funcionando con los sonidistas, con los demas no se que pasa.
+   ya mire y si sirve pero no en la semana actual ojo hay que arreglar eso 
+   (R/ 100%)
+
+   pendiente por validar en la programacion de turnos, en el boton de manita, ya que no valida si ya se habia guardado el stack
+   sugerido y vuelve y lo agrega y es horrible, por dende debo mostrar un mensaje diciendo que ya se guardo y no agregar nada, VOY EN MAINPLANNER 1
+   LINEA 995,, 
+   no avance mucho pero detecte el error, al guardar bien, pero al volver a guardar el que ya besta guardado es donde genera el error,
+   hay que mirar que es lo que produce el error, TIP: USAR EL DIA ACTUAL Y LA GENETE DE EMISION PARA PRUEBAS
+   (R/ 100%)
+
+   ya modifique el nuevo timeline que empieza a las 00 Horas y que ahora esta en hora militar, ahora debo volver a cuadrar las entradas de los
+   stack en el main planner1 ya que estan con el ajuste del timeline anterior que empesaba a las 04 am
+   (R/ 100%)
+
+   ahora en la pantalla modal del programador de turnos, cuando le doy en la brocha debe aparecer una alerta de que se borrara
+   el stack guardado, y borrarlo en la base de datos despues de confirmar.
+   - ya esta la ventana alert personalizada limpiando el stack pero falta borrar de la base de datos los registros
+   (R/ 100%)
+
+   Queda pendiente asignar un descanso al trabajador cuando se da clik en la tasa de 
+   cafe.
+   (R/ 100%)
+
+/*
+   Al intentar un grabar un stack en gris o limpio dice "STACK CUSTOM" y no agrega nada.. debo corregir esto y que aparezca un mensaje
+   correspondiente al error, NOTE Y NO ES UN ERROR SIMPLEMETE AVISA QUE SI NO HAY NINGUN STACK CARGADO, ENTONCES PIENSA QUE
+   SE VA A AGREGAR UN STACK CUSTOM O DEL QUE SE CREA A MANO IZQUIERDA MANUALMENTE
+
+*/  
 
 
+
+   estoy implemetando ANOTACIONES ya queda la interfaz ahora queda la implementacion de la base de datos y toda la interaccion
+   con la misma. bueno hoy implemente el crear nota. solo hay que traerlas ahora y refrescarlas en la interfaz o listado
+   tener pendiente que al crear la nota estoy limpiando algunos datos, evaluar si son necesarios o no,
+   hoy ya quedo practicamente solo queda pendiente editar y eliminar.. solo eso.... 
+   quedo.. peo ahora falta aplicaer las clases para que el item seleccionado quede coloreado
+   ok listo ya quedo full
+   (R/ 100%)
+
+   Mostrar en el ventana mpdal de programacion de turnos. el numero de anotaciones que tenga en ese dia.
+   hecho pape..
+   (R/ 100%)
+   
+   Solucionar... dar descanso cuando ya se ha asignado o adjudicado un turno y esta en color verde
+   (R/ 100%)
+
+   Ahora despues de que asigno un descanso (Que ya esta implementado, en el cuadro de turnos programados
+   del mainplanner y en listado deberia mostrar algo adicional no quedsar en blanco (OK), tambien deberia ponerse verde el nombre del
+   trabajador en la barra (PARA PRUEBAS USAR A ESTEFFY OVIEDO EL 30 DE SEPTIEMBRE)
+   (R/ 50%%)
+
+
+
+
+
+
+
+   y con esto pasar a las SUBTAREAS
 
 
    SUBTAREAS
+
+  -0) ojo por que cuando limpio el stack me da problemas en las asiganaciones temporales                          (--)
    0) implemetar cambios de roles en el listado                                                                   (OK) 
    1) crear stacks actuales para todos los grupos                                                                 (--)
    2) implementar funciionalidad completa de turnos no programados                                                (--)
