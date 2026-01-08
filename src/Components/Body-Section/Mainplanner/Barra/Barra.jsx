@@ -23,6 +23,7 @@ import ModalPlanner3 from "../../../Modals/ModalPlanner3";
 import toast from 'react-hot-toast';
 import { FechaBarraContext } from '../../../../context/FechaBarraProvider';
 import { AuxSustitutions} from '../../../../context/AuxSustitutionsProvider';
+import { PronosticoContext } from '../../../../context/PronosticoTurnosProvider';
 
 
 
@@ -72,6 +73,8 @@ export default function Barra() {
 
   const [Aux,setAux] = useContext(AuxSustitutions); //Este contexto referencia un estado que avisa si hubo un cambio
                                                                     //para volver a llamar las sustituciones nuevamente
+                                                                  
+  const [auxiliar,setAuxiliar] = useContext(PronosticoContext); // notifica de cambios en descansos
   
 //estado para la ventana modal1 
  const [modal1, setModal1] = useState(false); 
@@ -638,7 +641,7 @@ const noExist = () =>{
 
   useEffect(() => {
     getBreaks();
-  }, []);
+  }, [auxiliar]);
 
   useEffect(() => {
     getIncapacity();

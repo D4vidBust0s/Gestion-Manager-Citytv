@@ -10,8 +10,6 @@ import Pencil from '../../assets/pencil.svg'
 import Plus from '../../assets/Plus.svg'
 import Trash from '../../assets/trash.svg'
 import Clean from '../../assets/brush.svg'
-
-
 import Balanza from '../../assets/balanza.png'
 import cafe from '../../assets/coffee.svg'
 import Calendario from '../../assets/calendario.png'
@@ -19,6 +17,7 @@ import Ok from '../../assets/Ok.svg'
 import documento from '../../assets/document.svg'
 import capas from '../../assets/capas.svg'
 import less from '../../assets/Default.svg'
+import save from '../../assets/bxs-save.svg'
 
 
 
@@ -92,6 +91,7 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [data13, setData13] = useState([]);
   const [data14, setData14] = useState([]);
   const [showNotas, setShowNotas] = useState(false);
+  const [saveStack, setSaveStack] = useState(false);
 
  
 
@@ -99,6 +99,7 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [EndHour, setEndHour] = useState(new Date());
   const [IDUSER, setIDUSER] = useState();
   const [FECHA, setFECHA] = useState();
+  const [EVENTO, SETEVENTO] = useState("---------------------------------");
 
   /* Estados para el datepicker */
   const [calendar, setCalendar] = useState(new Date());
@@ -113,6 +114,7 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
  
 
   //Referencias
+  const mainEventRef = useRef();
   const pgmRef = useRef();
   const eventRef = useRef();
   const customRef = useRef();
@@ -237,6 +239,18 @@ const getSubstitutions = async () => {
     .then((response) => setData13(response.data));
 };
 
+ //Funcion que obtiene la data de la api - Programmers
+ const getProgrammers = async () => {
+  return await axios
+    .get("http://localhost:3000/api/programmer/",
+    {
+      params:{
+        fecha: fechaPlaner,
+      }
+    })
+    .then((response) => setData14(response.data));
+};
+
 
  //Funcion que obtiene la data de la api - listado de anotaciones segun id y fecha especifica
  const getNotatiosIdFecha = async () => {
@@ -244,20 +258,20 @@ const getSubstitutions = async () => {
     .get("http://localhost:3000/api/notations/",
     {
       params:{
-        id: iduser,
         fecha: new Date(fechaBarra).toISOString(),
       }
     })
     .then((response) => setData13(response.data));
 };
 
-  const crear = async (IDUSER,NOMBRES,INDEX,ID_PROGRAMA,EVENT_ID,COLOR,OBSERVACION,FECHA_CLAVE,ID_SCHEMA,INICIO_MAIN,TIPO)=>{
+  const crear = async (IDUSER,NOMBRES,INDEX,IDPROGRAMA,EVENT_ID,COLOR,OBSERVACION,FECHA_CLAVE,ID_SCHEMA,INICIO_MAIN,TIPO)=>{
 
+    /*
     await axios.post("http://localhost:3000/api/shifts/", {
       idUser: IDUSER,
       nombres: NOMBRES,
       index: INDEX,
-      idPrograma: ID_PROGRAMA,
+      idPrograma: IDPROGRAMA,
       eventId: EVENT_ID,
       color: COLOR,
       observacion: OBSERVACION,
@@ -266,7 +280,11 @@ const getSubstitutions = async () => {
       inicioMain: INICIO_MAIN,
       tipo: TIPO
 
-    });
+      
+
+    })*/
+    console.log(IDPROGRAMA);
+    ;
 
     obtenerListadoTurnos()
     obtenerListadoTurnosFull()
@@ -321,7 +339,7 @@ const getSubstitutions = async () => {
       if(eventRef.current.value=='none' && customRef.current.value == '')
       {
         crear(iduser,nombres,subGrupo,fechaPlaner,startHour,EndHour,pgmRef.current.value,color,"PROGRAMA",observationRef.current.value);
-        toast.success("Programa agregado a los turnos");
+        //toast.success("Programa agregado a los turnos");
       }
       else{
         toast.error("Si desea agregar un programa, la casilla Requerimiento y Custom no deben especificarse");
@@ -449,31 +467,54 @@ const getSubstitutions = async () => {
     return horareal;
   }
 
+  const eventMain = () =>{
+
+    data?.map((pgm)=>(
+        pgmRef.current.value == pgm._id && setStartHour(new Date(pgm.Start).getTime()),
+
+      data?.map((pgm)=>(
+        pgmRef.current.value == pgm._id && setEndHour(new Date(pgm.End).getTime()) 
+     ))
+
+   )) 
+ 
+  }
+
+
+  const eventProgrammer = () =>{
+
+    data14?.map((pgm)=>(
+        pgmRef.current.value == pgm._id && setStartHour(new Date(pgm.Time_in).getTime()),
+
+      data14?.map((pgm)=>(
+        pgmRef.current.value == pgm._id && setEndHour(new Date(pgm.Time_out).getTime()) 
+     ))
+
+   )) 
+ 
+  }
+
+
+  const resetPGM = () =>{
+
+   toast.success("Información Horaria Actualizada"),
+    EVENTO == "pgm" ||  EVENTO == "secundary" ? eventMain() : null
+ 
+   }
+
+   const resetPROGRAMMER = () =>{
+
+    toast.success("Información Horaria Actualizada"),
+     EVENTO == "programmer" ? eventProgrammer() : null
+  
+    }
 
   const reset1 = () =>{
-   customRef.current.value="";
    
 
-
-   data?.map((pgm)=>(
-     pgmRef.current.value == pgm.nombre ? setStartHour(new Date(pgm.Start).getTime()) : null
-  ))
-
-  data?.map((pgm)=>(
-    pgmRef.current.value == pgm.nombre ? setEndHour(new Date(pgm.End).getTime()) : null
- ))
   }
 
-  const reset2 = () =>{
-    customRef.current.value="";
-  }
-
-  /*
-  const validate = ()=>{
-    toast.success("Aqui se valida los turnos por defecto segun programaci'on");
-  }
-
-  */
+ 
 
   const validateMonts = (mont)=>{
     if(mont == 0)
@@ -1055,8 +1096,8 @@ const getSubstitutions = async () => {
         shifts.Fecha_clave == new Date(fechaPlaner).toISOString() && shifts.ID_user == iduser &&  (validador2 = 1)
       ))
 
-      /* valido que no se haya asignafdo un descanso al trabajador*/
-      data4.map((breaks)=>(
+      /* valido que no se haya asignado un descanso al trabajador*/
+      data4?.map((breaks)=>(
         breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser &&  (validador3 = 1)
       ))
 
@@ -1078,7 +1119,7 @@ const getSubstitutions = async () => {
 
       else{
         validador2 = 0;
-        validador3 = 0;
+        
         setIDUSER(iduser);
       
       data11.map((stacks,index)=>(stacks.ID_esquema == IDSCHEMAGLOBAL 
@@ -1146,6 +1187,7 @@ const getSubstitutions = async () => {
   
   const regalo = async ()=>{
 
+    traerBreaksTrabajador();
 
     //valido que no haya un registro realizado previamente 
     data12.map((shifts)=>(
@@ -1153,8 +1195,8 @@ const getSubstitutions = async () => {
     ))
 
     /* valido que no se haya asignafdo un descanso al trabajador*/
-    data4.map((breaks)=>(
-      breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser &&  (validador3 = 1)
+    data4?.map((breaks)=>(
+      breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser && (validador3 = 1)
     ))
 
     
@@ -1166,15 +1208,16 @@ const getSubstitutions = async () => {
       toast.error("El trabajador ya tiene asiganado un turno para la fecha actual, para asignar un descanso, primero elimine el turno asignado")
     }
 
-    else if(validador3 = 1)
+    else if(validador3 == 1)
     {
       validador3 = 0;
-      toast.error("El trabajador ya tiene asignado un descanso para esta fecha, no es necesario confirmarla")
+      toast.error("El trabajador ya tiene asignado un descanso para esta fecha, no es necesario confirmarla") 
     }
 
     else{
 
       validador2 = 0;
+      validador3 = 0;
 
       //Asignamos un descanso al trabajador
       await axios.post("http://localhost:3000/api/breaks/", {
@@ -1191,6 +1234,10 @@ const getSubstitutions = async () => {
 
       toast.success("Se asignó un descanso al trabajador");
     }
+
+
+    //Notificamos de el cambio a la barra para que se ponga en color verde de fondo que es el color asignado a un descanso
+    setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
 
     
   }
@@ -1418,6 +1465,29 @@ const getSubstitutions = async () => {
     return respuesta;
   }
 
+
+
+  const selectEvent = () =>{
+    getProgrammers();
+    SETEVENTO(mainEventRef.current.value);
+  }
+
+  const confirmacionSave = () =>{
+    alert("Hola ñiño")
+  }
+
+  const edit2 = ()=>{
+
+  }
+
+  const add2 = ()=>{
+    
+  }
+
+  const del2 = ()=>{
+    
+  }
+
  
    
  
@@ -1450,7 +1520,7 @@ const getSubstitutions = async () => {
 
  useEffect(()=>{
   traerBreaksTrabajador();
- },[])
+ },[auxiliar])
 
  useEffect(()=>{
   traerIncapacitysTrabajador();
@@ -1492,6 +1562,10 @@ const getSubstitutions = async () => {
  useEffect(()=>{
   getNotatiosIdFecha();
  }, [IDUSER, FECHA])
+
+ useEffect(()=>{
+  getProgrammers();
+ },[])
  
 
   return (
@@ -1628,6 +1702,66 @@ const getSubstitutions = async () => {
               
             </div>
 
+
+            <div className={saveStack == true ? "saveStackShow" : "saveStackHide"}>
+              
+              <h3 className='notas-title'>
+                Salvar o eliminar stack <br /> 
+                ________________________
+              </h3>
+
+              <h2 className='savestack-h2'>Especifica un nombre para el stack</h2>
+              <div className="saveStack-save">
+                
+                <input type="text"className='save-input'/>
+              </div>
+
+              <h2 className='savestack-h2'>Stacks guardados</h2>
+              <div className="stack-saved-main">
+
+              <div className="saveStack-saved-left">
+
+                <div className="leftChildA">
+                <ul>
+                    <li className='saved-li'>item 1</li>
+                    <li className='saved-li'>item 2</li>
+                    <li className='saved-li'>item 3</li>
+                    <li className='saved-li'>item 4</li>
+                    
+                  </ul>
+                </div>
+
+                <div className="leftChildB">
+                 <li>Item stack minimalista</li>
+                </div>
+                 
+              </div>
+ 
+               <div className="saveStack-saved-right">
+               <div className="seccionButons">
+                <div className="containerSingleButtom">
+                  <img src={Pencil} alt="pencil" className='img-butons' onClick={edit2}/>
+                </div>
+                <div className="containerSingleButtom">
+                 <img src={Plus} alt="plus" className='img-butons' onClick={add2}/>
+                </div>
+                <div className="containerSingleButtomDel">
+                 <img src={Trash} alt="trash" className='img-butons' onClick={del2}/>
+                </div>
+              </div>
+               </div>
+              </div>
+             
+
+              
+              
+            </div>
+
+
+
+
+            
+
            
 
           <div className="close2" onClick={() => cambiarEstado(!estado)}>X</div>
@@ -1698,15 +1832,7 @@ const getSubstitutions = async () => {
             
             {/*SECCION # 2 */}
             <div className="acciones">
-              <div className="leftTime">
-                Time-Pre
-                <input type="number" className='leftTime-input' placeholder='minutos' />
-              </div>
-
-              <div className="rightTime">
-                Time-Post
-                <input type="number" className='leftTime-input' placeholder='minutos'/>
-              </div>
+            
 
               <div className="titulo">
                 <h2>ACCIONES</h2>
@@ -1714,33 +1840,102 @@ const getSubstitutions = async () => {
               <div className="mainContainer">
               
 
-                <h3 className="subTitulo">PROGRAMA - REQUERIMIENTO</h3>
-                <h5 className='tipo'>Programa</h5>
-                <select name="turnoSeleccionado" className='selectedBox' ref={pgmRef} onChange={reset1}>
-                <option key="none" value="none" className='selecteItem' >{pgm}</option>
-                  {
-                    data?.map((pgm)=>(
-                      pgm.Type=="Main"&&
-                      <option key={pgm._id} value={pgm.nombre} className='selecteItem' ref={pgmRef}>{pgm.nombre}</option>
-                    ))
-                  }
-                  
+                <h3 className="subTitulo">EVENTOS</h3>
+                <h5 className='tipo'>Eventos del sistema</h5>
+                <select name="turnoSeleccionado" className='selectedBox' ref={mainEventRef} onChange={selectEvent}>
+                  <option key="nada" value="none" className='selecteItem' >---------------------------------</option>
+                  <option key="none_pgm" value="pgm" className='selecteItem' >PROGRAMA</option>
+                  <option key="none_req" value="req" className='selecteItem' >REQUERIMIENTO</option>
+                  <option key="none_sec" value="secundary" className='selecteItem' >SECUNDARIO</option>
+                  <option key="none_custom" value="custom" className='selecteItem' >CUSTOM</option>
+                  <option key="none_programmer" value="programmer" className='selecteItem' >PROGRAMADOR</option>
                 </select>
 
-                <h5 className='tipo'>Requerimiento</h5>
-                <select name="turnoSeleccionado" className='selectedBox' ref={eventRef} id='pgm' onChange={reset2}>
-                <option key="none" value="none" className='selecteItem'>{event}</option>
-                  {
-                    data?.map((pgm)=>(
-                      <option key={pgm._id} value={pgm.nombre} className='selecteItem' ref={eventRef}>{pgm.nombre}</option>
-                    ))
-                  }
-                  
-                </select>
 
-                <h5 className='tipo'>Custom</h5>
-                <input type='text' className='selectedBox2' ref={customRef} id='custom' placeholder='---------------------------------' defaultValue={custom}/>
+                {/* OPCIONES SEGUN CORRESPONDA */}
+
+              {
+
+                EVENTO == "pgm" ? 
+
+                <>
+                 <h5 className='tipo'>Programas</h5>
+                 <select name="turnoSeleccionado" className='selectedBox' ref={pgmRef} onChange={resetPGM}>
+                  <option key="none" value="none" className='selecteItem' >{pgm}</option>
+                    {
+                      data?.map((pgm)=>(
+                        pgm.Type=="Main"&&
+                        <option key={pgm._id} value={pgm._id} className='selecteItem'>{pgm.nombre}
+                    </option>
+                    ))
+                    }
+                </select>
+                </>
                 
+                
+
+              : EVENTO == "req" ?
+
+              <>
+              <h5 className='tipo'>Requerimientos</h5>
+              <select name="turnoSeleccionado" className='selectedBox' ref={eventRef} id='pgm' onChange={reset1}>
+              <option key="none1" value="none" className='selecteItem'>{event}</option>
+                {
+                  data?.map((pgm)=>(
+                    <option key={pgm._id} value={pgm.nombre} className='selecteItem'>{pgm.nombre}</option>
+                  ))
+                }
+                
+              </select>
+              </>
+              
+
+              : EVENTO == "secundary" ?
+
+              <>
+               <h5 className='tipo'>Eventos Secundarios</h5>
+               <select name="turnoSeleccionado" className='selectedBox' id='pgm' ref={pgmRef} onChange={resetPGM}>
+              <option key="none2" value="none" className='selecteItem'>{event}</option>
+                {
+                  data?.map((pgm)=>(
+                    pgm.Type=="Secondary"&&
+                    <option key={pgm._id} value={pgm._id} className='selecteItem'>{pgm.nombre}</option>
+                  ))
+                }
+                
+              </select>
+              </>
+             
+
+
+
+                : EVENTO == "custom" ?
+                <>
+                  <h5 className='tipo'>Evento Custom</h5>
+                  <input type='text' className='selectedBox2' ref={customRef} id='custom' placeholder='---------------------------------' defaultValue={custom}/>
+                </>
+
+                : EVENTO == "programmer" ? 
+
+                <>
+                <h5 className='tipo'>Eventos programados</h5>
+                <select name="turnoSeleccionado" className='selectedBox' ref={pgmRef} id='pgm' onChange={resetPROGRAMMER}>
+               <option key="none2" value="none" className='selecteItem'>{event}</option>
+                 {
+                   data14?.map((pgm)=>(
+                     <option key={pgm._id} value={pgm._id} className='selecteItem'>{pgm.Nombre}</option>
+                   ))
+                 }
+                 
+               </select>
+               </>
+
+
+                : <h5 className='event_message'>Seleccione un tipo de evento</h5>
+
+              }
+               
+                <button className='btnNull30'>Null 30 minutos</button>
                 
                 
 
@@ -1778,7 +1973,7 @@ const getSubstitutions = async () => {
                 </div>
 
 
-                <h3 className="subTitulo">OBSERVACIONES</h3>
+                <h3 className="subTitulo">OBSERVACIONES PERSONALES</h3>
                 <textarea name="observaciones" className='observaciones' ref={observationRef} defaultValue={obs}></textarea>
                 
               </div>
@@ -1927,6 +2122,9 @@ const getSubstitutions = async () => {
                 </div>
                 <div className="containerSingleButtomDel">
                  <img src={Clean} alt="trash" className='img-butons' onClick={clean}/>
+                </div>
+                <div className="containerSingleButtom">
+                 <img src={save} alt="save" className='img-butons' onClick={()=>setSaveStack(!saveStack)}/>
                 </div>
               </div>
             </div>

@@ -421,7 +421,7 @@ const editar = async ()=>{
 
           <div className="cajaControls">
           <div className="seccionButons">
-          <div className="containerSingleButtom">
+                <div className="containerSingleButtom">
                   <img src={Brush} alt="pencil" className='img-butons' onClick={limpiar} />
                 </div>
                 <div className="containerSingleButtom">
@@ -430,7 +430,7 @@ const editar = async ()=>{
                 <div className="containerSingleButtom">
                  <img src={Edit} alt="plus" className='img-butons' onClick={editar}/>
                 </div>
-                <div className="containerDeleteButtom2">
+                <div className="containerDeleteButtom">
                  <img src={Delete} alt="trash" className='img-butons' onClick={eliminar}/>
 
                 </div>

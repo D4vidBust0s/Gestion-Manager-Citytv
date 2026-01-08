@@ -153,9 +153,9 @@ function Sidebar() {
               </li>
 
               <li className="list__inside">
-                <a href="#" className="nav__link nav__link--inside">
-                  Programmer
-                </a>
+              <Link to="/programmer" className="nav__link">
+                Programmer
+              </Link>
               </li>
             </ul>
           </li>

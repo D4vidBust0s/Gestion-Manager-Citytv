@@ -1,0 +1,178 @@
+:root{
+    --PrimaryColor:  #00094B;
+    --HoverColor: #701CF5;
+    --WhiteColor:#FFFFFF;
+    --Secondary: #EB464B;
+    --Base: #545454;
+    --Base2: #DADADA;
+    --Black: #000000;
+    --Especial: #7ED957;
+    --TextColor: #DADADA;
+
+}
+
+.nuevoc{
+    
+    width: 80%;
+    margin-left: -20%;
+    height: 100%;
+    display: flex;
+   
+}
+
+.contentCalendar{
+    margin-top: 2%;
+}
+
+.events{
+    position: relative;
+    background: #545454;
+    height: 40vh;
+    width: 100%;
+    padding: 5px;
+    overflow: auto;
+}
+.events-Title{
+    color: #EB464B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 5px;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.events-ul{
+    color: aliceblue;
+    padding: 5px;
+    margin-top: 3.2%;
+    margin-bottom: 20%;
+    font-size: .9rem;
+    position: relative;
+}
+
+.content-btns{
+    
+    position: relative;
+    bottom: -26%;
+    width: 18.8%;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+   
+}
+
+.containerSingle{
+    background: #326d18;
+    height: 50px;
+    width: 50px;
+    margin-left: 5px;
+    border-radius: 5px;
+    box-shadow: #545454 2px 2px 10px;
+}
+
+.containerSingle:hover{
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+.containerDelete{
+    background: #EB464B;
+    height: 50px;
+    width: 50px;
+    margin-left: 5px;
+    border-radius: 5px;
+    box-shadow: #545454 2px 2px 10px;
+}
+
+.containerDelete:hover{
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+
+.itemLI:hover{
+    transform: scale(1.08);
+    cursor: pointer;
+    background: #DADADA;
+    color: #000000;
+}
+
+.event-description{
+    background: #545454;
+    height: 55%;
+    margin-top: 2%;
+    margin-left: 2%;
+    width: 48%;
+    padding: 10px;
+}
+
+.event-description-p{
+    position: absolute;
+    color: #EB464B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -30px;
+    margin-left: -10px;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.event-description-label{
+    color: aliceblue;
+    font-weight: 900;
+}
+
+.event-description-label-2{
+    color: aliceblue;
+    margin-top: 1rem;
+    font-weight: 900;
+}
+
+.event-input{
+    width: 95%;
+    margin-bottom: 1.5%;
+    height: 25px;
+}
+
+.event-input-desc{
+    width: 95%;
+    height: 70px;
+    margin-bottom: 1.5%;
+    padding: 5px;
+}
+
+.auxContent{
+ width: 50%;
+}
+
+.contentControls2{
+    display: flex;
+    color: aliceblue;
+    align-items: center;
+    margin-top: 1rem;
+    position: relative
+}
+
+.contentControls3{
+    display: flex;
+    color: aliceblue;
+    align-items: center;
+    margin-top: 1rem;
+    margin-left: 1.5rem;
+    position: relative
+}
+.contenControsl3-span{
+    margin-left: 0rem;
+}
+
+
+
+
+
+
+
+
+

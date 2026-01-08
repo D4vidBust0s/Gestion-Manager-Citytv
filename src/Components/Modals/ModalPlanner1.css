@@ -276,7 +276,7 @@
                 color: #DADADA;
                 margin-bottom: .2rem;
                 width: 100%;
-                height: 2.5rem;
+                height: 2rem;
             }
 
             .selectedBox2{
@@ -286,9 +286,10 @@
                 margin-top: .5rem;
                 text-align: center;
                 color: #DADADA;
-                margin-bottom: 1rem;
+                margin-bottom: .5rem;
                 width: 100%;
-                height: 2.5rem;
+                height: 2rem;
+                border: none;
             }
 
             .selectedBoxSingle{
@@ -832,36 +833,9 @@
     border-radius: 2px 2px 0 0;
 }
 
-.leftTime{
-    position: absolute;
-    left: 5%;
-    top: 40%;
-    background-color: #547725;
-    height: 4rem;
-    width: 6.5rem;
-    color: #DADADA;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    border-radius: 5px;
-}
 
-.rightTime{
-    position: absolute;
-    right: 5%;
-    top: 40%;
-    background-color: #547725;
-    height: 4rem;
-    width: 6.5rem;
-    color: #DADADA;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    border-radius: 5px;
-    
-}
+
+
 
 .leftTime-input{
     width: 5rem;
@@ -1135,4 +1109,135 @@
 .seccionButons2-hide{
     display: none;
   
+}
+
+.btnNull30{
+    background:  #294900;
+    color: #D9D9D9;
+    width: 100%;
+    height: 2rem;
+    margin-top: .5rem;
+    margin-bottom: .8rem;
+    cursor: pointer;
+    border: none;
+    border-radius: .2rem;
+}
+
+.btnNull30:hover{
+    transform: scale(1.1);
+    
+}
+
+.event_message{
+    color: #000000;
+}
+
+.saveStackShow{
+    background-color: #FFFFFF;
+    position: absolute;
+    height: 70%;
+    width: 50%;
+    z-index: 500;
+    top: 13%;
+    left: 25%;
+    padding: 1rem;
+    border-radius: 15px;
+    border: 3px solid #EB464B;
+    overflow: auto;
+    box-shadow: 10px 10px 60px #000000;
+    color: #000000;
+}
+
+.saveStackHide{
+    display: none;
+}
+
+.saveStack-save{
+    position: relative;
+    background-color: #00094B;
+    height: 20%;
+    color: #DADADA;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.savestack-h2{
+    font-size: .8rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.save-input{
+    width: 70%;
+    height: 2rem;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+
+
+.btn-confirm2:hover{
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+.saveStack-saved-left{
+    position: relative;
+    background-color: #545454;
+    overflow: auto;
+    color: #DADADA;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60%;
+    padding: 2rem;
+    display: flex;
+    
+}
+
+.saveStack-saved-right{
+    position: relative;
+    background-color: #D9D9D9;
+    color: #DADADA;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40%;
+    padding: 2rem;
+}
+
+.stack-saved-main{
+    display: flex;
+    height: 52%;
+}
+
+.saved-li:hover{
+    transform: scale(1.1);
+    cursor: pointer;
+    background: #000000;
+}
+
+.leftChildA{
+    background: #294900;
+    width: 30%;
+    height: 100%;
+    overflow: auto;
+    padding: 1rem;
+    font-size: .9rem;
+}
+
+.leftChildB{
+    background: #EB464B;
+    width: 70%;
+    height: 100%;
+    overflow: auto;
+    padding: 1rem;
+    font-size: .9rem;
 }

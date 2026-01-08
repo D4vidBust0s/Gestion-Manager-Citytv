@@ -29,6 +29,7 @@ import Licenses from './pages/Licenses/Licenses';
 import Breaks from './pages/Breaks/breaks';
 import Balancer from './pages/Balancer/balancer';
 import UserBalancer from './pages/UserBalancers/userBalancer';
+import Programmer from './pages/Programmer/programmer';
 
 /* Dependencias */
 import axios from "axios";
@@ -395,6 +396,7 @@ useEffect(()=>{
             <Route path="/breaks" element={<Breaks />} />
             <Route path="/balancer" element={<Balancer />} />
             <Route path="/user-balancers" element={<UserBalancer />} />
+            <Route path="/programmer" element={<Programmer />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

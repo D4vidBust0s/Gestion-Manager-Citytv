@@ -133,10 +133,22 @@
    Solucionar... dar descanso cuando ya se ha asignado o adjudicado un turno y esta en color verde
    (R/ 100%)
 
-   Ahora despues de que asigno un descanso (Que ya esta implementado, en el cuadro de turnos programados
-   del mainplanner y en listado deberia mostrar algo adicional no quedsar en blanco (OK), tambien deberia ponerse verde el nombre del
-   trabajador en la barra (PARA PRUEBAS USAR A ESTEFFY OVIEDO EL 30 DE SEPTIEMBRE)
-   (R/ 50%%)
+
+   FINALES MODAL PROGRAMACION O MODALPLANNER1
+     - Sistema de notaciones completo (R/ 100%)
+
+     - Ahora despues de que asigno un descanso (Que ya esta implementado, en el cuadro de turnos programados
+       del mainplanner y en listado deberia mostrar algo adicional no quedsar en blanco (R/ 100%)
+
+     - tambien deberia ponerse verde el nombre del trabajador en la barra (PARA PRUEBAS USAR A ESTEFFY OVIEDO EL 30 DE SEPTIEMBRE)
+       (R/ 100%)
+
+     - estoy avanzando an la implementacion de la nueva ventana PROGRAMMER, ya voy maquetando pero no avance mucho
+       debo acabar de mauqeyar toda la interfaz de PROGRAMMER y luego pasar a programar 
+       (R/ 100%)
+
+      - Ahora que complete programmer paso a guardar o salvar un stack, ya esta la interfaz pero ahora debo darle la funcionalidad
+      (R/ 50%)
 
 
 
@@ -149,11 +161,11 @@
 
    SUBTAREAS
 
-  -0) ojo por que cuando limpio el stack me da problemas en las asiganaciones temporales                          (--)
+   0) ojo por que cuando limpio el stack me da problemas en las asiganaciones temporales                          (--)
    0) implemetar cambios de roles en el listado                                                                   (OK) 
    1) crear stacks actuales para todos los grupos                                                                 (--)
    2) implementar funciionalidad completa de turnos no programados                                                (--)
-   3) implemetar descanso con un solo boton (la manita)                                                           (--)
+   3) implemetar descanso con un solo boton (la manita)                                                           (OK)
    4) implemetar el balancer en el modal1 y que sea funcional con el de inquiries/balancer                        (--)
    5) implemetar el Time Remating en modal 1 ya que su hermno FULL time ya esta                                   (--)
 
