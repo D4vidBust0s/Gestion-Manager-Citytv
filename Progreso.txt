@@ -148,7 +148,15 @@
        (R/ 100%)
 
       - Ahora que complete programmer paso a guardar o salvar un stack, ya esta la interfaz pero ahora debo darle la funcionalidad
+      NOTA: ESTO YA NO ES NECESARIO EN LA NUEVA VERSION ASI QUE DEBO BORRAR TODAS LAS DEPENDENCIAS YA QUE EL STACK SE GRABA AHORA EN LA NUEVA ventana
+      QUE EMERGE DE LA DERECHA EN LA VENTANA DE PROGRAMACION DE TURNOS INDIVIDUALES
       (R/ 50%)
+
+      Voy en la parte final de implementacion de turnos que no dependen de las rotaciones. esta el dilema de que se crear
+      un stack y respetas la hora de inicio del primer evento que se llame "por el momento un programa o nul-30" pero los demas que se
+      agregan no respetan la hora de inicio del programa si no se pega al ultimo evento... no se que tan bueno es eso
+      la fecha que estoy usando es el 8 de enero de 2026
+      (R/ 20%)
 
 
 

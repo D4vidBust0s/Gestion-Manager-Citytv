@@ -18,6 +18,8 @@ import documento from '../../assets/document.svg'
 import capas from '../../assets/capas.svg'
 import less from '../../assets/Default.svg'
 import save from '../../assets/bxs-save.svg'
+import flechaLeft from '../../assets/arrow4.svg'
+import handStop from '../../assets/handStop.gif'
 
 
 
@@ -47,6 +49,7 @@ let totalGrupo = 0;
 let totalSchema = 0;
 let auxOut = "--:--:--";
 let fullTime = 0;
+let index = 0;
 
 //Variables 
 let DiaClave;
@@ -57,6 +60,8 @@ let IDGLOBAL;
 let IDSCHEMAGLOBAL;
 let HORAINGLOBAL;
 let INDEXGLOBAL;
+//let FECHAINICIOGLOBAL  = new Date();
+//let FECHAFINALGLOBAL;
 
 let validador = 0;
 let validador2 = 0;
@@ -65,6 +70,11 @@ let validador4 = 0;
 let validador5 = 0;
 let inicioMain;
 let validaUser = 0;
+
+let fechaAuxGlobal;
+
+
+
 
 export default function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color,gp,gpid}) {
 
@@ -90,6 +100,7 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [data12, setData12] = useState([]);
   const [data13, setData13] = useState([]);
   const [data14, setData14] = useState([]);
+  const [data15, setData15] = useState([]);
   const [showNotas, setShowNotas] = useState(false);
   const [saveStack, setSaveStack] = useState(false);
 
@@ -111,18 +122,28 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
 
   const [pr,setPr]= useState(0);
   const [showAlert,setShowAlert]= useState(false);
+  const [showRight,setShowRight]= useState(false);
+
+  const [messageTitle,setMessageTitle]= useState("Titulo");
+  const [messageContenido,setMessageContenido]= useState("Contenido");
+  const [messageBtn1,setMessageBtn1]= useState("-----");
+  const [messageBtn2,setMessageBtn2]= useState("-----");
+  const [messageBtn1Show,setMessageBtn1Show]= useState(false);
+  const [messageBtn2Show,setMessageBtn2Show]= useState(false);
+
+ 
  
 
   //Referencias
   const mainEventRef = useRef();
   const pgmRef = useRef();
+  const secRef = useRef();
   const eventRef = useRef();
   const customRef = useRef();
   const startRef = useRef();
   const endRef = useRef();
   const observationRef = useRef();
   const pruebaRef = useRef();
-
   const stackRef = useRef();
 
  
@@ -252,21 +273,24 @@ const getSubstitutions = async () => {
 };
 
 
+
+
  //Funcion que obtiene la data de la api - listado de anotaciones segun id y fecha especifica
  const getNotatiosIdFecha = async () => {
   return await axios
     .get("http://localhost:3000/api/notations/",
     {
       params:{
+        id: iduser,
         fecha: new Date(fechaBarra).toISOString(),
       }
     })
-    .then((response) => setData13(response.data));
+    .then((response) => setData15(response.data));
 };
 
-  const crear = async (IDUSER,NOMBRES,INDEX,IDPROGRAMA,EVENT_ID,COLOR,OBSERVACION,FECHA_CLAVE,ID_SCHEMA,INICIO_MAIN,TIPO)=>{
+  const crear = async (IDUSER,NOMBRES,INDEX,IDPROGRAMA,EVENT_ID,COLOR,OBSERVACION,FECHA_CLAVE,ID_SCHEMA,INICIO_MAIN,OUT,TIPO)=>{
 
-    /*
+    
     await axios.post("http://localhost:3000/api/shifts/", {
       idUser: IDUSER,
       nombres: NOMBRES,
@@ -278,13 +302,10 @@ const getSubstitutions = async () => {
       fechaClave: FECHA_CLAVE,
       idSchema: ID_SCHEMA,
       inicioMain: INICIO_MAIN,
-      tipo: TIPO
+      out: OUT,
+      tipo: TIPO,
 
-      
-
-    })*/
-    console.log(IDPROGRAMA);
-    ;
+    });
 
     obtenerListadoTurnos()
     obtenerListadoTurnosFull()
@@ -292,7 +313,7 @@ const getSubstitutions = async () => {
     INDEXGLOBAL = INDEX;
 
       //limpiamos los campos
-      customRef.current.value="";
+      //customRef.current.value="";
       observationRef.current.value="";
 
   }
@@ -316,7 +337,125 @@ const getSubstitutions = async () => {
 
   };
 
+  const validarTimes = ()=>{
+    let respuesta = 0;
+    let inicio = new Date(startHour).toLocaleTimeString();
+    let salida = new Date(EndHour).toLocaleTimeString();
 
+    if(inicio > salida)
+    {     respuesta = 1;
+          setMessageTitle("No puede agregar el evento Custom " + "-" + customRef.current.value + "-");
+          setMessageContenido("La hora de inicio del evento es mayor que la hora de salida");
+          setMessageBtn1Show(true);
+          setMessageBtn2Show(false);
+          setMessageBtn1("Ok lo corregiré");
+          setShowAlert(!showAlert);
+    }
+
+    else if(inicio == salida)
+    {
+          respuesta = 1;
+          setMessageTitle("No puede agregar el evento Custom " + "-" + customRef.current.value + "-");
+          setMessageContenido("La hora de inicio del evento y la hora de salida son iguales");
+          setMessageBtn1Show(true);
+          setMessageBtn2Show(false);
+          setMessageBtn1("Ok lo corregiré");
+          setShowAlert(!showAlert);
+    }
+
+    else{
+      respuesta = 0;
+    }
+
+    return respuesta;
+  }
+
+  const validarTimesTimeOut = ()=>{
+    let respuesta = 0;
+    let inicio = new Date(startHour).toLocaleTimeString();
+    let salida = new Date(EndHour).toLocaleTimeString();
+
+    if(inicio > salida)
+    {     respuesta = 1;
+          setMessageTitle("No se puede agregar el evento TimeOut ");
+          setMessageContenido("La hora de inicio del evento es mayor que la hora de salida");
+          setMessageBtn1Show(true);
+          setMessageBtn2Show(false);
+          setMessageBtn1("Ok lo corregiré");
+          setShowAlert(!showAlert);
+    }
+
+    else if(inicio == salida)
+    {
+          respuesta = 1;
+          setMessageTitle("No se puede agregar el evento TimeOut ");
+          setMessageContenido("La hora de inicio del evento y la hora de salida son iguales");
+          setMessageBtn1Show(true);
+          setMessageBtn2Show(false);
+          setMessageBtn1("Ok lo corregiré");
+          setShowAlert(!showAlert);
+    }
+
+    else{
+      respuesta = 0;
+    }
+
+    return respuesta;
+  }
+
+
+  const getNameProgram = (idEvento,tipo,ID_event) =>{
+
+    let nombre;
+
+    //Null-30
+    if(tipo=="Null")
+    {
+      nombre = "Null-30"
+    }
+
+    //Program 
+    else if(tipo=="Programa")
+    {
+      data?.map((programas)=>(
+        programas._id == idEvento && (nombre = programas.nombre) 
+      ))
+    }
+
+    //Secondary
+    else if(tipo=="Secondary")
+    {
+      data?.map((programas)=>(
+        programas._id == idEvento && (nombre = programas.nombre) 
+      ))
+      
+
+    }
+
+     //Custom
+     else if(tipo=="Custom")
+     {
+       nombre = idEvento;
+     }
+
+    
+    //Custom
+     else if(tipo=="TimeOut")
+     {
+       nombre = idEvento;
+     }
+
+      //Custom
+      else if(tipo=="Programmer")
+      {
+        data14?.map((programmers)=>(
+          programmers._id == idEvento && (nombre = programmers.Nombre) 
+        ))
+      }
+
+    return  nombre;
+
+  }
 
   const desabilitar = ()=>{
     
@@ -328,68 +467,330 @@ const getSubstitutions = async () => {
 
   }
 
+  const getIndex = () =>{
+    let actual = index;
+    let aumentado = actual +1;
+    index = aumentado;
+    return aumentado;
+  }
+
+const transformarNullIndex1 = ()=>{
+  let normal = new Date(fechaBarra);
+  let horas = new Date(startHour).getHours();
+  let minutos = new Date(startHour).getMinutes();
+
+  let nueva = new Date(normal).setHours(horas);
+  let nueva2 = new Date(nueva).setMinutes(minutos);
+
+  return new Date(nueva2);
+}
+
+const transformarPGMIndex1 = ()=>{
+  let normal = new Date(fechaBarra);
+  let horas = new Date(startHour).getHours();
+  let minutos = new Date(startHour).getMinutes();
+
+  let nueva = new Date(normal).setHours(horas);
+  let nueva2 = new Date(nueva).setMinutes(minutos);
+
+  return new Date(nueva2);
+}
+
+const transformarCustomIndexIn = ()=>{
+  let normal = new Date(fechaBarra);
+  let horas = new Date(startHour).getHours();
+  let minutos = new Date(startHour).getMinutes();
+
+  let nueva = new Date(normal).setHours(horas);
+  let nueva2 = new Date(nueva).setMinutes(minutos);
+
+  return new Date(nueva2);
+}
+
+const transformarCustomIndexOut = ()=>{
+  let normal = new Date(fechaBarra);
+  let horas = new Date(EndHour).getHours();
+  let minutos = new Date(EndHour).getMinutes();
+
+  let nueva = new Date(normal).setHours(horas);
+  let nueva2 = new Date(nueva).setMinutes(minutos);
+
+  return new Date(nueva2);
+}
+
+const validacion = ()=>{
+  let respuesta = 0;
+
+  if( new Date(startHour).toLocaleTimeString() != new Date(fechaAuxGlobal).toLocaleTimeString() )
+  {
+    respuesta = 1;
+  }
+
+ return respuesta;
+}
+
 
 
 
   const add = ()=>{
 
-    if(pgmRef.current.value!='none')
+    //obtenerListadoTurnos(); pendiente por optimizar esto ya que a medida que crezca el sistema se volvera mas lenta la consulta
+    index = data1.length;
+
+    //PROCESO PARA AGREGAR UN EVENTO TIPO (Programa - Requerimiento - Secundario - custom - programmer - null-30 - time-out)
+    //-------------------------------------------------------------------------------------------------------------------------
+
+
+    if(EVENTO == "pgm")
     {
-      //Validacion para solo PGM
-      if(eventRef.current.value=='none' && customRef.current.value == '')
-      {
-        crear(iduser,nombres,subGrupo,fechaPlaner,startHour,EndHour,pgmRef.current.value,color,"PROGRAMA",observationRef.current.value);
-        //toast.success("Programa agregado a los turnos");
-      }
-      else{
-        toast.error("Si desea agregar un programa, la casilla Requerimiento y Custom no deben especificarse");
-      }
-
-    }
-
-
-    if(eventRef.current.value!='none')
-    {
-      //Validacion para solo REQUERIMIENTO
-      if(pgmRef.current.value=='none' && customRef.current.value == '')
-      {
-        crear(iduser,nombres,subGrupo,fechaPlaner,startHour,EndHour,eventRef.current.value,color,"REQUERIMIENTO",observationRef.current.value);
-        toast.success("Requerimiento agregado a los turnos correctamente");
-      }
-      else{
-        toast.error("Si desea agregar un Requerimiento, la casilla Programa y custom no deben especificarse");
-      }
-    }
-
-    if(customRef.current.value!='')
-    {
-      //Validacion para solo CUSTOM
-      if(pgmRef.current.value=='none' && eventRef.current.value == 'none')
-      {
-        crear(iduser,nombres,subGrupo,fechaPlaner,startHour,EndHour,customRef.current.value,color,"CUSTOM",observationRef.current.value);
-        toast.success("Evento Custom agregado a los turnos correctamente");
-      }
-      else{
-        toast.error("Si desea agregar un Custom , la casilla Programa y Requerimiento no deben especificarse");
-      }
-    }
-
-
-    if(pgmRef.current.value=='none' && eventRef.current.value=='none' && customRef.current.value=='')
-    {
-        toast.error("Debe especificar una de los tres opciones, Programa - Requerimiento - Custom");
-    }
-
-     /* 
        
-     
-       3) AL HACER CLICK SOBRE EL EVENTO O PROGRAMA TRAER LA HORA DE INICIO Y FINAL
-       3.1) AL HACER CLICK SOBRE EL TURNO ACTUALIZAR LA INFORMACION EN ACCIONES
-       4) ORGANIZARLOS LOS TURNOS SEGUN LA HORA DE INICIO O START
+      //Valida que se halla seleccionado un programa
+      if(pgmRef.current.value == "" || pgmRef.current.value == "none" )
+      {
+          toast.error("Para agregar un Programa, primero seleccionelo de la lista desplegable");
+      }
 
-     */
-   
+  
+      else{
+
+        if(index==0)
+        {
+          crear(iduser,nombres,getIndex(),pgmRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",transformarPGMIndex1(),"------","Programa");
+          setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+          toast.success("Programa agregado al Stack");
+        }
+
+        else if(index >= 1)
+        {
+
+          if(validacion() == 1)
+          {
+            setMessageTitle("No puede agregar el programa "+ getNameProgram(pgmRef.current.value,"Programa") +" al stack");
+            setMessageContenido("La hora de inicio del programa debe coincidir con la final del evento anterior");
+            setMessageBtn1Show(true);
+            setMessageBtn2Show(false);
+            setMessageBtn1("Ok lo corregiré");
+            setShowAlert(!showAlert);
+          }
+
+          else{
+            crear(iduser,nombres,getIndex(),pgmRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",new Date(fechaAuxGlobal),"------","Programa");
+            setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+            toast.success("Programa agregado al Stack");
+          }
+          
+        }
+
+           
+      }
       
+    }
+
+    else if(EVENTO == "req")
+    {
+      toast.error("Aun esta pendiente por implemetar el sistema de gestion de requerimientos...");
+    }
+    
+    else if(EVENTO == "secundary")
+    {
+      
+      //Valida que se halla seleccionado un programa
+      if(secRef.current.value == "" || secRef.current.value == "none" )
+      {
+          toast.error("Para agregar un Evento Secundario, primero seleccionelo de la lista desplegable");
+      }
+
+      else
+      {
+        if(index==0)
+        {
+          crear(iduser,nombres,getIndex(),secRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",transformarPGMIndex1(),"------","Secondary");
+          setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+          toast.success("Evento secundario agregado al Stack");
+        }
+
+        else if(index >= 1)
+        {
+
+          if(validacion() == 1)
+          {
+            setMessageTitle("No puede agregar el evento secundario "+ getNameProgram(secRef.current.value,"Secondary") +" al stack");
+            setMessageContenido("La hora de inicio del evento secundario debe coincidir con la final del evento anterior");
+            setMessageBtn1Show(true);
+            setMessageBtn2Show(false);
+            setMessageBtn1("Ok lo corregiré");
+            setShowAlert(!showAlert);
+            
+          }
+
+          else{
+            crear(iduser,nombres,getIndex(),secRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",new Date(fechaAuxGlobal),"------","Secondary");
+            setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+            toast.success("Evento secundario agregado al Stack");
+          }
+          
+        }
+      }
+    }
+
+    else if(EVENTO == "custom")
+    {
+       //Valida que se halla escrito un nombre para el evento custom
+       if(customRef.current.value == "" || customRef.current.value == "none" )
+       {
+           toast.error("Para agregar un evento Custom, por favor, especifique un nombre descriptivo.");
+           customRef.current.focus();
+       }
+
+       else{
+        //Validamos que los horarios time sean coherentes
+        if(validarTimes() == 0)
+        {
+          if(index==0)
+          {
+            crear(iduser,nombres,getIndex(),customRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",transformarCustomIndexIn(),transformarCustomIndexOut(),"Custom");
+            setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+            toast.success("Evento custom agregado al Stack");
+          }
+  
+          else if(index >= 1)
+          {
+            if(validacion() == 1)
+            {
+              setMessageTitle("No puede agregar el evento custom " + customRef.current.value +" al stack");
+              setMessageContenido("La hora de inicio del evento debe coincidir con la final del evento anterior");
+              setMessageBtn1Show(true);
+              setMessageBtn2Show(false);
+              setMessageBtn1("Ok lo corregiré");
+              setShowAlert(!showAlert);
+            }
+  
+            else{
+              crear(iduser,nombres,getIndex(),customRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",new Date(fechaAuxGlobal),transformarCustomIndexOut(),"Custom");
+              setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+              toast.success("Evento custom agregado al Stack");
+            }
+          }
+        }
+       }
+
+
+      
+     
+     
+
+
+      
+    }
+
+    else if(EVENTO == "programmer")
+    {
+      //Valida que se halla seleccionado un programmer de la lista desplegable
+      if(pgmRef.current.value == "" || pgmRef.current.value == "none" )
+      {
+          toast.error("Para agregar un evento Programmer, primero seleccionelo de la lista desplegable");
+      }
+      else
+      {
+        if(index==0)
+        {
+          crear(iduser,nombres,getIndex(),pgmRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",transformarPGMIndex1(),transformarCustomIndexOut(),"Programmer");
+          setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+          toast.success("Programmer agregado al Stack");
+        }
+
+        else if(index >= 1)
+        {
+
+          if(validacion() == 1)
+          {
+            setMessageTitle("No puede agregar el evento Programmer "+ getNameProgram(pgmRef.current.value,"Programmer") +" al stack");
+            setMessageContenido("La hora de inicio del evento programmer debe coincidir con la final del evento anterior");
+            setMessageBtn1Show(true);
+            setMessageBtn2Show(false);
+            setMessageBtn1("Ok lo corregiré");
+            setShowAlert(!showAlert);
+          }
+
+          else{
+            crear(iduser,nombres,getIndex(),pgmRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",new Date(fechaAuxGlobal),transformarCustomIndexOut(),"Programmer");
+            setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+            toast.success("Programmer agregado al Stack");
+          }
+          
+        }
+      }
+    }
+
+    else if(EVENTO == "null30")
+    {
+      
+      //valido si es el primer elemento o no y opero segun corresponda para un null-30
+      if(index==0)
+      {
+          crear(iduser,nombres,getIndex(),"Null-30","------","red",observationRef.current.value,new Date(fechaPlaner),"------",transformarNullIndex1(),"------","Null");
+          toast.success("Null-30 agregado al Stack");
+          setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+          
+      }
+
+      else if(index >= 1)
+      {
+        crear(iduser,nombres,getIndex(),"Null-30","------","red",observationRef.current.value,new Date(fechaPlaner),"------",new Date(fechaAuxGlobal),"------","Null");
+        toast.success("Null-30 agregado al Stack");
+        setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+
+      }
+      
+    }
+
+    else if(EVENTO == "timeout")
+    {
+       //Validamos que los horarios time sean coherentes
+       if(validarTimesTimeOut() == 0)
+       {
+        if(index==0)
+        {
+          crear(iduser,nombres,getIndex(),"TimeOut","------","red",observationRef.current.value,new Date(fechaPlaner),"------",transformarCustomIndexIn(),transformarCustomIndexOut(),"TimeOut");
+          setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+          toast.success("Evento TimeOut agregado al Stack");
+        }
+
+        else if(index >= 1)
+          {
+            if(validacion() == 1)
+            {
+              setMessageTitle("No se puede agregar TimeOut ");
+              setMessageContenido("La hora de inicio del evento debe coincidir con la final del evento anterior");
+              setMessageBtn1Show(true);
+              setMessageBtn2Show(false);
+              setMessageBtn1("Ok lo corregiré");
+              setShowAlert(!showAlert);
+            }
+  
+            else{
+              crear(iduser,nombres,getIndex(),"TimeOut","------","red",observationRef.current.value,new Date(fechaPlaner),"------",new Date(fechaAuxGlobal),transformarCustomIndexOut(),"TimeOut");
+              setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+              toast.success("Evento TimeOut agregado al Stack");
+            }
+          }
+
+       }
+
+
+
+    }
+
+    else{
+      //Valida que se halla escrito un nombre para el evento custom
+      if(mainEventRef.current.value == "" || mainEventRef.current.value == "none" )
+      {
+          toast.error("Debe seleccionar un tipo de evento de la lista desplegable.");
+          mainEventRef.current.focus();
+      }
+    }
+
+
   }
 
   
@@ -397,7 +798,7 @@ const getSubstitutions = async () => {
 
   const del = ()=>{
 
-   toast.error("quiere eliminar?");
+   toast.error("quiere eliminar?.. pues espere que no he implementado esto");
     
   }
 
@@ -480,6 +881,19 @@ const getSubstitutions = async () => {
  
   }
 
+  const eventSec = () =>{
+
+    data?.map((pgm)=>(
+        secRef.current.value == pgm._id && setStartHour(new Date(pgm.Start).getTime()),
+
+      data?.map((pgm)=>(
+        secRef.current.value == pgm._id && setEndHour(new Date(pgm.End).getTime()) 
+     ))
+
+   )) 
+ 
+  }
+
 
   const eventProgrammer = () =>{
 
@@ -501,6 +915,13 @@ const getSubstitutions = async () => {
     EVENTO == "pgm" ||  EVENTO == "secundary" ? eventMain() : null
  
    }
+
+   const resetSEC = () =>{
+
+    toast.success("Información Horaria Actualizada"),
+     EVENTO == "pgm" ||  EVENTO == "secundary" ? eventSec() : null
+  
+    }
 
    const resetPROGRAMMER = () =>{
 
@@ -1134,6 +1555,7 @@ const getSubstitutions = async () => {
           new Date(fechaPlaner),
           stacks.ID_esquema,
           inicioMain,
+          "------",
           stacks.Type,
           stacks.Value,
 
@@ -1318,6 +1740,37 @@ const getSubstitutions = async () => {
 
   }
 
+  const getDurationprogram2 = (idEvento) =>{
+
+    let inicio;
+    let salida;
+
+    data?.map((programas)=>(
+      programas._id == idEvento && (inicio = programas.Start, salida = programas.End) 
+    ))
+
+    let diferencia;
+    var fechaInicio = new Date(inicio).getTime();
+    var fechaFin    = new Date(salida).getTime();
+
+    diferencia = fechaFin - fechaInicio;
+    return  (diferencia/1000)/60;
+
+  }
+
+  const getDurationCustom = (inicio,salida) =>{
+
+    let diferencia;
+    var fechaInicio = new Date(inicio).getTime();
+    var fechaFin    = new Date(salida).getTime();
+
+    diferencia = fechaFin - fechaInicio;
+    return  (diferencia/1000)/60;
+
+  }
+
+ 
+
   const resolver = (id,tipo,idPrograma,duracion,orden,valor)=>{
 
     
@@ -1472,8 +1925,17 @@ const getSubstitutions = async () => {
     SETEVENTO(mainEventRef.current.value);
   }
 
-  const confirmacionSave = () =>{
-    alert("Hola ñiño")
+  const getTime = (fecha) =>{
+    let recibida = new Date(fecha).getTime();
+    let nueva = new Date(recibida).toLocaleTimeString();
+
+    //Valido si es el primer index para guardar el valor en una variable
+    if(index==1)
+    {
+      //FECHAINICIOGLOBAL = nueva;
+    }
+    
+    return nueva;
   }
 
   const edit2 = ()=>{
@@ -1488,8 +1950,81 @@ const getSubstitutions = async () => {
     
   }
 
+  const guardar = ()=>{
+
+    setMessageTitle("Ho puede agregar el programa al stack");
+    setMessageContenido("La hora de inicio debe ser igual al la final del evento anterior");
+    setMessageBtn1Show(true);
+    setMessageBtn2Show(false);
+    setMessageBtn1("Ok lo corregiré");
+    setShowAlert(!showAlert);
+  }
+
+  const limpiar = ()=>{
+
+    setMessageTitle("¿Realmente desea borrar todos los registros del stack?");
+    setMessageContenido("Si el stack no se ha guardado se perderá");
+    setMessageBtn1Show(false);
+    setMessageBtn2Show(true);
+    setMessageBtn2("Sí limpiar");
+    setShowAlert(!showAlert);
+  }
+
  
-   
+  const operacion = (FechaIn,idEvento,tipo,out)=>{
+    //valido que tipo de vento es y opero segun corresponda
+
+
+    //NULL
+    if(tipo == "Null")
+    {
+      
+      let recibida = new Date(FechaIn).getTime();
+      recibida = new Date(recibida).setMinutes(new Date(recibida).getMinutes() + parseInt(30));
+
+      fechaAuxGlobal = recibida;
+       return recibida
+    }
+
+    else  if(tipo == "Programa" || tipo == "Secondary")
+    {   
+      let recibida = new Date(FechaIn).getTime();
+      recibida = new Date(recibida).setMinutes(new Date(recibida).getMinutes() + parseInt(getDurationprogram2(idEvento)));
+
+      fechaAuxGlobal = recibida;
+       return recibida
+    }
+
+    else if(tipo == "Custom")
+    {
+      let recibida = new Date(FechaIn).getTime();
+      recibida = new Date(recibida).setMinutes(new Date(recibida).getMinutes() + parseInt(getDurationCustom(FechaIn,out)));
+
+      fechaAuxGlobal = recibida;
+      return recibida
+
+    }
+
+    else if(tipo == "TimeOut")
+    {
+      let recibida = new Date(FechaIn).getTime();
+      recibida = new Date(recibida).setMinutes(new Date(recibida).getMinutes() + parseInt(getDurationCustom(FechaIn,out)));
+
+      fechaAuxGlobal = recibida;
+      return recibida
+
+    }
+
+    else if(tipo == "Programmer")
+    {
+      let recibida = new Date(FechaIn).getTime();
+      recibida = new Date(recibida).setMinutes(new Date(recibida).getMinutes() + parseInt(getDurationCustom(FechaIn,out)));
+
+      fechaAuxGlobal = recibida;
+      return recibida
+
+    }
+  }
  
 
    /* *********************************************************************************************************************** */
@@ -1668,16 +2203,17 @@ const getSubstitutions = async () => {
           <div className="cuerpoModal">
 
           <div className={showAlert == true ? "alert" : "hideAlert"}>
+            <img src={handStop} alt="stop" className='handStop'/>
             <div className="cierre" onClick={()=>setShowAlert(!showAlert)}>x</div>
             <div className="alert-conten">
-              ¿Realmente desea limpiar el stack?
+              {messageTitle}
             </div>
             <div className="alert-subtitulo">
-            Si hay un registro previamente guardado, se perderá
+            {messageContenido}
             </div>
             <div className="alert-butoms">
-              <div className="btn-no" onClick={()=>setShowAlert(!showAlert)}>NO</div>
-              <div className="btn-confirm" onClick={()=>confirmacionAlert()}>OK</div>
+              { messageBtn1Show == true && <div className="btn-no" onClick={()=>setShowAlert(!showAlert)}>{messageBtn1}</div>}
+              { messageBtn2Show == true && <div className="btn-confirm" onClick={()=>confirmacionAlert()}>{messageBtn2}</div>}
             </div>
 
           </div>
@@ -1690,7 +2226,7 @@ const getSubstitutions = async () => {
               </h3>
 
               {
-                data13?.map((anotaciones,index)=>(  
+                data15?.map((anotaciones,index)=>(  
                   <span className='main-nt' key={anotaciones._id}>
                     <h5 key={index} className='numero-notas'>{index+1}</h5>
                     <p className='notas-contenido' key={anotaciones._id}>
@@ -1756,13 +2292,6 @@ const getSubstitutions = async () => {
               
               
             </div>
-
-
-
-
-            
-
-           
 
           <div className="close2" onClick={() => cambiarEstado(!estado)}>X</div>
 
@@ -1832,7 +2361,6 @@ const getSubstitutions = async () => {
             
             {/*SECCION # 2 */}
             <div className="acciones">
-            
 
               <div className="titulo">
                 <h2>ACCIONES</h2>
@@ -1849,6 +2377,8 @@ const getSubstitutions = async () => {
                   <option key="none_sec" value="secundary" className='selecteItem' >SECUNDARIO</option>
                   <option key="none_custom" value="custom" className='selecteItem' >CUSTOM</option>
                   <option key="none_programmer" value="programmer" className='selecteItem' >PROGRAMADOR</option>
+                  <option key="none_null-30" value="null30" className='selecteItem' >NULL-30</option>
+                  <option key="none_time_out" value="timeout" className='selecteItem' >TIME OUT</option>
                 </select>
 
 
@@ -1894,7 +2424,7 @@ const getSubstitutions = async () => {
 
               <>
                <h5 className='tipo'>Eventos Secundarios</h5>
-               <select name="turnoSeleccionado" className='selectedBox' id='pgm' ref={pgmRef} onChange={resetPGM}>
+               <select name="turnoSeleccionado" className='selectedBox' id='pgm' ref={secRef} onChange={resetSEC}>
               <option key="none2" value="none" className='selecteItem'>{event}</option>
                 {
                   data?.map((pgm)=>(
@@ -1931,11 +2461,17 @@ const getSubstitutions = async () => {
                </>
 
 
-                : <h5 className='event_message'>Seleccione un tipo de evento</h5>
+                : EVENTO == "null30" ? 
+
+                 <h3 className='null-30'>Null-30 es un campo nulo de media hora</h3>
+                
+                :  EVENTO == "timeout" ? 
+
+                <h3 className='null-30'>Seleccione el rango horario del tiempo fuera</h3>
+
+                : null
 
               }
-               
-                <button className='btnNull30'>Null 30 minutos</button>
                 
                 
 
@@ -1949,7 +2485,7 @@ const getSubstitutions = async () => {
                             onChange={(date) => setStartHour(date)}
                             showTimeSelect
                             showTimeSelectOnly
-                            timeIntervals={15}
+                            timeIntervals={30}
                             timeCaption="Start"
                             dateFormat="HH:mm aa"
                             ref={startRef}
@@ -1964,7 +2500,7 @@ const getSubstitutions = async () => {
                             onChange={(date) => setEndHour(date)}
                             showTimeSelect
                             showTimeSelectOnly
-                            timeIntervals={15}
+                            timeIntervals={30}
                             timeCaption="End"
                             dateFormat="HH:mm aa"
                             ref={endRef}
@@ -1975,6 +2511,7 @@ const getSubstitutions = async () => {
 
                 <h3 className="subTitulo">OBSERVACIONES PERSONALES</h3>
                 <textarea name="observaciones" className='observaciones' ref={observationRef} defaultValue={obs}></textarea>
+               
                 
               </div>
 
@@ -1988,25 +2525,22 @@ const getSubstitutions = async () => {
                 <div className="containerSingleButtomDel">
                  <img src={Trash} alt="trash" className='img-butons' onClick={del}/>
                 </div>
-              </div>
-              {
-                /*
-                <div className='validar'>
-                 <img src={Arrow} alt="trash" className='imgBtnValidate' onClick={validate}/>
+                <div className="containerSingleButtom-open">
+                 <img src={flechaLeft} alt="plus" className='img-butons' onClick={()=>setShowRight(!showRight)}/>
                 </div>
-                */
-              }
-              
+              </div>
             </div>
+
+           
 
             <div className="list-turnos">
               <div className="titulo">
-                <h2>TURNOS PROGRAMADOS</h2>
+                <h2>TURNO SEGUN ROTACION</h2>
+                
                 <p className='name-turno-rotacion'>{Pronostico(iduser)}</p>
                 
               </div>
 
-              
 
               {/* ANTES QUE NADA DEBO VALIDAR SI YA HAY O NO UNA PROGRAMACION GUARDADA PARA EL USUARIO  */}
 
@@ -2097,10 +2631,10 @@ const getSubstitutions = async () => {
               <div className={validador5 == 1 ? "seccionButons2-hide" :"seccionButons2"}>
               <div className="containerSingleButtom">
               {
-                data13 != 0 ?
+                data15 != 0 ?
 
                 <span className='noti'>
-                  {data13.length}
+                  {data15.length}
                 </span>
 
                 :
@@ -2128,8 +2662,9 @@ const getSubstitutions = async () => {
                 </div>
               </div>
             </div>
+          </div> 
 
-          </div>
+         
 
          
 
@@ -2141,6 +2676,8 @@ const getSubstitutions = async () => {
             120.5
            </div>
           </div>
+
+         
 
           <div className="barraButom">
            <div className="inspectorContainer">
@@ -2224,13 +2761,81 @@ const getSubstitutions = async () => {
            </div>
           </div>
         </div>
-        
-        
 
       )}
 
-     
-      
+      {
+         <div className={showRight==true ? "content_principal_custom" : "hideRight"} >
+                <div className="titulo-custom1">
+                  <h2>Stack de turnos </h2>
+                </div>
+
+                <div className="cuerpoStackTurnos">
+                  {
+                    data1?.map((shifts)=>(
+                      <div className="contentBoloque" key={shifts._id}>
+                      <div className="in" >{new Date(shifts.Inicio_main).toLocaleTimeString()}</div>
+                      <div className="center" >{getNameProgram(shifts.Event_name,shifts.Type,shifts.ID_event)}</div>
+                      <div className="out" >{new Date(operacion(shifts.Inicio_main,shifts.Event_name,shifts.Type,shifts.Out)).toLocaleTimeString()}</div>
+                    </div>
+                    ))
+                  }
+                 
+
+                  
+                
+
+                  <div className="timeIn"><span className='spanIn'>Time In</span>--:--:--</div>
+                  <div className="okButom" onClick={guardar}>
+                    <img src={Ok} alt="Ok" />
+                 </div>
+                 <div className="cleanButom" onClick={limpiar}>
+                    <img src={Trash} alt="Ok" />
+                 </div>
+                  <div className="timeOut"><span className='spanOut'>Time Out</span>--:--:--</div>
+
+                </div>
+
+
+                <div className="titulo-custom2">
+                    <h2>Stack Guardados</h2>
+                </div>
+
+                <div className="cuerpoStackGuardados">
+                  <div className="guardadosLeft">
+                    <ul>
+                      <li className='guardadosItem'>item 1</li>
+                      <li className='guardadosItem'>item 2</li>
+                      <li className='guardadosItem'>item 3</li>
+                      <li className='guardadosItem'>item 4</li>
+                      <li className='guardadosItem'>item 5</li>
+                    </ul>
+                  </div>
+                  <div className="guardadosRight">
+
+                   <div className="contenControls">
+                    Nombre
+                    <input type='text' className='controsName'></input>
+                      <div className="seccionButonsNew">
+                          <div className="containerSingleButtomNew">
+                            <img src={Pencil} alt="pencil"  />
+                          </div>
+                          <div className="containerSingleButtomNew">
+                          <img src={save} alt="plus"  />
+                          </div>
+                          <div className="containerSingleButtomDelNew">
+                          <img src={Trash} alt="trash"  />
+                          </div> 
+                      </div>
+                   </div>
+                   
+                  </div>
+                </div>
+         </div>
+      }
+            
     </>
   );
+
+  
 }

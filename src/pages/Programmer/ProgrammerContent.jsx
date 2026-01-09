@@ -263,7 +263,7 @@ export default function ProgrammerContent() {
                             onChange={(date) => setStartHour(date)}
                             showTimeSelect
                             showTimeSelectOnly
-                            timeIntervals={15}
+                            timeIntervals={30}
                             timeCaption="In"
                             dateFormat="HH:mm aa"
                             ref={startRef}
@@ -277,7 +277,7 @@ export default function ProgrammerContent() {
                             onChange={(date) => setEndHour(date)}
                             showTimeSelect
                             showTimeSelectOnly
-                            timeIntervals={15}
+                            timeIntervals={30}
                             timeCaption="Out"
                             dateFormat="HH:mm aa"
                             ref={endRef}

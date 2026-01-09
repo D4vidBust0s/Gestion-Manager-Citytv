@@ -43,6 +43,7 @@ export default function Listado() {
   const [data12, setData12] = useState([]);
   const [data13, setData13] = useState([]);
   const [data14, setData14] = useState([]);
+  const [data15, setData15] = useState([]);
 
   const [saved, setSaved] = useState(false);
   const [semanasP, setSemanasP] = useState("----------");
@@ -81,24 +82,29 @@ export default function Listado() {
 
   let totalSche;
   let totalScheFS;
-
+  
   let totalGP;
   let totalGPFS;
-
+  
   let actual;
   let actualFS;
-
+  
   let globalIdGroup;
   let arrayVariables = [];
-
+  
   let globalDomingos;
-
+  
   let auxi = 0;
   let idGroupGlobal = "";
   
   
-
+  
   //----------------------------------------------------------------------------------------------------------
+  /* CONTEXTOS*/
+  const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Define un estado para la fecha de la barra
+  const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
+  const [Aux,setAux] = useContext(AuxSustitutions); // Permite avisar a la barra que debe ser actualizada
+
   //FUNCIONES
   //Funcion que obtiene la data de la api - listado de grupos
   const obtenerListadoGrupos = async () => {
@@ -190,11 +196,19 @@ const getSubstitutions = async () => {
     .then((response) => setData13(response.data));
 };
 
+//Funcion que obtiene la data de la api - Programmers
+const getProgrammers = async () => {
+  return await axios
+    .get("http://localhost:3000/api/programmer/",
+    {
+      params:{
+        fecha: fechaBarra,
+      }
+    })
+    .then((response) => setData15(response.data));
+};
 
-/* CONTEXTOS*/
-const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Define un estado para la fecha de la barra
-const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
-const [Aux,setAux] = useContext(AuxSustitutions); // Permite avisar a la barra que debe ser actualizada
+
 
 //FUNCIONES
 //----------------------------------------------------------------------------------------------------------------------------------------
@@ -612,6 +626,16 @@ const tareaStack = (nombreEsquema,payrollID)=>{
     return color;
  }
 
+ const getColorProgrammer = (nombreEvent)=>{
+  let color;
+
+    data15?.map((programmers)=>(
+      programmers._id == nombreEvent && (color = programmers.Color)
+    ))
+
+    return color;
+ }
+
 
  const getNombre = (nombreEvent)=>{
   let nombre;
@@ -621,6 +645,16 @@ const tareaStack = (nombreEsquema,payrollID)=>{
     ))
 
     return nombre;
+ }
+
+ const getNombreProgrammer = (nombreEvent)=>{
+  let nombreProgrammer;
+
+    data15?.map((programmers)=>(
+      programmers._id == nombreEvent && (nombreProgrammer = programmers.Nombre)
+    ))
+
+    return nombreProgrammer;
  }
 
 
@@ -648,6 +682,17 @@ const tareaStack = (nombreEsquema,payrollID)=>{
 
  }
 
+ const getDurationCustomMain = (inicio,salida) =>{
+
+  let diferencia;
+  var fechaInicio = new Date(inicio).getTime();
+  var fechaFin    = new Date(salida).getTime();
+
+  diferencia = fechaFin - fechaInicio;
+  return  ((diferencia/1000)/60)*60/30+"px";
+
+ }
+
  const getDurationprogram = (start, end) =>{
   let diferencia;
   var fechaInicio = new Date(start).getTime();
@@ -670,6 +715,17 @@ const getDurationPGM = (idEvent) =>{
        
 }
 
+const getDurationProgrammer = (start,end) =>{
+  
+  let diferencia;
+  var fechaInicio = new Date(start).getTime();
+  var fechaFin    = new Date(end).getTime();
+
+  diferencia = fechaFin - fechaInicio;
+  return  ((diferencia/1000)/60)*60/30;
+   
+}
+
 const getDurationTimeOut = (id) =>{
   let DURACION;
 
@@ -678,6 +734,15 @@ const getDurationTimeOut = (id) =>{
   ))
 
    return (DURACION * 60)/30 ;
+}
+
+const getDurationTimeOutMain = (start,end) =>{
+  let diferencia;
+  var fechaInicio = new Date(start).getTime();
+  var fechaFin    = new Date(end).getTime();
+
+  diferencia = fechaFin - fechaInicio;
+  return  ((diferencia/1000)/60)*60/30;
 }
 
 
@@ -694,8 +759,8 @@ const getMinutes = (fecha) =>{
 }
 
 
- const magic = (nombreEvent,idEvent,tipo,horaInicio)=>{
-    let fechaInicio = new Date(horaInicio);
+ const magic = (nombreEvent,idEvent,tipo,horaInicio,horaSalida)=>{
+    //let fechaInicio = new Date(horaInicio); esto no esta haciendo nada
  
 
   //Primero traigo el color que le corresponde segun el id de evento y tipo
@@ -719,10 +784,15 @@ const getMinutes = (fecha) =>{
       mainColor = getColorPrimary(nombreEvent);
   }
 
+  else if(tipo == "Programmer")
+  {
+      mainColor = getColorProgrammer(nombreEvent);
+  }
+
   else if(tipo == "TimeOut")
   {
       mainColor = "transparent";
-      //mainColor = "#e481e42a";
+      //mainColor = "red";
 
   }
 
@@ -751,7 +821,12 @@ const getMinutes = (fecha) =>{
 
   else if(tipo == "TimeOut")
   {
-    nombreEvento = "TimeOut"
+    nombreEvento = "TimeOut";
+  }
+
+  else if(tipo == "Programmer")
+  {
+    nombreEvento = getNombreProgrammer(nombreEvent);
   }
 
 
@@ -762,9 +837,14 @@ const getMinutes = (fecha) =>{
       anchoEvent = "60px";
   }
 
-  else if(tipo == "Custom")
+  else if(tipo == "Custom" && idEvent != "------")
   {
     anchoEvent = getDurationCustom(idEvent);
+  }
+
+  else if(tipo == "Custom" && idEvent == "------")
+  {
+    anchoEvent = getDurationCustomMain(horaInicio,horaSalida);
   }
 
   else if(tipo == "Secondary")
@@ -777,9 +857,19 @@ const getMinutes = (fecha) =>{
     anchoEvent = getDurationPGM(nombreEvent)+"px";
   }
 
-  else if(tipo == "TimeOut")
+  else if(tipo == "TimeOut" && idEvent != "------")
   {
     anchoEvent = getDurationTimeOut(idEvent)+"px";
+  }
+
+  else if(tipo == "TimeOut" && idEvent == "------")
+  {
+    anchoEvent = getDurationTimeOutMain(horaInicio,horaSalida)+"px";
+  }
+
+  else if(tipo == "Programmer")
+  {
+    anchoEvent = getDurationProgrammer(horaInicio,horaSalida)+"px";
   }
 
 
@@ -1193,6 +1283,7 @@ const getMinutes = (fecha) =>{
 
   else{
     inicio = 0;
+    console.log("Entro aqui " + horas + "--" + minutos);
   }
 
  
@@ -1205,15 +1296,15 @@ const getMinutes = (fecha) =>{
 
   
     return  <li style={
-      {
-        float: "left",
-        height: "1.45rem",
-        borderLeft: "1px solid #000000",
-        width: anchoEvent,
-        display: "flex",
-        marginLeft: inicio+"px",
-        
-      }
+        {
+          float: "left",
+          height: "1.45rem",
+          borderLeft: "1px solid #000000",
+          width: anchoEvent,
+          display: "flex",
+          marginLeft: inicio+"px",
+          
+        }
       } onClick={() => setModal2(!modal2)}>
 
       <a href="#" style={
@@ -1296,7 +1387,7 @@ const getMinutes = (fecha) =>{
                                  ?
                                     <li className={saved == false ? "liEventTipe0" : "liEventTipe000"} onClick={() => setModal2(!modal2)}>
                                       
-                                        {magic(shift.Event_name,shift.ID_event,shift.Type,shift.Inicio_main)}
+                                        {magic(shift.Event_name,shift.ID_event,shift.Type,shift.Inicio_main,shift.Out)}
                               
                                     </li>
 
@@ -1700,6 +1791,10 @@ const asignar = () =>{
   useEffect(() => {
     obtenerListadoGrupos2();
   }, []);
+
+  useEffect(() => {
+    getProgrammers();
+  }, [fechaBarra]);
   
   return (
     <>

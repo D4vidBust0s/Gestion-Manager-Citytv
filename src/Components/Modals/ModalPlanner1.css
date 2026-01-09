@@ -965,15 +965,16 @@
 .alert{
     position: absolute;
     top: 22%;
-    left: 26.5%;
+    left: 18.5%;
     height: 40%;
     width: 750px;
     background-color: #FFFFFF;
-    z-index: 6000;
+    z-index: 3000;
     border-radius: 10px;
     box-shadow: #000000 10px 10px 1000px;
     display: flex;
     flex-direction: column;
+    
     
   
 }
@@ -1011,12 +1012,14 @@
     width: 100%;
     height: 60%;
     position: absolute;
-    padding: 10px;
+    padding: 60px;
     display: flex;
-    align-items: center;
     justify-content: center;
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     z-index: 500;
+    font-weight: 900;
+    margin-top: 1.2rem;
+    
     
 }
 
@@ -1031,6 +1034,7 @@
     justify-content: center;
     font-size: 1.1rem;
     z-index: 500;
+    padding: 80px;
     
 }
 
@@ -1111,22 +1115,6 @@
   
 }
 
-.btnNull30{
-    background:  #294900;
-    color: #D9D9D9;
-    width: 100%;
-    height: 2rem;
-    margin-top: .5rem;
-    margin-bottom: .8rem;
-    cursor: pointer;
-    border: none;
-    border-radius: .2rem;
-}
-
-.btnNull30:hover{
-    transform: scale(1.1);
-    
-}
 
 .event_message{
     color: #000000;
@@ -1240,4 +1228,288 @@
     overflow: auto;
     padding: 1rem;
     font-size: .9rem;
+}
+
+.null-30{
+    color: #000000;
+    font-size: .9rem;
+    margin-bottom: 2rem;
+}
+
+/* The animation code */
+@keyframes myAnimationIn {
+    from {
+        transform: translateX(60%);
+    }
+    to {left: 63.4%;}
+  }
+
+  
+
+
+.content_principal_custom{
+    position: fixed;
+    z-index: 2000;
+    background: #D9D9D9;
+    height: 95vh;
+    width: 35%;
+    left: 63.4%;
+    top: 4%;
+    border: 5px solid #547725;
+    border-radius: 10px;
+    padding: 1.5rem;
+    animation-name: myAnimationIn;
+    animation-duration: 2s;
+    display: flex;
+
+    align-items: center;
+    flex-direction: column;
+    
+}
+
+.containerSingleButtom-open{
+    position: absolute;
+    background: #547725;
+    padding: .2rem;
+    border-radius: .5rem;
+    box-shadow: .2rem .2rem .8rem #545454;
+    right: 50px;
+    top:42%;
+
+    .img-butons{
+        height: 3rem;
+        width: 4rem;
+        
+    }
+}
+
+
+.containerSingleButtom-open:hover{
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+.hideRight{
+    position: absolute;
+    display: none;
+    
+} 
+
+.titulo-custom1{
+    background: #EB464B;
+    font-size: .8rem;
+    padding: .2rem;
+    display: flex;
+    justify-content: center;
+    border-radius: 50px;
+    width: 50%;
+}
+
+.titulo-custom2{
+    background: #EB464B;
+    font-size: .8rem;
+    padding: .2rem;
+    display: flex;
+    justify-content: center;
+    border-radius: 50px;
+    margin-top: 6.5rem;
+    width: 50%;
+}
+
+.cuerpoStackTurnos{
+    border: 1px solid #545454;
+    margin-top: 1rem;
+    width: 100%; 
+    height: 50%;
+    padding: .8rem;
+    overflow: auto;
+   
+}
+
+.contentBoloque{
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 30px;
+    margin-top: .5rem;
+}
+
+.contentBoloque:hover{
+    cursor: pointer;
+    transform: scale(1.01);
+}
+
+.center{
+    width: auto;
+    background: #FFFFFF;
+    width: 60%;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.in , .out{
+    background: #547725;
+    height: 30px;
+    width: 20%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border-radius: 50px;
+}
+
+.timeIn{
+    position: absolute;
+    background: #000000;
+    color: #DADADA;
+    width: 15%;
+    height: 5%;
+    left: 30px;
+    bottom: 40%;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.timeOut{
+    position: absolute;
+    background: #000000;
+    color: #DADADA;
+    width: 15%;
+    height: 5%;
+    right: 30px;
+    bottom: 40%;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.spanIn , .spanOut{
+    color: #EB464B;
+}
+
+.cuerpoStackGuardados{
+    border: 1px solid #545454;
+    margin-top: 1rem;
+    width: 100%; 
+    height: 25%;
+    padding: .8rem;
+    overflow: auto;
+    display: flex;
+}
+.guardadosLeft{
+    background: #000000;
+    height: 100%;
+    width: 50%;
+    overflow: auto;
+    padding: 1rem;
+}
+.guardadosItem{
+    color: aliceblue;
+    padding: .1rem;
+}
+
+.guardadosItem:hover{
+    background: #DADADA;
+    color: #000000;
+    cursor: pointer;
+}
+
+.seccionButonsNew{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    
+}
+
+.guardadosRight{
+    
+    top: -50px;
+    width: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.containerSingleButtomNew{
+    background: #547725;
+    height: 50px;
+    width: 50px;
+    border-radius: 5px;
+}
+
+.containerSingleButtomNew:hover{
+  transform: scale(1.1);
+  cursor: pointer;
+}
+
+.containerSingleButtomDelNew{
+    background: #EB464B;
+    height: 50px;
+    width: 50px;
+    border-radius: 5px;
+}
+
+.containerSingleButtomDelNew:hover{
+    transform: scale(1.1);
+    cursor: pointer;
+  }
+
+.contenControls{
+    background: #00094B;
+    width: 100%;
+    height: 100%;
+    color: #DADADA;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+}
+.controsName{
+ width: 85%;
+ height: 28px;
+ margin-top: .5rem;
+ margin-bottom: 1rem;
+ padding: .3rem;
+}
+
+.okButom{
+    position: absolute;
+    background: #547725;
+    width: 60px;
+    left: 40%;
+    bottom: 39%;
+    border-radius: 5px;
+}
+
+.okButom:hover{
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+.cleanButom{
+    position: absolute;
+    background: #EB464B;
+    width: 60px;
+    left: 50%;
+    bottom: 39%;
+    border-radius: 5px;
+}
+
+.cleanButom:hover{
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+.handStop{
+    height: 70px;
+    width: 70px;
 }
