@@ -28,12 +28,14 @@ export default function ProgramsContent() {
   const [valueLogo, setValueLogo] = useState("Default");
   const [ID, setId] = useState(null);
   const [order,setOrder] = useState("Seleccione");
+  const [planner,setPlanner] = useState("Seleccione");
 
   //Referencias
   const refName = useRef();
   const refLogo = useRef();
   const refDescripcion = useRef();
   const refOrder = useRef();
+  const refMainplanner = useRef();
   //------------------------------------------------------------------------------------
 
   const setNew = (orden)=>{
@@ -60,7 +62,8 @@ export default function ProgramsContent() {
           setLogo(response.data.logo) +
           setValueLogo(response.data.logo) +
           setOrder(response.data.orden) +
-          setNew(response.data.orden)
+          setNew(response.data.orden) +
+          (refMainplanner.current.value = response.data.mainplanner)
 
       );
     setId(id);
@@ -100,6 +103,7 @@ export default function ProgramsContent() {
         logo: logo,
         order: order,
         descripcion: description,
+        mainplanner: refMainplanner.current.value,
       });
 
       obtenerListadoGrupos();
@@ -169,6 +173,7 @@ export default function ProgramsContent() {
         logo: logo,
         orden: order,
         descripcion: description,
+        mainplanner: refMainplanner.current.value,
       });
 
       obtenerListadoGrupos();
@@ -274,6 +279,14 @@ export default function ProgramsContent() {
             <div className="cajaLogo">
               <img src={logo} alt="LogoGrupo" />
             </div>
+          </div>
+
+          <h3 className="subTitulo">MainPlanner</h3>
+          <div className="contentSectionLogo">
+            <select className="inputDir" ref={refMainplanner} >
+            <option key={1} value="MainPlanner">MainPlanner </option>
+            <option key={2} value="MainPlanner +">MainPlanner +</option>
+            </select>
           </div>
 
           <h3 className="subTitulo">Descripción del grupo</h3>

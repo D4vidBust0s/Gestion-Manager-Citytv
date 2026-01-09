@@ -96,6 +96,7 @@ let fechaAuxGlobal;
 let fechaAuxGlobalIn = "--:--:--";
 let nameEventSavedGlobal = "";
 let IDITEMGLOBAL = "";
+let globalCantidad = 0;
 
 let validaDiaFestivo = 0;
 let mensaje = "-------";
@@ -2695,11 +2696,16 @@ const exist2 = (payrollId,payrollGrupo,groupNombre,payrollNombres, payrollApelli
 
   ax = 0;
 
-  numDias2?.map((item,index)=>(
+  numDias2?.map((item)=>(
         
     ax=ax + operarDiaslaborados(item.mes,item.dia,item.año,payrollId)
       
   ))
+
+  if(iduser == payrollId)
+  {
+    globalCantidad = ax;
+  }
 
   return ax;
 
@@ -2760,6 +2766,13 @@ const convertir= (dia,mes,año)=>{
 
 }
 
+
+const calcular = ()=>{
+
+  let resultado= 0;
+  resultado = (data2[0].Horas) - globalCantidad;
+  return resultado;
+}
    /* *********************************************************************************************************************** */
      /* EFECTOS
    /* *********************************************************************************************************************** */
@@ -2854,6 +2867,8 @@ const convertir= (dia,mes,año)=>{
 useEffect(()=>{
   traerRangoFechas();
 },[data2,data8]);
+
+
 
  
 
@@ -3015,8 +3030,8 @@ useEffect(()=>{
                           {item.nombres + "  " + item.apellidos} 
                           <span className='indicador'>
                             {exist2(item._id,item.grupo,"-",item.nombres,item.apellidos)}
-                          </span>
-                          <progress value={exist2(item._id,item.grupo,"-",item.nombres,item.apellidos)} max={24} className='progress'/>
+                          </span>                                                                      
+                          <progress value={exist2(item._id,item.grupo,"-",item.nombres,item.apellidos)} max={data2[0].Horas} className='progress'/>
                         </li>
                         :
                         null
@@ -3483,10 +3498,13 @@ useEffect(()=>{
 
           <div className='aux1'>
            <div className="aux1_title">
-            Objetivo
+            Restante
            </div>
            <div className="aux1_label">
-            120.5
+           {
+              calcular()
+           }
+           <span className='aux_label-1'>Horas</span>
            </div>
           </div>
 

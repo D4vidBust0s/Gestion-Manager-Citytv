@@ -2,12 +2,13 @@
 import './RulesContent.css'
 
 /* IMAGENES */
-import Calendar from '../../../../assets/bxs-calendar.svg'
-import Sun from '../../../../assets/bx-sun.svg'
-import Moon from '../../../../assets/bx-moon.svg'
-import Cake from '../../../../assets/bx-cake.svg'
-import Save from '../../../../assets/bxs-save.svg'
-import Period from '../../../../assets/period.svg'
+import Calendar from '../../../../assets/bxs-calendar.svg';
+import Sun from '../../../../assets/bx-sun.svg';
+import Moon from '../../../../assets/bx-moon.svg';
+import Cake from '../../../../assets/bx-cake.svg';
+import Save from '../../../../assets/bxs-save.svg';
+import Period from '../../../../assets/period.svg';
+import Time from '../../../../assets/bx-time-five.svg';
 
 /* DEPENDENCIAS */
 import {useState,useRef, useEffect} from 'react';
@@ -36,6 +37,7 @@ export default function RulesContent() {
   const [ID,setId]= useState();
   
   const [dias, setDias]= useState();
+  const [horas, setHoras]= useState();
   const [startDate, setStartDate] = useState(new Date());
  
   /* Referencias */
@@ -46,6 +48,7 @@ export default function RulesContent() {
   const endNocturnoRef = useRef();
   const periodRef = useRef();
   const diasRef = useRef();
+  const targetHorasRef = useRef();
 
 
   //FUNCIONES
@@ -60,7 +63,8 @@ export default function RulesContent() {
       InLaboralNocturna: startDateNocturno,
       EndLaboralNocturna: endDateNocturno,
       DiaPeriod: startDate,
-      Dia:dias
+      Dia:dias,
+      Horas: horas,
 
     });
 
@@ -75,32 +79,43 @@ export default function RulesContent() {
     /*Validaciones */
     if(diaRef.current.value=="")
     {
+      diaRef.current.focus();
       toast.error("El campo Dia de la semana de inicio, no debe estar vacio");
     }
 
     else if(inDiurnoRef.current.value=="")
     {
+      inDiurnoRef.current.focus();
       toast.error("El campo hora de inicio de la hora laborar diurna, no debe estar vacio");
     }
 
     else if(endDiurnoRef.current.value=="")
     {
+      endDiurnoRef.current.focus();
       toast.error("El campo hora final de la hora laborar diurna, no debe estar vacio");
     }
 
     else if (inNocturnoRef.current.value=="")
     {
+      inNocturnoRef.current.focus();
       toast.error("El campo hora inicio de la hora laborar nocturna, no debe estar vacio");
     }
 
     else if (endNocturnoRef.current.value=="")
     {
+      endNocturnoRef.current.focus();
       toast.error("El campo hora final de la hora laborar nocturna, no debe estar vacio");
     }
 
     else if(periodRef.current.value=="")
     {
+      periodRef.current.focus();
       toast.error("El campo que especifica el dia de inicio del periodo, no debe estar vacio");
+    }
+    else if(targetHorasRef.current.value=="")
+    {
+      targetHorasRef.current.focus();
+      toast.error("El campo que especifica el objetivo de horas laborales, no debe estar vacio");
     }
 
     else{
@@ -114,6 +129,7 @@ export default function RulesContent() {
         endLaboralNocturna: endDateNocturno,
         diaPeriod: startDate,
         dia: dias,
+        horas: horas,
       });
 
       setValidador(1);
@@ -134,6 +150,10 @@ export default function RulesContent() {
 
   const setDays= () =>{
     setDias(diasRef.current.value);
+  }
+
+  const setTarget = () =>{
+    setHoras(targetHorasRef.current.value);
   }
 
   
@@ -180,6 +200,8 @@ export default function RulesContent() {
       setStartDate(Date.parse (rule.DiaPeriod));
       setDias(rule.Dia);
       diasRef.current.value=rule.Dia;
+      setHoras(rule.Horas);
+      targetHorasRef.current.value = rule.Horas;
     });
   },[data]);
 
@@ -325,6 +347,16 @@ export default function RulesContent() {
             selected={startDate}
             onChange={(date) => setStartDate(date) }
          />
+        </div>
+      </div>
+
+      <div className="filaContentRules">
+        <div className="fila_img">
+          <img src={Time} alt="Calendar" />
+        </div>
+        <div className="texto">Objetivo de horas laborales</div>
+        <div className="controls">
+          <input type="text" className='inputRules' placeholder='Horas' ref={targetHorasRef} onChange={setTarget}/>
         </div>
       </div>
 
