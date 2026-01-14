@@ -132,7 +132,7 @@
     height: 90%;
     width: 35%;
     padding: 1.5rem;
-    border-left: 1px solid #ce1414;
+    border-left: 1px solid #000000;
     padding: 1.5rem 2rem;
     overflow: hidden;
     margin-left: -10%;
@@ -156,15 +156,17 @@
 
     .cabezal{
         margin-bottom: 2px;
-        color: #ce1414;
+        color: #FFFFFF;
+        background: #545454;
     }
 
 }
 
 .cabezal2{
-    color: #ce1414;
+    color: #FFFFFF;
     margin-bottom: 2px;
     margin-top: 8px;
+    background: #545454;
     
 
 }

@@ -187,10 +187,14 @@ cual debo filtrar que sea por dia y por mes aqui en la llamada a la api, asi me 
         //Como el dia no existe en el mes seleccionado procedo a actualizar el mes con el nuevo
         //dato ya que el mes existe ya
 
+        let nfecha = new Date(startDate).setHours(0,0,0,0);
+
+
         await axios.put("http://localhost:3000/api/holidays/" + startDate.getDate(), {
           motivo: motivoRef.current.value,
           mes: startDate.getMonth(),
           año: startDate.getFullYear(),
+          fecha: new Date(nfecha).toISOString(),
           
         });
 
@@ -202,7 +206,7 @@ cual debo filtrar que sea por dia y por mes aqui en la llamada a la api, asi me 
         toast.success("Mes actualizado correctamente en el año correspondiente");
       }
       else{
-        
+
         //En este paso como el dia existe junto al mes y año, pues simplemte lo actualizo
         await axios.put("http://localhost:3000/api/holidays/", {
           dias: startDate.getDate(),
@@ -224,16 +228,19 @@ cual debo filtrar que sea por dia y por mes aqui en la llamada a la api, asi me 
     else{
 
       //El dia es agregado ya que no existe
+
+      let fecha = new Date(startDate).setHours(0,0,0,0);
       
       await axios.post("http://localhost:3000/api/holidays/", {
-        nombre: startDate.toLocaleString('default', { month: 'long' }),
+        nombre: startDate.toLocaleString('es-ES', { month: 'long' }),
         mes: startDate.getMonth(),
         año: startDate.getFullYear(),
 
           dias: [
             {
               "dia":startDate.getDate(),
-              "motivo":motivoRef.current.value
+              "motivo":motivoRef.current.value,
+              "fechaFull": new Date(fecha).toISOString()
             }
           ]
       });
@@ -479,12 +486,12 @@ const motivoRef = useRef();
                 {item.Nombre}
                 <br/>
                     <span className='sp'>
-                      <ul className='ulMeses'>
+                      <ul className='ulMeses2'>
                         {
                           item.Dias?.map((sub)=>(
-                            <li className='liDias' key={sub.dia} onClick={()=>seleccionado(sub.dia,item.Mes,item.Año,sub.motivo)}>
-                             <div className='numero'>{sub.dia}</div>
-                             <div className='motivo'>{sub.motivo}</div>
+                            <li className='liDias22' key={sub.dia} onClick={()=>seleccionado(sub.dia,item.Mes,item.Año,sub.motivo)}>
+                             <div className='numero2'>{sub.dia}</div>
+                             <div className='motivo2'>{sub.motivo}</div>
                             </li>
                             )
                           )

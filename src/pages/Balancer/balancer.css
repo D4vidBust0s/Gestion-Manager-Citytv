@@ -143,34 +143,88 @@
     padding-left: 5rem;
 }
 
+.sujetos{
+    /*width: 24.55%;*/
+    width: 243px;
+}
+
 .pr{
     
     display: flex;
     text-align: center;
-    position: absolute;
+    position: relative;
     left: 22%;
+    z-index: 10;
 }
 
 .li-pr{
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: #FFFFFF;
     width: 29px;
+    height: 20px;
     text-align: center;
     padding: .05rem;
     border-right: 1px solid #000000;
+    font-size: .9rem;
+    position: relative;
+    top: 200%;
+    
     
 }
 
 .li-pr2{
     background: #701CF5;
     width: 117px;
+    height: 20px;
     text-align: center;
     padding: .05rem;
     border-right: 1px solid #000000;
     color: #FFFFFF;
     margin-left: 3px;
     font-weight: 900;
+    font-size: .9rem;
+    position: relative;
+    top: 200%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
    
     
+}
+
+.li-pr3{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FFFFFF;
+    width: 29px;
+    height: 20px;
+    text-align: center;
+    padding: .05rem;
+    border-right: 1px solid #000000;
+    font-size: .9rem;
+    position: relative;
+    top: 200%;
+    
+}
+
+.li-pr4{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FFFFFF;
+    width: 29px;
+    height: 20px;
+    text-align: center;
+    padding: .05rem;
+    border-right: 1px solid #000000;
+    font-size: 1rem;
+    position: relative;
+    top: 200%;
+    color: #000000;
+    font-weight: bold;
 }
 
 .calendar-2{

@@ -169,6 +169,21 @@
             padding-bottom: 5rem;
         }
 
+        .ulLista-rotation-saved{
+            padding: 0;
+            margin: 0;
+            margin-top: 2rem;
+            text-align: center;
+            font-size: .9rem;
+            width: 100%;
+            background: #EB464B;
+            height: 73%;
+            padding: 1.5rem;
+            border-radius: 2rem;
+            overflow: auto;
+            padding-bottom: 5rem;
+        }
+
         .liItem{
             background: #545454;
             margin-bottom: .6rem;
@@ -1120,43 +1135,6 @@
     color: #000000;
 }
 
-.saveStackShow{
-    background-color: #FFFFFF;
-    position: absolute;
-    height: 70%;
-    width: 50%;
-    z-index: 500;
-    top: 13%;
-    left: 25%;
-    padding: 1rem;
-    border-radius: 15px;
-    border: 3px solid #EB464B;
-    overflow: auto;
-    box-shadow: 10px 10px 60px #000000;
-    color: #000000;
-}
-
-.saveStackHide{
-    display: none;
-}
-
-.saveStack-save{
-    position: relative;
-    background-color: #00094B;
-    height: 20%;
-    color: #DADADA;
-    padding: 1rem;
-    margin-bottom: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.savestack-h2{
-    font-size: .8rem;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-}
 
 .save-input{
     width: 70%;
@@ -1165,70 +1143,11 @@
     font-size: 1.2rem;
 }
 
-
-
 .btn-confirm2:hover{
     transform: scale(1.1);
     cursor: pointer;
 }
 
-.saveStack-saved-left{
-    position: relative;
-    background-color: #545454;
-    overflow: auto;
-    color: #DADADA;
-    padding: 1rem;
-    margin-bottom: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 60%;
-    padding: 2rem;
-    display: flex;
-    
-}
-
-.saveStack-saved-right{
-    position: relative;
-    background-color: #D9D9D9;
-    color: #DADADA;
-    padding: 1rem;
-    margin-bottom: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40%;
-    padding: 2rem;
-}
-
-.stack-saved-main{
-    display: flex;
-    height: 52%;
-}
-
-.saved-li:hover{
-    transform: scale(1.1);
-    cursor: pointer;
-    background: #000000;
-}
-
-.leftChildA{
-    background: #294900;
-    width: 30%;
-    height: 100%;
-    overflow: auto;
-    padding: 1rem;
-    font-size: .9rem;
-}
-
-.leftChildB{
-    background: #EB464B;
-    width: 70%;
-    height: 100%;
-    overflow: auto;
-    padding: 1rem;
-    font-size: .9rem;
-}
 
 .null-30{
     color: #000000;
@@ -1255,7 +1174,7 @@
     width: 35%;
     left: 63.4%;
     top: 4%;
-    border: 5px solid #547725;
+    border: 5px solid #EB464B;
     border-radius: 10px;
     padding: 1.5rem;
     animation-name: myAnimationIn;
@@ -1268,6 +1187,28 @@
 }
 
 .containerSingleButtom-open{
+    position: absolute;
+    background: #EB464B;
+    padding: .2rem;
+    border-radius: .5rem;
+    box-shadow: .2rem .2rem .8rem #545454;
+    right: 50px;
+    top:42%;
+
+    .img-butons{
+        height: 3rem;
+        width: 4rem;
+        
+    }
+}
+
+
+.containerSingleButtom-open:hover{
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+.containerSingleButtom-agendado{
     position: absolute;
     background: #547725;
     padding: .2rem;
@@ -1284,7 +1225,7 @@
 }
 
 
-.containerSingleButtom-open:hover{
+.containerSingleButtom-agendado:hover{
     cursor: pointer;
     transform: scale(1.1);
 }
@@ -1312,7 +1253,7 @@
     display: flex;
     justify-content: center;
     border-radius: 50px;
-    margin-top: 6.5rem;
+    margin-top: 9rem;
     width: 50%;
 }
 
@@ -1349,7 +1290,18 @@
     justify-content: center;
 }
 
-.in , .out{
+.centerSaved{
+    width: auto;
+    background: #0f0101;
+    width: 60%;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+}
+
+.in {
     background: #547725;
     height: 30px;
     width: 20%;
@@ -1358,6 +1310,49 @@
     justify-content: center;
     font-weight: 700;
     border-radius: 50px;
+    margin-right: -5px;
+    z-index: 200;
+}
+
+.inSaved {
+    background: #00094B;
+    height: 30px;
+    width: 20%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border-radius: 50px;
+    margin-right: -5px;
+    z-index: 200;
+    color: #DADADA;
+}
+
+.out{
+    background: #547725;
+    height: 30px;
+    width: 20%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border-radius: 50px;
+    margin-left: -5px;
+    z-index: 200;
+}
+
+.outSaved{
+    background: #00094B;
+    height: 30px;
+    width: 20%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border-radius: 50px;
+    margin-left: -5px;
+    z-index: 200;
+    color: #DADADA;
 }
 
 .timeIn{
@@ -1479,27 +1474,16 @@
  margin-top: .5rem;
  margin-bottom: 1rem;
  padding: .3rem;
+ text-align: center;
 }
 
-.okButom{
+
+
+.cleanButom{
     position: absolute;
     background: #547725;
     width: 60px;
     left: 40%;
-    bottom: 39%;
-    border-radius: 5px;
-}
-
-.okButom:hover{
-    transform: scale(1.1);
-    cursor: pointer;
-}
-
-.cleanButom{
-    position: absolute;
-    background: #EB464B;
-    width: 60px;
-    left: 50%;
     bottom: 39%;
     border-radius: 5px;
 }
@@ -1513,3 +1497,87 @@
     height: 70px;
     width: 70px;
 }
+
+.timeAcu{
+    position: absolute;
+    background: #000000;
+    color: #DADADA;
+    width: 25%;
+    height: 5%;
+    right: 37.8%;
+    bottom: 33.5%;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.cleanButomFull{
+    position: absolute;
+    background: #EB464B;
+    width: 60px;
+    left: 50%;
+    bottom: 39%;
+    border-radius: 5px;
+}
+
+.cleanButomFull:hover{
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+.containerSingleButtomAply{
+    background: #547725;
+    height: 30px;
+    width: 170px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.containerSingleButtomAply:hover{
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+.label_aplicar{
+    font-weight: 700;
+}
+
+
+.seccionButonsNone{
+   display: none;
+}
+
+.Activo{
+    background: #EB464B;
+    color: #0f0101;
+    font-weight: 700;
+    
+}
+
+.img_bandera{
+    width: 20%;
+    position: absolute;
+    top: 9%;
+    
+}
+
+.holiday_name{
+    color: #DADADA;
+    font-family: serif;
+    font-size: .9rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+    position: absolute;
+    margin-top: .8rem;
+}
+.content_bandera{
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2%;
+}
+

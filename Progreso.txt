@@ -150,13 +150,35 @@
       - Ahora que complete programmer paso a guardar o salvar un stack, ya esta la interfaz pero ahora debo darle la funcionalidad
       NOTA: ESTO YA NO ES NECESARIO EN LA NUEVA VERSION ASI QUE DEBO BORRAR TODAS LAS DEPENDENCIAS YA QUE EL STACK SE GRABA AHORA EN LA NUEVA ventana
       QUE EMERGE DE LA DERECHA EN LA VENTANA DE PROGRAMACION DE TURNOS INDIVIDUALES
-      (R/ 50%)
+      (R/ 100%)
 
       Voy en la parte final de implementacion de turnos que no dependen de las rotaciones. esta el dilema de que se crear
       un stack y respetas la hora de inicio del primer evento que se llame "por el momento un programa o nul-30" pero los demas que se
       agregan no respetan la hora de inicio del programa si no se pega al ultimo evento... no se que tan bueno es eso
-      la fecha que estoy usando es el 8 de enero de 2026
-      (R/ 20%)
+      la fecha que estoy usando es el 8 de enero de 2026.
+      ESTO ESTA FULL YA
+      (R/ 100%)
+
+      Bueno ya vamos finalizando la implemetacion de turnos especiales usando la ventana flotante de la derecha en el programador.
+      ya queda hacerle pruebas ya que hay problermas de logica como por ejemplo. traer un stack y a ese que traje
+      agregarle nuvos eventos.. eso esta mal o debe manejarse de otra manejarse
+      (R 100%)
+
+      estoy implementado la bandera para dias festivos, ya cree el estado llamado validaDiaFestivo, si es true se muestra
+      si es false se oculta. ahora queda hacer la consulta segun el dia de fechabarra y el dia o fercha guardado
+      y operar segun corresponda
+      (R 100%)
+
+      -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      entre a la parte de consultas balancer.. ya cuadre el layout que estaba incompleto y ya cree la funcion que operara
+      con la base de datos.. shifts para devolver las horas laboradas segun corresponda, ahora hay que hacer que la funcion
+      haga eso
+
+      estoy validando ya en la funcion operarMatrizDias del balancerContent linea 143, ya estoy devolviendo datos, loq ue queda es operar y traer la cantidad de horas laboradas
+      segun corresponda
+      ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      (R 60%)
+      ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 

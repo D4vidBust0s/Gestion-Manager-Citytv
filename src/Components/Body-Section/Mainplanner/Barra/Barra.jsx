@@ -60,6 +60,7 @@ let verifyBreaks = 0;             //Breaks
 let auxi = 0;
 let aux = "";
 
+let vAño = 0;
 
 
 export default function Barra() {
@@ -93,6 +94,7 @@ export default function Barra() {
  const [data8, setData8] = useState([]);
  const [data9, setData9] = useState([]);
  const [data10, setData10] = useState([]);
+ const [data11, setData11] = useState([]);
 
  const [nombre, setNombre] = useState("");
  const [cargo, setCargo] = useState("");
@@ -107,7 +109,7 @@ export default function Barra() {
  const [isChecked, setIsChecked] = useState(false);
 
  const [nombreUserLista, setNombreUserLista] = useState("------");
-
+ 
 /* Referencias */
 const groupsRef = useRef();
 
@@ -181,6 +183,20 @@ const getPeopleOfGroup = async ()=>{
 
 }
 
+const traerHolidays = async ()=>{
+  
+  const year = startDate.getFullYear().toString();
+     
+    return await axios
+      .get("http://localhost:3000/api/holidays/especial/"+year,
+      { 
+        params:{
+        fecha: new Date(fechaBarra).toISOString(),
+      }
+      })
+      .then((response) => setData11(response.data));
+ 
+ }
 
   const semanasAlDia = (ID_Usuario,Nombre,Apellido)=>{
 
@@ -200,6 +216,7 @@ const getPeopleOfGroup = async ()=>{
 
   const verificar = (pid,pn,pa,subgrupo,cargo,pg,gid)=>{
 
+      traerHolidays();
 
       verifyDescanso = 0;
       verifyIncapacitado = 0;
@@ -408,13 +425,14 @@ const noExist = () =>{
         </ul>
  }
 
- const traerRemplazo = (pid,grupoid) =>{
+ const traerRemplazo = (pid,grupoid,pNombre) =>{
   let respuesta = " / ---------------";
-
-  if(permissions == 1 || incapacitado == 1 || licensia == 1 || vacaciones == 1 || breaks == 1)
+  
+  //Para los remplazos tengo en cuenta todos menos el que descansa ya que un descanso no necesita ser relevado
+  if(permissions == 1 || incapacitado == 1 || licensia == 1 || vacaciones == 1 || pNombre == "UserBalancer")
   {
-    data8?.map(
-      (sustituciones)=>(sustituciones.ID_grupo_der == grupoid && new Date(fechaBarra).toISOString() == sustituciones.Fecha_dia && sustituciones.ID_user_main == pid ? respuesta = " / " +sustituciones.NombreLeft : null)
+    data8?.map((sustituciones)=>(
+      sustituciones.ID_grupo_der == grupoid && new Date(fechaBarra).toISOString() == sustituciones.Fecha_dia && sustituciones.ID_user_main == pid ? respuesta = " / " +sustituciones.NombreLeft : null)
       )
   } 
 
@@ -430,8 +448,9 @@ const noExist = () =>{
 
 
   const exist = (pid,pg,gn,pn,cargo,pa,subgrupo,grupoid) =>{
+    
+ 
 
-  
     testPermissions(pid)
     testIncapacitys(pid)
     testRecess(pid)
@@ -454,7 +473,7 @@ const noExist = () =>{
           ))
         }
         
-        {pn +" "+pa + traerRemplazo(pid,grupoid)}
+        {pn +" "+pa + traerRemplazo(pid,grupoid,pn)}
       </li>
     </ul>
 
@@ -672,6 +691,12 @@ const noExist = () =>{
   },[fechaBarra])
 
 
+
+  
+ 
+
+
+
   
  
 
@@ -679,7 +704,7 @@ const noExist = () =>{
     <>
       
       {createPortal(
-        <ModalPlanner1 estado={modal1} cambiarEstado={setModal1} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={colorBorder} gp={grupo} gpid={gpid}/>,
+        <ModalPlanner1 estado={modal1} cambiarEstado={setModal1} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={colorBorder} gp={grupo} gpid={gpid} holy={data11.length == 1 ? true : false} datos={data11}/>,
         document.querySelector("#portal")
       )}
 

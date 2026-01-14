@@ -3,23 +3,27 @@
 import  './ModalPlanner1.css'
 
 /* Import recursos */
-import Anita from '../../assets/Anita.jpg'
-import Calendar from '../../assets/calendar.webp'
-import Clock from '../../assets/bx-time-five.svg'
-import Pencil from '../../assets/pencil.svg'
-import Plus from '../../assets/Plus.svg'
-import Trash from '../../assets/trash.svg'
-import Clean from '../../assets/brush.svg'
-import Balanza from '../../assets/balanza.png'
-import cafe from '../../assets/coffee.svg'
-import Calendario from '../../assets/calendario.png'
-import Ok from '../../assets/Ok.svg'
-import documento from '../../assets/document.svg'
-import capas from '../../assets/capas.svg'
-import less from '../../assets/Default.svg'
-import save from '../../assets/bxs-save.svg'
-import flechaLeft from '../../assets/arrow4.svg'
-import handStop from '../../assets/handStop.gif'
+import Anita from '../../assets/Anita.jpg';
+import Calendar from '../../assets/calendar.webp';
+import Clock from '../../assets/bx-time-five.svg';
+import Pencil from '../../assets/pencil.svg';
+import Plus from '../../assets/Plus.svg';
+import Trash from '../../assets/trash.svg';
+import Clean from '../../assets/brush.svg';
+import Balanza from '../../assets/balanza.png';
+import cafe from '../../assets/coffee.svg';
+import Calendario from '../../assets/calendario.png';
+import Ok from '../../assets/Ok.svg';
+import documento from '../../assets/document.svg';
+import capas from '../../assets/capas.svg';
+import less from '../../assets/Default.svg';
+import save from '../../assets/bxs-save.svg';
+import flechaLeft from '../../assets/arrow4.svg';
+import handStop from '../../assets/handStop.gif';
+import trashFull from '../../assets/trashFull.svg';
+import savedShift from '../../assets/savedShift.svg';
+import bandera from '../../assets/Flag-Colombia.gif';
+
 
 
 
@@ -68,15 +72,22 @@ let validador2 = 0;
 let validador3 = 0;
 let validador4 = 0;
 let validador5 = 0;
+let validador6 = 0;
 let inicioMain;
 let validaUser = 0;
 
 let fechaAuxGlobal;
+let fechaAuxGlobalIn = "--:--:--";
+let nameEventSavedGlobal = "";
+let IDITEMGLOBAL = "";
+
+let validaDiaFestivo = 0;
+let mensaje = "-------";
 
 
 
 
-export default function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color,gp,gpid}) {
+export default function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color,gp,gpid,holy,datos}) {
 
 /* CONTEXTOS*/
 const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext);  //Define un estado para la fecha de la barra
@@ -101,8 +112,9 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [data13, setData13] = useState([]);
   const [data14, setData14] = useState([]);
   const [data15, setData15] = useState([]);
+  const [data16, setData16] = useState([]);
   const [showNotas, setShowNotas] = useState(false);
-  const [saveStack, setSaveStack] = useState(false);
+  
 
  
 
@@ -130,6 +142,11 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [messageBtn2,setMessageBtn2]= useState("-----");
   const [messageBtn1Show,setMessageBtn1Show]= useState(false);
   const [messageBtn2Show,setMessageBtn2Show]= useState(false);
+  const [validaColor,setValidaColor]= useState(false);
+
+  const [fechaFull,setFechaFull]= useState([]);
+  
+
 
  
  
@@ -145,6 +162,7 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const observationRef = useRef();
   const pruebaRef = useRef();
   const stackRef = useRef();
+  const saveStackRef = useRef();
 
  
   
@@ -288,6 +306,14 @@ const getSubstitutions = async () => {
     .then((response) => setData15(response.data));
 };
 
+ //Funcion que obtiene la data de la api - de la pila de stacks Guardados
+ const obtenerListadoStacksSaved= async () => {
+  return await axios
+    .get("http://localhost:3000/api/savedstacks/")
+    .then((response) => setData16(response.data));
+};
+
+
   const crear = async (IDUSER,NOMBRES,INDEX,IDPROGRAMA,EVENT_ID,COLOR,OBSERVACION,FECHA_CLAVE,ID_SCHEMA,INICIO_MAIN,OUT,TIPO)=>{
 
     
@@ -318,6 +344,29 @@ const getSubstitutions = async () => {
 
   }
 
+
+  const crearSaveStack = async (NOMBRESTACK,IDUSER,NOMBRES,INDEX,IDPROGRAMA,EVENT_ID,COLOR,OBSERVACION,FECHA_CLAVE,ID_SCHEMA,INICIO_MAIN,OUT,TIPO)=>{
+
+    
+    await axios.post("http://localhost:3000/api/savedstacks/", {
+      nombreStack: NOMBRESTACK,
+      idUser: IDUSER,
+      nombres: NOMBRES,
+      index: INDEX,
+      idPrograma: IDPROGRAMA,
+      eventId: EVENT_ID,
+      color: COLOR,
+      observacion: OBSERVACION,
+      fechaClave: FECHA_CLAVE,
+      idSchema: ID_SCHEMA,
+      inicioMain: INICIO_MAIN,
+      out: OUT,
+      tipo: TIPO,
+
+    }).then(()=>obtenerListadoStacksSaved());
+
+  }
+
   const cleanRegistro = async ()=>{
     //new Date(Fecha_Barra).toISOString()
 
@@ -337,14 +386,41 @@ const getSubstitutions = async () => {
 
   };
 
+  const confirmacionAlert = () =>{
+
+    //Limpiamos los registros en la base de datos
+    cleanRegistro();
+    
+    setData11([]);  
+    setData9([]);
+    auxOut = "--:--:--";
+    validador = 1;
+    setShowAlert(!showAlert);
+    setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+    
+    toast.success("Limpieza de lista ejecutado correctamente");
+  }
+
+  
+  const borrarStack = ()=>{
+  
+    setMessageTitle("¿Realmente desea eliminar el stack actual?");
+    setMessageContenido("Una vez eliminado, no podrá recuperarse.");
+    setMessageBtn1Show(true);
+    setMessageBtn2Show(true);
+    setMessageBtn1("No borrar");
+    setMessageBtn2("SI BORRAR");
+    setShowAlert(!showAlert);
+  }
+
   const validarTimes = ()=>{
     let respuesta = 0;
-    let inicio = new Date(startHour).toLocaleTimeString();
-    let salida = new Date(EndHour).toLocaleTimeString();
+    let inicio = new Date(startHour).getTime();
+    let salida = new Date(EndHour).getTime();
 
     if(inicio > salida)
     {     respuesta = 1;
-          setMessageTitle("No puede agregar el evento Custom " + "-" + customRef.current.value + "-");
+          setMessageTitle("No puede agregar el evento Custom " + "-" + customRef.current.value);
           setMessageContenido("La hora de inicio del evento es mayor que la hora de salida");
           setMessageBtn1Show(true);
           setMessageBtn2Show(false);
@@ -500,6 +576,28 @@ const transformarCustomIndexIn = ()=>{
   let normal = new Date(fechaBarra);
   let horas = new Date(startHour).getHours();
   let minutos = new Date(startHour).getMinutes();
+
+  let nueva = new Date(normal).setHours(horas);
+  let nueva2 = new Date(nueva).setMinutes(minutos);
+
+  return new Date(nueva2);
+}
+
+const transformarGenericSalida = ()=>{
+  let normal = new Date(fechaBarra);
+  let horas = new Date(fechaAuxGlobal).getHours();
+  let minutos = new Date(fechaAuxGlobal).getMinutes();
+
+  let nueva = new Date(normal).setHours(horas);
+  let nueva2 = new Date(nueva).setMinutes(minutos);
+
+  return new Date(nueva2);
+}
+
+const transformarGenericIn = ()=>{
+  let normal = new Date(fechaBarra);
+  let horas = new Date(fechaAuxGlobalIn).getHours();
+  let minutos = new Date(fechaAuxGlobalIn).getMinutes();
 
   let nueva = new Date(normal).setHours(horas);
   let nueva2 = new Date(nueva).setMinutes(minutos);
@@ -793,12 +891,30 @@ const validacion = ()=>{
 
   }
 
+  const deleteStackSavedSingle = async ()=>{
+
+    return await axios
+    .delete("http://localhost:3000/api/shifts/single/"+IDITEMGLOBAL)
   
+      .then(() => obtenerListadoTurnos())
+      .then(() => IDITEMGLOBAL="")
+      .then(()=> setAuxiliar(!auxiliar))  //este estado notifica al contexto para ser usado en listado)
+      .then(toast.success("Item eliminado correctamente"));
+      
+  
+  }
 
 
   const del = ()=>{
 
-   toast.error("quiere eliminar?.. pues espere que no he implementado esto");
+   if(IDITEMGLOBAL == "")
+   {
+      toast.error("Para eliminar un elemento del stack, primero debe seleccionarlo");
+   }
+
+   else{
+    deleteStackSavedSingle();
+   }
     
   }
 
@@ -1678,27 +1794,14 @@ const validacion = ()=>{
     }
 
     else{
-      setShowAlert(!showAlert);
+      borrarStack();
     }
     
   }
 
   
 
-  const confirmacionAlert = () =>{
-
-    //Limpiamos los registros en la base de datos
-    cleanRegistro();
-    
-    setData11([]);  
-    setData9([]);
-    auxOut = "--:--:--";
-    validador = 1;
-    setShowAlert(!showAlert);
-    setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-    
-    toast.success("Limpieza de lista ejecutado correctamente");
-  }
+  
 
   const edit = ()=>{
 
@@ -1938,17 +2041,6 @@ const validacion = ()=>{
     return nueva;
   }
 
-  const edit2 = ()=>{
-
-  }
-
-  const add2 = ()=>{
-    
-  }
-
-  const del2 = ()=>{
-    
-  }
 
   const guardar = ()=>{
 
@@ -2025,7 +2117,343 @@ const validacion = ()=>{
 
     }
   }
+
+  const salvar = (fechaInicio,index)=>{
+    if(index == 1)
+    {
+      fechaAuxGlobalIn = fechaInicio;
+    }
+
+    return new Date(fechaInicio).toLocaleTimeString();
+  }
+
+  const timeAcumulado = ()=>{
+    let salida =  new Date(transformarGenericSalida()).getTime();
+    let inicio =  new Date(transformarGenericIn()).getTime();
+    let nueva = (salida - inicio)/ (1000 * 60);
+
+    let respuesta = new Date().setHours(0,0,0,0);
+    respuesta = new Date(respuesta).setMinutes(nueva);
+
+    return new Date(respuesta).toLocaleTimeString();
+  }
+
+  const guardarStack = ()=>{
+    let identificador = 0;
+
+    data16?.map((savedStacks)=>(
+      saveStackRef.current.value == savedStacks.Nombre_Stack && (identificador = 1)
+    ))
+
+    if(saveStackRef.current.value == "")
+    {
+      toast.error("Para salvar un stack creado, primero debe asignarle un nombre");
+      saveStackRef.current.focus();
+    }
+
+    else if(identificador == 1)
+    { 
+      //Validar si ya existe el nombre
+      toast.error("El nombre que desea asignar al stack ya existe");
+    }
+
+    else if(data1.length==0)
+    { 
+      //Validar si hay un stack para guardar, es decir que no este en blanco
+      toast.error("No hay un stack para guardar... la ventana de Stacks esta vacia");
+    }
+    else{
+     
+      data1?.map((shift)=>(
+
+        crearSaveStack(
+          saveStackRef.current.value,
+          shift.ID_user,
+          shift.Nombres,
+          shift.Index,
+          shift.Event_name,
+          shift.ID_event,
+          shift.Color,
+          shift.Observacion,
+          new Date(shift.Fecha_clave),
+          shift.Id_Schema,
+          new Date(shift.Inicio_main),
+          shift.Out,
+          shift.Type)
+      ))
+
+      saveStackRef.current.value = "";
+      toast.success("Stack guardao correctamente");
+    }
+  }
  
+  //Funcion que sobrescribe la indormacion en data1
+ const traer= async (nombreStack) => {
+
+  nameEventSavedGlobal = nombreStack;
+
+  return await axios
+    .get("http://localhost:3000/api/savedstacks/corto/",
+    {
+      params:{
+        nombre: nombreStack,
+      }
+    })
+    .then((response) => setData1(response.data))
+    .then(saveStackRef.current.value = nombreStack)
+    .then(()=>(setValidaColor(true)))
+    .then(toast.success("Stack actualizado"));
+
+}
+
+const updateStackSaved = async ()=>{
+
+  return await axios
+  .put("http://localhost:3000/api/savedstacks/"+nameEventSavedGlobal,
+    {
+      nombre:saveStackRef.current.value,
+    })
+    .then(() => obtenerListadoStacksSaved())
+    .then(toast.success("Nombre del stack guardado, editado correctamente"));
+    
+
+}
+
+const deleteStackSaved = async ()=>{
+
+  return await axios
+  .delete("http://localhost:3000/api/savedstacks/"+nameEventSavedGlobal)
+
+    .then(() => obtenerListadoStacksSaved())
+    .then(toast.success("Stack eliminado correctamente"))
+    .then(()=>setData1([]));
+    
+
+}
+
+
+
+
+//boton editar stack
+const editSaveStack = ()=>{
+  if(nameEventSavedGlobal == "")
+  {
+    toast.error("Para editar el nombre de un stack guardado, primero seleccionelo dando doble click");
+  }
+
+  else{
+    updateStackSaved();
+    saveStackRef.current.value = "";
+    nameEventSavedGlobal="";
+  }
+}
+
+const openRight = ()=>{
+
+  //traemos la data
+  obtenerListadoTurnos();
+
+  //Limpiamos el input de nombre stcak saved
+  saveStackRef.current.value="";
+
+  //reiniciamos la variable que indica que se habia llamado un stack guardado
+  nameEventSavedGlobal = "";
+
+  //Mostramos o ocultamos la ventana
+  setShowRight(!showRight);
+
+  //reiniciamos el color por defecto del item
+  setValidaColor(false);
+
+  //limpiamos la variable que tiene el id de un item previamente seleccionado
+  IDITEMGLOBAL = "";
+}
+
+const eliminarItemSavedStack = ()=>{
+
+  if(nameEventSavedGlobal == "")
+  {
+    toast.error("Para eliminar un stack guardado, primero seleccionelo dando doble click");
+  }
+
+  else{
+    deleteStackSaved();
+    saveStackRef.current.value = "";
+    nameEventSavedGlobal="";
+  }
+  
+}
+
+
+const reGet = ()=>{
+
+  //traemos la data
+  obtenerListadoTurnos();
+
+  //Limpiamos el input de nombre stcak saved
+  saveStackRef.current.value="";
+
+  //reiniciamos el color por defecto del item
+  setValidaColor(false);
+
+  toast.success("Stack actual actualizado");
+}
+
+const operarItem = (iditem,e)=>{
+
+  IDITEMGLOBAL = iditem;
+
+   //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
+   if (e.target.classList=="center") 
+   {
+
+     let aux = document.getElementsByClassName("Activo");
+
+     for (let index = 0; index < aux.length; index++) 
+     {
+       aux[index].classList.remove("Activo");
+     }
+
+     e.target.classList.add("Activo");
+   }
+
+}
+
+const corroborarDia = (l,m,mi,j,v,s,d)=>{
+
+  let respuesta = 0;
+
+  let DiaActual = new Date(fechaBarra).getDay();
+ 
+  if(DiaActual == 1 || DiaActual == 2 || DiaActual == 3 || DiaActual == 4 || DiaActual == 5)
+  {
+    if(DiaActual == 1 && l == true)
+    {
+      respuesta = 1;
+    }
+
+    else if(DiaActual == 2 && m == true)
+    {
+      respuesta = 1;
+    }
+
+    else if(DiaActual == 3 && mi == true)
+    {
+      respuesta = 1;
+    }
+
+    else if(DiaActual == 4 && j == true)
+    {
+      respuesta = 1;
+    }
+
+    else if(DiaActual == 5 && v == true)
+    {
+      respuesta = 1;
+    }
+    
+  }
+
+  else if(DiaActual == 0 || DiaActual == 6)
+  {
+    if(DiaActual == 6 && s == true)
+    {
+      respuesta = 1;
+    }
+
+    else if(DiaActual == 0 && d == true)
+    {
+      respuesta = 1;
+    }
+  }
+
+  return respuesta;
+}
+
+const restaurarValor = ()=>{
+  validador6 = 0;
+}
+
+
+const traerValores =()=>{
+  data1?.map((shifts)=>(
+    shifts.Color=="red" && (validador6 = 1)
+  ))
+}
+
+
+const aplicarStack = ()=>{
+  if(nameEventSavedGlobal == "")
+  {
+    toast.error("Para aplicar un stack guardado, primero seleccionelo dando doble click");
+  }
+
+  else{
+
+    //toast.success("Es.. " + data1.length);
+    
+    data1?.map((savedStacks)=>(
+
+      crear(
+        iduser,
+        nombres,
+        savedStacks.Index,
+        savedStacks.Event_name,
+        savedStacks.ID_event,
+        savedStacks.Color,
+        savedStacks.Observacion,
+        new Date(fechaBarra),
+        savedStacks.Id_Schema,
+        new Date(savedStacks.Inicio_main),
+        savedStacks.Out,
+        savedStacks.Type)
+    ))
+
+      obtenerListadoTurnos();
+      obtenerListadoTurnosFull();
+
+      //Notificamos de el cambio a la barra para que se ponga en color verde de fondo que es el color asignado a un descanso
+      setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
+
+      saveStackRef.current.value = "";
+      toast.success("Stack aplicadocorrectamente");
+  
+          
+  }
+}
+
+//Funcion que obtiene la data de la api - listado de holidays segun el año actual
+
+const llamarAño = async()=>{
+  return await axios
+    .get('http://localhost:3000/api/holidays/'+new Date(fechaBarra).getFullYear())
+    .then((respuesta1) => setFechaFull(respuesta1.data));
+    
+ }
+
+ 
+
+
+
+const corroborarFestivo = async ()=>{
+/*
+  validaDiaFestivo = 0;
+
+  holyday?.map((item)=>(
+    item.Mes == new Date(fechaBarra).getMonth() && item.Dias?.map((dato)=>(dato.dia)) == new Date(fechaBarra).getDate()
+     ? validaDiaFestivo = 1 : null,
+     
+     console.log("hollyday "+ item.Mes + " barra-mes " + new Date(fechaBarra).getMonth()  + " Dia " + item.Dias.map((item)=>(item.dia)) + " dia " + new Date(fechaBarra).getDate())
+  ))
+
+ console.log("vdf = " + validaDiaFestivo);
+ console.log("----------------------------");
+ */
+ 
+ 
+}
+
+
 
    /* *********************************************************************************************************************** */
      /* EFECTOS
@@ -2100,7 +2528,27 @@ const validacion = ()=>{
 
  useEffect(()=>{
   getProgrammers();
- },[])
+ },[showRight])
+
+ useEffect(()=>{
+  obtenerListadoStacksSaved();
+ },[showRight])
+
+
+ useEffect(()=>{
+  traerValores();
+ },[]);
+
+ useEffect(()=>{
+  //llamarAño();
+ },[fechaBarra]);
+
+ useEffect(()=>{
+  corroborarFestivo();
+ },[fechaBarra]);
+
+ 
+
  
 
   return (
@@ -2130,7 +2578,7 @@ const validacion = ()=>{
               <div className="actividad_container">
               <div className="actividad_lista">
                   <ul>
-                    <li className='liLista'>Permissions<span className='indicador'>
+                    <li className='liLista' key={iduser}>Permissions<span className='indicador'>
                       {
                        fullPermissionsUser(iduser)
                       }
@@ -2141,7 +2589,7 @@ const validacion = ()=>{
                     </li>
 
 
-                    <li className='liLista'>Breaks<span className='indicador'>
+                    <li className='liLista' key={iduser}>Breaks<span className='indicador'>
                       {
                        fullBreaksUser(iduser)
                       }
@@ -2152,7 +2600,7 @@ const validacion = ()=>{
                     </li>
 
                     
-                    <li className='liLista'>Incapacitys<span className='indicador'>
+                    <li className='liLista' key={iduser}>Incapacitys<span className='indicador'>
                       {
                         fullIncapacitysUser(iduser)
                       }
@@ -2165,7 +2613,7 @@ const validacion = ()=>{
 
 
 
-                    <li className='liLista'>Recess<span className='indicador'>
+                    <li className='liLista' key={iduser}>Recess<span className='indicador'>
                        {
                         fullRecessUser(iduser)
                        }
@@ -2177,7 +2625,7 @@ const validacion = ()=>{
 
 
 
-                    <li className='liLista'>Licenses<span className='indicador'>
+                    <li className='liLista' key={iduser}>Licenses<span className='indicador'>
                        {
                         fullLicensesUser(iduser)
                        }
@@ -2238,61 +2686,6 @@ const validacion = ()=>{
               
             </div>
 
-
-            <div className={saveStack == true ? "saveStackShow" : "saveStackHide"}>
-              
-              <h3 className='notas-title'>
-                Salvar o eliminar stack <br /> 
-                ________________________
-              </h3>
-
-              <h2 className='savestack-h2'>Especifica un nombre para el stack</h2>
-              <div className="saveStack-save">
-                
-                <input type="text"className='save-input'/>
-              </div>
-
-              <h2 className='savestack-h2'>Stacks guardados</h2>
-              <div className="stack-saved-main">
-
-              <div className="saveStack-saved-left">
-
-                <div className="leftChildA">
-                <ul>
-                    <li className='saved-li'>item 1</li>
-                    <li className='saved-li'>item 2</li>
-                    <li className='saved-li'>item 3</li>
-                    <li className='saved-li'>item 4</li>
-                    
-                  </ul>
-                </div>
-
-                <div className="leftChildB">
-                 <li>Item stack minimalista</li>
-                </div>
-                 
-              </div>
- 
-               <div className="saveStack-saved-right">
-               <div className="seccionButons">
-                <div className="containerSingleButtom">
-                  <img src={Pencil} alt="pencil" className='img-butons' onClick={edit2}/>
-                </div>
-                <div className="containerSingleButtom">
-                 <img src={Plus} alt="plus" className='img-butons' onClick={add2}/>
-                </div>
-                <div className="containerSingleButtomDel">
-                 <img src={Trash} alt="trash" className='img-butons' onClick={del2}/>
-                </div>
-              </div>
-               </div>
-              </div>
-             
-
-              
-              
-            </div>
-
           <div className="close2" onClick={() => cambiarEstado(!estado)}>X</div>
 
          
@@ -2301,8 +2694,6 @@ const validacion = ()=>{
               <div className="titulo">
                 <h2>INFORMACION</h2>
               </div>
-
-             
 
               <div className="info1">
                 <h6 className='titleBalancer'>Balancer</h6>
@@ -2365,7 +2756,29 @@ const validacion = ()=>{
               <div className="titulo">
                 <h2>ACCIONES</h2>
               </div>
+
+
+              {
+                //Validamos dia festivo para mostrar bandera
+                holy ? 
+                <div className='content_bandera'>
+                  
+                  <img src={bandera} alt="bandera" className='img_bandera' /> 
+                  <p className='holiday_name'>
+                  {
+                    datos?.map((item)=>(
+                      item.Mes == parseInt(new Date(fechaBarra).getMonth()) && item.Dias?.map((dato)=>(dato.dia) == parseInt(new Date(fechaBarra).getDate()) &&  dato.motivo)
+                    ))
+                    
+                  }
+                  </p> 
+                </div>
+                   
+                : null
+              }
+              
               <div className="mainContainer">
+              
               
 
                 <h3 className="subTitulo">EVENTOS</h3>
@@ -2394,7 +2807,7 @@ const validacion = ()=>{
                   <option key="none" value="none" className='selecteItem' >{pgm}</option>
                     {
                       data?.map((pgm)=>(
-                        pgm.Type=="Main"&&
+                        pgm.Type=="Main"&& corroborarDia(pgm.lunes,pgm.Martes,pgm.Miercoles,pgm.Jueves,pgm.Viernes,pgm.Sabado,pgm.Domingo) == 1 &&
                         <option key={pgm._id} value={pgm._id} className='selecteItem'>{pgm.nombre}
                     </option>
                     ))
@@ -2412,7 +2825,7 @@ const validacion = ()=>{
               <option key="none1" value="none" className='selecteItem'>{event}</option>
                 {
                   data?.map((pgm)=>(
-                    <option key={pgm._id} value={pgm.nombre} className='selecteItem'>{pgm.nombre}</option>
+                    <option key={pgm._id} value={pgm.nombre} className='selecteItem'>Pendiente por implementar</option>
                   ))
                 }
                 
@@ -2428,7 +2841,7 @@ const validacion = ()=>{
               <option key="none2" value="none" className='selecteItem'>{event}</option>
                 {
                   data?.map((pgm)=>(
-                    pgm.Type=="Secondary"&&
+                    pgm.Type=="Secondary" && corroborarDia(pgm.lunes,pgm.Martes,pgm.Miercoles,pgm.Jueves,pgm.Viernes,pgm.Sabado,pgm.Domingo) == 1 &&
                     <option key={pgm._id} value={pgm._id} className='selecteItem'>{pgm.nombre}</option>
                   ))
                 }
@@ -2515,7 +2928,7 @@ const validacion = ()=>{
                 
               </div>
 
-              <div className="seccionButons">
+              <div className={validaColor == false ? "seccionButons" : "seccionButonsNone"}>
                 <div className="containerSingleButtom">
                   <img src={Pencil} alt="pencil" className='img-butons' onClick={edit}/>
                 </div>
@@ -2525,10 +2938,40 @@ const validacion = ()=>{
                 <div className="containerSingleButtomDel">
                  <img src={Trash} alt="trash" className='img-butons' onClick={del}/>
                 </div>
-                <div className="containerSingleButtom-open">
-                 <img src={flechaLeft} alt="plus" className='img-butons' onClick={()=>setShowRight(!showRight)}/>
-                </div>
+               
               </div>
+
+
+                {
+                  traerValores()
+                }
+
+                {
+                  validador6 == 1
+                  ?
+
+                  <div className="containerSingleButtom-open">
+                   <img src={flechaLeft} alt="plus" className='img-butons' onClick={()=>openRight()}/>
+                  </div>
+
+                  :
+
+                  validador6 == 0
+
+                  ? 
+
+                     <div className="containerSingleButtom-agendado">
+                      <img src={Ok} alt="plus" className='img-butons' onClick={()=>toast.success("Para el trabajador actual ya se ha asignado el turno sugerido según rotación.")}/>
+                     </div>
+
+                  : null
+
+                }
+                
+              
+                
+
+            
             </div>
 
            
@@ -2551,21 +2994,31 @@ const validacion = ()=>{
                   ))
               }
 
+             {
+              traerValores()
+             }
+
               {
                 data1.length == 0 
                 ?
                 
-                
-                
                 <ul className="ulLista-rotation">
 
                   {/* Esta imagen se debe mostrar solo si se asigno un descanso al trabajador*/}
-                  {validador5 == 1 ? <img src={less} alt="coffe"  className='img-coffe'/> : validador4 == 1 && <img src={cafe} alt="coffe"  className='img-coffe'/>}
+                  {validador5 == 1 
+                    ? 
+                      <img src={less} alt="less"  className='img-coffe'/> 
+                      
+                    : validador4 == 1 && 
+                    
+                    <img src={cafe} alt="coffe"  className='img-coffe'/>
+                  }
                   
                   
                   {
                     validador5 == 0 && validador4 == 0 &&
-                    <span className='horaIN' key={data1.length}>{devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN() }</span>
+                    <span className='horaIN' key={data1.length}>{devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN() }{validador6=1}</span>
+                    
                   }
 
                  
@@ -2599,29 +3052,78 @@ const validacion = ()=>{
                   
                 
                     
-                : 
+                :   
+                
+                //validar color rojo aqui
+                //---------------------------------------------------------------------------------------------------
 
-                <ul className="ulLista-rotation-ok">
+
+                
+                
+                validador6 == 1 
+                ?
+
+             
+            
+                  <ul className="ulLista-rotation-saved">
                   <span className='horaIN'>{devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN() }</span>
                   {
                     data11?.map((stack)=>( 
                   
-                  stack.ID_esquema == IDSCHEMAGLOBAL ? 
-                  (
-                    <li className="liItem-rotation" onClick={(e)=>updateAcciones()}   ref={pruebaRef} key={stack._id}>
-                     
-                      {resolver(stack.ID_programa,stack.Type,stack.ID_programa,stack.Duration,stack.Order,stack.Value)}
-                      
-                    </li>
-                  )
+                    stack.ID_esquema == IDSCHEMAGLOBAL 
+                    ? 
+                      (
+                        <li className="liItem-rotation" onClick={(e)=>updateAcciones()}   ref={pruebaRef} key={stack._id}>
+                        
+                          {resolver(stack.ID_programa,stack.Type,stack.ID_programa,stack.Duration,stack.Order,stack.Value)}
+                          
+                        </li>
+                      )
 
-                  : null
+                    : null
                   
                   
-                ))
-                }
-                <span className='horaOUT'>{auxOut == "Invalid Date" ? "--:--:--" : auxOut }</span>
+                    ))
+                   }
+                    <span className='horaOUT'>{auxOut == "Invalid Date" ? "--:--:--" : auxOut }</span>
+                    {restaurarValor()}
                   </ul>
+
+                  : 
+
+                  validador6 == 0
+
+                  ?
+
+                
+
+                  <ul className="ulLista-rotation-ok">
+                  <span className='horaIN'>{devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN() }</span>
+                  {
+                    data11?.map((stack)=>( 
+                  
+                    stack.ID_esquema == IDSCHEMAGLOBAL 
+                    ? 
+                      (
+                        <li className="liItem-rotation" onClick={(e)=>updateAcciones()}   ref={pruebaRef} key={stack._id}>
+                        
+                          {resolver(stack.ID_programa,stack.Type,stack.ID_programa,stack.Duration,stack.Order,stack.Value)}
+                          
+                        </li>
+                      )
+
+                    : null
+                  
+                  
+                    ))
+                   }
+                    <span className='horaOUT'>{auxOut == "Invalid Date" ? "--:--:--" : auxOut }</span>
+
+                    {restaurarValor()}
+                  </ul>
+
+                  
+                : null
               }
     
               
@@ -2657,9 +3159,6 @@ const validacion = ()=>{
                 <div className="containerSingleButtomDel">
                  <img src={Clean} alt="trash" className='img-butons' onClick={clean}/>
                 </div>
-                <div className="containerSingleButtom">
-                 <img src={save} alt="save" className='img-butons' onClick={()=>setSaveStack(!saveStack)}/>
-                </div>
               </div>
             </div>
           </div> 
@@ -2683,7 +3182,7 @@ const validacion = ()=>{
            <div className="inspectorContainer">
 
                   <ul>
-                    <li className='liInspector2'>
+                    <li className='liInspector2' key={iduser}>
                       <span className='nameUS'></span>
                       <div className="cajaNumero">
                         <div className="cuadro201">S</div>
@@ -2716,7 +3215,7 @@ const validacion = ()=>{
                       item.grupo == gp &&  
                       
                       <ul className='Separador' key={item._id}>
-                        <li className='liInspector'>
+                        <li className='liInspector' key={item._id}>
                           <span className={nombres == item.nombres + " " + item.apellidos ? 'nameUSActual' : 'nameUS'}>{item.nombres + " " + item.apellidos}</span>
                           <div className="cajaNumero">
                             <div className="cuadro20">10</div>
@@ -2767,16 +3266,16 @@ const validacion = ()=>{
       {
          <div className={showRight==true ? "content_principal_custom" : "hideRight"} >
                 <div className="titulo-custom1">
-                  <h2>Stack de turnos </h2>
+                  <h2>Stack de turnos especiales</h2>
                 </div>
 
                 <div className="cuerpoStackTurnos">
                   {
                     data1?.map((shifts)=>(
                       <div className="contentBoloque" key={shifts._id}>
-                      <div className="in" >{new Date(shifts.Inicio_main).toLocaleTimeString()}</div>
-                      <div className="center" >{getNameProgram(shifts.Event_name,shifts.Type,shifts.ID_event)}</div>
-                      <div className="out" >{new Date(operacion(shifts.Inicio_main,shifts.Event_name,shifts.Type,shifts.Out)).toLocaleTimeString()}</div>
+                      <div className={validaColor == false ? "in" : "inSaved"} >{salvar(shifts.Inicio_main,shifts.Index)}</div>
+                      <div className={validaColor == false ? "center" : "centerSaved"} onClick={(e)=>operarItem(shifts._id,e)}>{getNameProgram(shifts.Event_name,shifts.Type,shifts.ID_event)}</div>
+                      <div className={validaColor == false ? "out" : "outSaved"} >{new Date(operacion(shifts.Inicio_main,shifts.Event_name,shifts.Type,shifts.Out)).toLocaleTimeString()}</div>
                     </div>
                     ))
                   }
@@ -2785,14 +3284,18 @@ const validacion = ()=>{
                   
                 
 
-                  <div className="timeIn"><span className='spanIn'>Time In</span>--:--:--</div>
-                  <div className="okButom" onClick={guardar}>
-                    <img src={Ok} alt="Ok" />
+                  <div className="timeIn"><span className='spanIn'>Time In</span>{new Date(fechaAuxGlobalIn).toLocaleTimeString()}</div>
+                 
+                 <div className="cleanButom">
+                    <img src={capas} alt="Ok" onClick={reGet}/>
                  </div>
-                 <div className="cleanButom" onClick={limpiar}>
-                    <img src={Trash} alt="Ok" />
+
+                 <div className="cleanButomFull" onClick={limpiar}>
+                    <img src={trashFull} alt="Ok" />
                  </div>
-                  <div className="timeOut"><span className='spanOut'>Time Out</span>--:--:--</div>
+                  <div className="timeOut"><span className='spanOut'>Time Out</span>{new Date(fechaAuxGlobal).toLocaleTimeString()}</div>
+
+                  <div className="timeAcu"><span className='spanOut'>Accumulated time</span>{timeAcumulado()}</div>
 
                 </div>
 
@@ -2804,29 +3307,36 @@ const validacion = ()=>{
                 <div className="cuerpoStackGuardados">
                   <div className="guardadosLeft">
                     <ul>
-                      <li className='guardadosItem'>item 1</li>
-                      <li className='guardadosItem'>item 2</li>
-                      <li className='guardadosItem'>item 3</li>
-                      <li className='guardadosItem'>item 4</li>
-                      <li className='guardadosItem'>item 5</li>
+                      {
+                        data16?.map((savedStacks)=>(
+                          savedStacks.Index==1 &&
+                          <li className='guardadosItem'onDoubleClick={()=>traer(savedStacks.Nombre_Stack)} key={savedStacks._id}>{savedStacks.Nombre_Stack}</li>
+                        ))
+                      }
+                     
+                     
                     </ul>
                   </div>
                   <div className="guardadosRight">
 
                    <div className="contenControls">
                     Nombre
-                    <input type='text' className='controsName'></input>
+                    <input type='text' className='controsName' ref={saveStackRef}></input>
                       <div className="seccionButonsNew">
-                          <div className="containerSingleButtomNew">
+                          <div className="containerSingleButtomNew" onClick={editSaveStack}>
                             <img src={Pencil} alt="pencil"  />
                           </div>
-                          <div className="containerSingleButtomNew">
-                          <img src={save} alt="plus"  />
+                          <div className="containerSingleButtomNew" onClick={guardarStack}>
+                            <img src={save} alt="plus"/>
                           </div>
-                          <div className="containerSingleButtomDelNew">
-                          <img src={Trash} alt="trash"  />
+                          <div className="containerSingleButtomDelNew" onClick={eliminarItemSavedStack}>
+                            <img src={Trash} alt="trash"  />
                           </div> 
+                          
                       </div>
+                          <div className="containerSingleButtomAply" onClick={aplicarStack}>
+                            <p className='label_aplicar'>Aplicar Stack</p>
+                          </div> 
                    </div>
                    
                   </div>

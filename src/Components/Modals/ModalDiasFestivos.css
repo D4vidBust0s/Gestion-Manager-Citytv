@@ -170,16 +170,18 @@
         
     }
 
-    .ulMeses{
+    .ulMeses2{
         
         
-        .liDias{
+        .liDias22{
             padding-left: 1rem;
             font-size: 1.1rem;
             padding-top: .3rem;
+            width: 100%;
+            font-weight: 400;
         }
 
-        .numero{
+        .numero2{
             color: #EB464B;
             display: flex;
             justify-content: center;
@@ -193,7 +195,7 @@
 
         }
 
-        .motivo{
+        .motivo2{
             margin-bottom: 1rem;
             font-size: 1rem;
             padding-left: 2.5rem;
@@ -205,7 +207,7 @@
         }
     }
 
-    .liDias:hover{
+    .liDias22:hover{
         cursor: pointer;
         background-color: #EB464B;
         color: #FFFFFF;

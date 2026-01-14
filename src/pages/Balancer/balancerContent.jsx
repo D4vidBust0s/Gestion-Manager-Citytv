@@ -22,6 +22,12 @@ let fechaRulesFormat;
 let auxDias;
 let auxDias2;
 let auxDias3;
+let mes;
+let año;
+
+let auxDias0;
+let auxDias22;
+let auxDias33;
 
 let auxMont;
 let auxMont2;
@@ -34,6 +40,9 @@ let corroborador3 = 0;
 let ancho = 0;
 let ancho1 = 0;
 let ancho2 = 0;
+
+let inicial;
+let final
 
 
 
@@ -48,6 +57,7 @@ export default function BalancerContent() {
     const [data1, setData1] = useState([]);
     const [data2, setData2] = useState([]);
     const [data3, setData3] = useState([]);
+    const [data4, setData4] = useState([]);
    
    
     //----------------------------------------------------------------------------------------------------------
@@ -82,10 +92,86 @@ export default function BalancerContent() {
       
   };
 
-  
+  //Funcion que obtiene la data de la api - listado de turnos segun id y fecha especifica
+  const obtenerListadoTurnos = async (fecha) => {
+    return await axios
+      .get("http://localhost:3000/api/shifts/day",
+      {
+        params:{
+          in: inicial,
+          out: final
+        }
+      })
+      .then((response) => setData4(response.data));
+  };
+
+
+ //Funcion que agrega un cero si el numero recibido es de 0 a 9
+  const formatearNumero = (Nuevonumero)=>{
+   
+    
+    if(Nuevonumero == 0 || Nuevonumero == 1 || Nuevonumero == 2 || Nuevonumero == 3|| Nuevonumero == 4 || Nuevonumero == 5 || Nuevonumero == 6 || Nuevonumero == 7 || Nuevonumero == 8 || Nuevonumero == 9)
+    {
+        Nuevonumero = "0"+Nuevonumero;
+    }
+
+    else{
+      Nuevonumero =  Nuevonumero;
+    }
+
+    return Nuevonumero;
+  }
+
+  //Funcion que agrega un cero si el numero recibido es de 0 a 9
+  const formatearNumero2 = (Nuevonumero)=>{
+   
+    Nuevonumero++;
+    
+    if(Nuevonumero == 0 || Nuevonumero == 1 || Nuevonumero == 2 || Nuevonumero == 3|| Nuevonumero == 4 || Nuevonumero == 5 || Nuevonumero == 6 || Nuevonumero == 7 || Nuevonumero == 8 || Nuevonumero == 9)
+    {
+        Nuevonumero = "0"+Nuevonumero;
+    }
+
+    else{
+      Nuevonumero =  Nuevonumero;
+    }
+
+    return Nuevonumero;
+  }
+
+
+  const operarMatrizDias = (iduser,fechaEvaluada)=>{
+    let horas = 0;
+
+    data4.map((shiftsLimited)=>(
+      shiftsLimited.ID_user == iduser && shiftsLimited.Fecha_clave == new Date(fechaEvaluada).toISOString() && (horas = shiftsLimited.Index)
+    ))
+
+    return horas;
+  }
   
 
+//-------------------------------------------------------------------------------------------------------------------------
+//Funcion mas grande del sistema que operara con la base de datos shifts para traer las horas laboradas
+//por un trabajador segun la los parasmetros recibidos
+
+const operarDiaslaborados = (mes, dia, año, iduser)=>{
+
+  mes ++;
+
+  let HorasLaborada = 0;
+  let nuevafecha;
+
+  // 1) crear una fecha aprtir de un string
+  nuevafecha = ""+año+"-"+formatearNumero(mes)+"-"+formatearNumero(dia)+"T00:00:00";
+  nuevafecha = new Date(nuevafecha).toISOString();
+
+  // 2) Con la fecha y el id de usuario operar la base de datos coleccion shifts para saber las horas laboradas ese dia
+  HorasLaborada = operarMatrizDias(iduser,nuevafecha);
   
+  return HorasLaborada;
+
+}
   
   const validateMonts = (mont)=>{
     if(mont == 0)
@@ -154,6 +240,11 @@ export default function BalancerContent() {
       numDias.splice(0,numDias.length);
     }
 
+      //Limpiamos el array
+      for (let index = 0; index < parseInt(diasRules); index++) {
+        numDias2.splice(0,numDias2.length);
+      }
+
     //Llenamos el array
     for (let i = 0; i <= parseInt(diasRules); i++) {
 
@@ -161,23 +252,28 @@ export default function BalancerContent() {
       auxDias = new Date(fechaRules);
       auxDias2 =  new Date(auxDias.setDate(auxDias.getDate()+i));
       auxDias3 =  new Date(auxDias2).getDate();
-    
+
       numDias.push(auxDias3);
     }
 
 
 
-    //Limpiamos el array
-    for (let index = 0; index < parseInt(diasRules); index++) {
-      numDias2.splice(0,numDias2.length);
-    }
+   //Llenamos el array
+   for (let i = 0; i <= parseInt(diasRules); i++) {
 
-    //Llenamos el array
-    for (let i = 0; i <= parseInt(diasRules); i++) {
+    //Proceso para llenar el nuevo array con los dias correspondientes
+    auxDias0 = new Date(fechaRules);
+    auxDias22 =  new Date(auxDias0.setDate(auxDias0.getDate()+i));
+    auxDias33 =  new Date(auxDias22).getDate();
 
-      //Proceso para llenar el nuevo array con los dias correspondientes
-      numDias2.push(i);
-    }
+    mes = new Date(auxDias0).getMonth();
+    año = new Date(auxDias0).getFullYear();
+  
+    numDias2.push({dia:auxDias33,mes:mes,año:año});
+  }
+
+
+  
   }
 
 
@@ -261,14 +357,29 @@ export default function BalancerContent() {
       <div key={payrollId}>
         <div className="principal">
           
-          {payrollNombres + " " + payrollApellidos}
+          
+          {
+            //Mostramos nombre y apellido
+            <div className="sujetos">
+              { payrollNombres + " " + payrollApellidos}
+            </div>
+            
+          }
+
           <ul className="pr">
           {
             numDias2?.map((item,index)=>(
-              item.idUser ? <li className="li-pr" key={index}>{new Date(item.From).getMonth()}</li> : <li className="li-pr" key={index}>-</li>
+              
+              //aqui debo hacer la operacion con el dato del mes, el dia y el año, y el id de usuario o con una fecha completa
+              //creando una funcion que retorne el valor de horas en ese dia consultando en shifts
+
+              <li className={operarDiaslaborados(item.mes,item.dia,item.año,payrollId) != 0 ? "li-pr4" : "li-pr"} key={index}>{operarDiaslaborados(item.mes,item.dia,item.año,payrollId)}</li> 
             ))
           }
-           <li className="li-pr2">000</li>
+           <li className="li-pr2">
+            {0}
+          </li>
+
          </ul>
         </div>
       </div>
@@ -293,6 +404,20 @@ export default function BalancerContent() {
     createBalancer();
   }
 
+  const traerRangoFechas = async ()=>{
+
+    //inicial = ( new Date (item.DiaPeriod).getDate() + " de " + validateMonts(new Date (item.DiaPeriod).getMonth()) + " de " + new Date (item.DiaPeriod).getFullYear()),
+    //final = ( sumaDias(item.DiaPeriod,item.Dia) + " de " + validateMonts(sumaMes(item.DiaPeriod,item.Dia)) + " de " + sumaAño(item.DiaPeriod,item.Dia)),
+
+    data2?.map((item)=>(
+
+      inicial = (""+ new Date (item.DiaPeriod).getFullYear()+"-"+formatearNumero2(new Date (item.DiaPeriod).getMonth())+"-"+ formatearNumero(new Date (item.DiaPeriod).getDate()) +"T00:00:00"),
+      final = (""+sumaAño(item.DiaPeriod,item.Dia)+"-"+formatearNumero(sumaMes(item.DiaPeriod,item.Dia)+1)+"-"+sumaDias(item.DiaPeriod,item.Dia)+"T00:00:00"),
+      
+      console.log ("Inicial = " + inicial + " final = " +final)
+      ))
+  }
+
   
 
   useEffect(()=>{
@@ -311,6 +436,16 @@ export default function BalancerContent() {
       getBalancerActual();
     },[]);
 
+
+    useEffect(()=>{
+      traerRangoFechas();
+    },[data1]);
+
+
+    useEffect(()=>{
+      obtenerListadoTurnos();
+    },[]);
+
    
   
   
@@ -321,10 +456,10 @@ export default function BalancerContent() {
 
         <div className="calendar-2">
                 <DatePicker className='calen'
-            closeOnScroll={true}
-            selected={startDate}
-            onChange={(date) => setStartDate(date)}
-            />
+                  closeOnScroll={true}
+                  selected={startDate}
+                  onChange={(date) => setStartDate(date)}
+               />
         </div>
 
 
@@ -332,7 +467,7 @@ export default function BalancerContent() {
         <div className="date">
         <img src={Calendar} alt="calendarLog" className='calendarLog'/>
           {data2?.map((item)=>(
-              new Date (item.DiaPeriod).getDate() + " de " + validateMonts(new Date (item.DiaPeriod).getMonth()) + " de " + new Date (item.DiaPeriod).getFullYear() + " ---- " + sumaDias(item.DiaPeriod,item.Dia) + " de " + validateMonts(sumaMes(item.DiaPeriod,item.Dia)) + " de " + sumaAño(item.DiaPeriod,item.Dia)
+              "Periodo de "+ new Date (item.DiaPeriod).getDate() + " de " + validateMonts(new Date (item.DiaPeriod).getMonth()) + " de " + new Date (item.DiaPeriod).getFullYear() + " -- A --  " + sumaDias(item.DiaPeriod,item.Dia) + " de " + validateMonts(sumaMes(item.DiaPeriod,item.Dia)) + " de " + sumaAño(item.DiaPeriod,item.Dia) + " --- " + data4.length + " items encontrados"
           ))}
         </div>
 
@@ -354,8 +489,8 @@ export default function BalancerContent() {
           {/*<li className="liDias">1</li>*/}   
 
           {
-            data2.map((it)=>(
-              createArray(it.Dia)
+            data2.map((rules_Dia)=>(
+              createArray(rules_Dia.Dia)
             ))
 
             
@@ -365,8 +500,8 @@ export default function BalancerContent() {
 
             {
 
-                numDias?.map((item,index)=>(
-                  <li className="liDias" key={index}>{item}</li>
+                numDias2?.map((item,index)=>(
+                  <li className="liDias" key={index}>{item.dia}</li>
                 ))
                 
             }
@@ -379,8 +514,8 @@ export default function BalancerContent() {
         
         {data?.map((group)=>(
          <div className="rowDef" key={group._id}>
-         <div className="sectionOne" key={group._id}>
-           <img src={group.logo?group.logo:Logodefault} alt="" className="logoDef" />
+          <div className="sectionOne" key={group._id}>
+           <img src={group.logo?group.logo:Logodefault} alt={group.nombre} className="logoDef" />
 
            <div className="ul-listado" key={group.nombre}>
              
@@ -392,9 +527,6 @@ export default function BalancerContent() {
                   
                 ))
               }
-             
-              
-
              
            </div>
          </div>
