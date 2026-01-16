@@ -137,10 +137,11 @@
     color: #FFFFFF;
     margin-left: 22%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 1rem;
-    text-align: left;
+    font-size: 1.2rem;
     padding-top: 1rem;
-    padding-left: 5rem;
+    display: flex;
+    justify-content: center;
+    
 }
 
 .sujetos{
@@ -175,7 +176,7 @@
 }
 
 .li-pr2{
-    background: #701CF5;
+    background: #000000;
     width: 117px;
     height: 20px;
     text-align: center;
@@ -220,12 +221,36 @@
     text-align: center;
     padding: .05rem;
     border-right: 1px solid #000000;
-    font-size: 1rem;
+    font-size: .9rem;
     position: relative;
     top: 200%;
     color: #000000;
     font-weight: bold;
 }
+
+.li-pr5{
+    background: #EB464B;
+    width: 117px;
+    height: 20px;
+    text-align: center;
+    padding: .05rem;
+    border-right: 1px solid #000000;
+    color: #FFFFFF;
+    margin-left: 3px;
+    font-weight: 900;
+    font-size: .9rem;
+    position: relative;
+    top: 200%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+   
+    
+}
+
+
+
+
 
 .calendar-2{
     position: absolute;

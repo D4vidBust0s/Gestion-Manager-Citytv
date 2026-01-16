@@ -44,9 +44,7 @@ let ancho2 = 0;
 let inicial;
 let final
 
-
-
-
+let pr = 0;
 
 
 
@@ -58,6 +56,9 @@ export default function BalancerContent() {
     const [data2, setData2] = useState([]);
     const [data3, setData3] = useState([]);
     const [data4, setData4] = useState([]);
+    const [data5, setData5] = useState([]);
+
+    
    
    
     //----------------------------------------------------------------------------------------------------------
@@ -93,7 +94,7 @@ export default function BalancerContent() {
   };
 
   //Funcion que obtiene la data de la api - listado de turnos segun id y fecha especifica
-  const obtenerListadoTurnos = async (fecha) => {
+  const obtenerListadoTurnos = async () => {
     return await axios
       .get("http://localhost:3000/api/shifts/day",
       {
@@ -103,6 +104,13 @@ export default function BalancerContent() {
         }
       })
       .then((response) => setData4(response.data));
+  };
+
+   //Funcion que obtiene la data de la api - listado de programs
+   const obtenerListadoPrograms = async () => {
+    return await axios
+      .get("http://localhost:3000/api/programs")
+      .then((response) => setData5(response.data));
   };
 
 
@@ -138,16 +146,96 @@ export default function BalancerContent() {
 
     return Nuevonumero;
   }
+  
+  const extraerHorasCustom = (inicio,final)=>{
+    
+    let timeIn = new Date(inicio);
+    let timeOut = new Date(final);
+    let respuesta = timeOut.getTime()-timeIn.getTime();
+        respuesta = Math.round(respuesta / (1000 * 60 ));
 
+    return respuesta;
+  }
+
+  const extraerHorasProgram = (idPrograma)=>{
+
+    let fechaIn;
+    let fechaOut;
+
+    data5?.map((programa)=>(
+      programa._id==idPrograma && (fechaIn=programa.Start, fechaOut=programa.End)
+    ))
+
+    let timeIn = new Date(fechaIn);
+    let timeOut = new Date(fechaOut);
+
+
+    let respuesta = timeOut.getTime()-timeIn.getTime();
+        respuesta = Math.round(respuesta / (1000 * 60 ));
+    
+
+
+    return respuesta;
+
+  }
+
+ 
+ 
 
   const operarMatrizDias = (iduser,fechaEvaluada)=>{
     let horas = 0;
 
+    
+  
     data4.map((shiftsLimited)=>(
-      shiftsLimited.ID_user == iduser && shiftsLimited.Fecha_clave == new Date(fechaEvaluada).toISOString() && (horas = shiftsLimited.Index)
-    ))
+      shiftsLimited.ID_user == iduser && shiftsLimited.Fecha_clave == new Date(fechaEvaluada).toISOString() &&
+       (
+           //Tipo Null-30
+           shiftsLimited.Type == "Null" 
+           ?
+             (horas = horas +30 )
 
-    return horas;
+           : 
+
+           
+           //Tipo Custom
+           shiftsLimited.Type == "Custom"
+           ?
+             (horas =  horas + extraerHorasCustom(shiftsLimited.Inicio_main,shiftsLimited.Out) )
+           : 
+          
+           
+           //Tipo Programa
+           shiftsLimited.Type == "Programa"
+           ?
+             (horas =  horas + extraerHorasProgram(shiftsLimited.Event_name) )
+           : 
+
+           
+           //Tipo Secondary
+           shiftsLimited.Type == "Secondary"
+           ?
+             (horas =  horas + extraerHorasProgram(shiftsLimited.Event_name) )
+           :  
+
+           
+           //Tipo Requerimiento  (PENDIENTE POR IMPLEMENTAR - PERO FUNCIONA IGUAL QUE UN PROGRAMA)
+           shiftsLimited.Type == "Requerimiento"
+           ?
+             (horas =  horas + extraerHorasProgram(shiftsLimited.Event_name) )
+           : 
+
+
+           //Tipo Programmer  
+           shiftsLimited.Type == "Programmer"
+           ?
+             (horas =  horas + extraerHorasCustom(shiftsLimited.Inicio_main, shiftsLimited.Out) )
+           : null
+
+       )
+    ));
+
+    return horas/60;
   }
   
 
@@ -158,20 +246,24 @@ export default function BalancerContent() {
 const operarDiaslaborados = (mes, dia, año, iduser)=>{
 
   mes ++;
+  
 
-  let HorasLaborada = 0;
+  let HorasLaboradas = 0;
   let nuevafecha;
+ 
 
   // 1) crear una fecha aprtir de un string
   nuevafecha = ""+año+"-"+formatearNumero(mes)+"-"+formatearNumero(dia)+"T00:00:00";
   nuevafecha = new Date(nuevafecha).toISOString();
 
   // 2) Con la fecha y el id de usuario operar la base de datos coleccion shifts para saber las horas laboradas ese dia
-  HorasLaborada = operarMatrizDias(iduser,nuevafecha);
+  HorasLaboradas = operarMatrizDias(iduser,nuevafecha);
   
-  return HorasLaborada;
+  return HorasLaboradas;
 
 }
+
+
   
   const validateMonts = (mont)=>{
     if(mont == 0)
@@ -281,7 +373,7 @@ const operarDiaslaborados = (mes, dia, año, iduser)=>{
     //Primero haberiguar si son dos meses o uno
 
       //Limpiamos el array
-      for (let index = 0; index < parseInt(diasRules); index++) {
+      for (let i = 0; i < parseInt(diasRules); i++) {
         monts.splice(0,monts.length);
       }
   
@@ -300,15 +392,18 @@ const operarDiaslaborados = (mes, dia, año, iduser)=>{
         corroborador1 = monts[0];
         corroborador2 = monts[i];
         ancho = parseInt(diasRules)*29;
+
+        //console.log(corroborador1 + " -- " + corroborador2 + " diasRules "  )
         
         if(corroborador1!=corroborador2)
         {
           corroborador3 = 1;
+          
         }
       }
 
       ancho1=0;
-
+      
       for (let i = 0; i <= parseInt(diasRules); i++) {
         //Operacion para saber cuantos dias son de un mes y cuantos de otro
         
@@ -323,8 +418,6 @@ const operarDiaslaborados = (mes, dia, año, iduser)=>{
           i=parseInt(diasRules);
           ancho2 = parseInt(diasRules)-ancho1;
         }
-
-       
             
       }
 
@@ -352,36 +445,44 @@ const operarDiaslaborados = (mes, dia, año, iduser)=>{
 
   const exist = (payrollId,payrollGrupo,groupNombre,payrollNombres, payrollApellidos ) =>{
 
+    pr = 0;
 
     return (
       <div key={payrollId}>
         <div className="principal">
           
           
-          {
+          { 
             //Mostramos nombre y apellido
             <div className="sujetos">
               { payrollNombres + " " + payrollApellidos}
             </div>
-            
+           
           }
 
           <ul className="pr">
-          {
+          { 
             numDias2?.map((item,index)=>(
+      
+              pr=pr + operarDiaslaborados(item.mes,item.dia,item.año,payrollId),
               
               //aqui debo hacer la operacion con el dato del mes, el dia y el año, y el id de usuario o con una fecha completa
               //creando una funcion que retorne el valor de horas en ese dia consultando en shifts
+              //tratar de crear una variable para cambiar el color de rojo a negro, ya esta pero estoy llamado el proceso
+              //completo tan solo para velidar el color y luego nuevamente lo llamo para lo que realmente es.. OJO.. 
 
               <li className={operarDiaslaborados(item.mes,item.dia,item.año,payrollId) != 0 ? "li-pr4" : "li-pr"} key={index}>{operarDiaslaborados(item.mes,item.dia,item.año,payrollId)}</li> 
+             
             ))
           }
-           <li className="li-pr2">
-            {0}
+           <li className={pr > 0 ? "li-pr2" : "li-pr5"}>
+            {
+              pr
+            }
           </li>
 
          </ul>
-        </div>
+        </div>  
       </div>
     );
   }
@@ -399,10 +500,6 @@ const operarDiaslaborados = (mes, dia, año, iduser)=>{
     return new Date(new Date(fecha).setDate( new Date (fecha).getDate()+parseInt(dias))).getFullYear();
   }
 
-  const createFirstBalancer = ()=>{
-    console.log("SE CREA EL REGISTRO");
-    createBalancer();
-  }
 
   const traerRangoFechas = async ()=>{
 
@@ -412,9 +509,9 @@ const operarDiaslaborados = (mes, dia, año, iduser)=>{
     data2?.map((item)=>(
 
       inicial = (""+ new Date (item.DiaPeriod).getFullYear()+"-"+formatearNumero2(new Date (item.DiaPeriod).getMonth())+"-"+ formatearNumero(new Date (item.DiaPeriod).getDate()) +"T00:00:00"),
-      final = (""+sumaAño(item.DiaPeriod,item.Dia)+"-"+formatearNumero(sumaMes(item.DiaPeriod,item.Dia)+1)+"-"+sumaDias(item.DiaPeriod,item.Dia)+"T00:00:00"),
+      final = (""+sumaAño(item.DiaPeriod,item.Dia)+"-"+formatearNumero(sumaMes(item.DiaPeriod,item.Dia)+1)+"-"+formatearNumero(sumaDias(item.DiaPeriod,item.Dia))+"T00:00:00")
       
-      console.log ("Inicial = " + inicial + " final = " +final)
+      
       ))
   }
 
@@ -439,11 +536,18 @@ const operarDiaslaborados = (mes, dia, año, iduser)=>{
 
     useEffect(()=>{
       traerRangoFechas();
-    },[data1]);
+    },[data1,data2]);
+
+    useEffect(()=>{
+      obtenerListadoPrograms();
+    },[]);
 
 
     useEffect(()=>{
-      obtenerListadoTurnos();
+      setTimeout(function(){
+        obtenerListadoTurnos();
+    }, 1000);
+     
     },[]);
 
    
@@ -467,7 +571,7 @@ const operarDiaslaborados = (mes, dia, año, iduser)=>{
         <div className="date">
         <img src={Calendar} alt="calendarLog" className='calendarLog'/>
           {data2?.map((item)=>(
-              "Periodo de "+ new Date (item.DiaPeriod).getDate() + " de " + validateMonts(new Date (item.DiaPeriod).getMonth()) + " de " + new Date (item.DiaPeriod).getFullYear() + " -- A --  " + sumaDias(item.DiaPeriod,item.Dia) + " de " + validateMonts(sumaMes(item.DiaPeriod,item.Dia)) + " de " + sumaAño(item.DiaPeriod,item.Dia) + " --- " + data4.length + " items encontrados"
+              "Periodo de "+ new Date (item.DiaPeriod).getDate() + " de " + validateMonts(new Date (item.DiaPeriod).getMonth()) + " de " + new Date (item.DiaPeriod).getFullYear() + " -- A --  " + sumaDias(item.DiaPeriod,item.Dia) + " de " + validateMonts(sumaMes(item.DiaPeriod,item.Dia)) + " de " + sumaAño(item.DiaPeriod,item.Dia)
           ))}
         </div>
 
