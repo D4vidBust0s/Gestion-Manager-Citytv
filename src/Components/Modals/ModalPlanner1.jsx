@@ -49,6 +49,22 @@ let fullLicenses   = 0;
 let globalIdGroup;
 let arrayVariables = [];
 
+let numDias2 = [];
+let numDias = [];
+
+let fechaRules;
+let fechaRulesFormat;
+let auxDias;
+let auxDias2;
+let auxDias3; 
+
+let auxDias0;
+let auxDias22;
+let auxDias33;
+
+let mes;
+let año;
+
 let totalGrupo = 0;
 let totalSchema = 0;
 let auxOut = "--:--:--";
@@ -2432,25 +2448,54 @@ const llamarAño = async()=>{
  }
 
  
+ const createArray = (diasRules)=>{
 
+  //Proceso para traer los dias correctos segun fecha definida
+  data2?.map((item)=>{
 
-
-const corroborarFestivo = async ()=>{
-/*
-  validaDiaFestivo = 0;
-
-  holyday?.map((item)=>(
-    item.Mes == new Date(fechaBarra).getMonth() && item.Dias?.map((dato)=>(dato.dia)) == new Date(fechaBarra).getDate()
-     ? validaDiaFestivo = 1 : null,
-     
-     console.log("hollyday "+ item.Mes + " barra-mes " + new Date(fechaBarra).getMonth()  + " Dia " + item.Dias.map((item)=>(item.dia)) + " dia " + new Date(fechaBarra).getDate())
-  ))
-
- console.log("vdf = " + validaDiaFestivo);
- console.log("----------------------------");
- */
+    fechaRules = new Date(item.DiaPeriod).setHours(0,0,0,0);
+    fechaRulesFormat = new Date(fechaRules);
+    fechaRulesFormat.setDate(fechaRulesFormat.getDate() + parseInt(item.Dia) + 1);
  
+})
  
+  //Limpiamos el array
+  for (let index = 0; index < parseInt(diasRules); index++) {
+    numDias.splice(0,numDias.length);
+  }
+
+    //Limpiamos el array
+    for (let index = 0; index < parseInt(diasRules); index++) {
+      numDias2.splice(0,numDias2.length);
+    }
+
+  //Llenamos el array
+  for (let i = 0; i <= parseInt(diasRules); i++) {
+
+    //Proceso para llenar el nuevo array con los dias correspondientes
+    auxDias = new Date(fechaRules);
+    auxDias2 =  new Date(auxDias.setDate(auxDias.getDate()+i));
+    auxDias3 =  new Date(auxDias2).getDate();
+
+    numDias.push(auxDias3);
+  }
+
+
+
+ //Llenamos el array
+ for (let i = 0; i <= parseInt(diasRules); i++) {
+
+  //Proceso para llenar el nuevo array con los dias correspondientes
+  auxDias0 = new Date(fechaRules);
+  auxDias22 =  new Date(auxDias0.setDate(auxDias0.getDate()+i));
+  auxDias33 =  new Date(auxDias22).getDate();
+
+  mes = new Date(auxDias0).getMonth();
+  año = new Date(auxDias0).getFullYear();
+
+  numDias2.push({dia:auxDias33,mes:mes,año:año});
+}
+
 }
 
 
@@ -2543,9 +2588,7 @@ const corroborarFestivo = async ()=>{
   //llamarAño();
  },[fechaBarra]);
 
- useEffect(()=>{
-  corroborarFestivo();
- },[fechaBarra]);
+
 
  
 
@@ -3165,8 +3208,6 @@ const corroborarFestivo = async ()=>{
 
          
 
-         
-
           <div className='aux1'>
            <div className="aux1_title">
             Time Remating
@@ -3175,6 +3216,12 @@ const corroborarFestivo = async ()=>{
             120.5
            </div>
           </div>
+
+
+
+
+
+
 
          
 
@@ -3185,27 +3232,21 @@ const corroborarFestivo = async ()=>{
                     <li className='liInspector2' key={iduser}>
                       <span className='nameUS'></span>
                       <div className="cajaNumero">
-                        <div className="cuadro201">S</div>
-                        <div className="cuadro201">D</div>
-                        <div className="cuadro201">L</div>
-                        <div className="cuadro201">M</div>
-                        <div className="cuadro201">M</div>
-                        <div className="cuadro201">J</div>
-                        <div className="cuadro201">V</div>
-                        <div className="cuadro201">S</div>
-                        <div className="cuadro201">D</div>
-                        <div className="cuadro201">L</div>
-                        <div className="cuadro201">M</div>
-                        <div className="cuadro201">M</div>
-                        <div className="cuadro201">J</div>
-                        <div className="cuadro201">V</div>
-                        <div className="cuadro201">S</div>
-                        <div className="cuadro201">D</div>
-                        <div className="cuadro201">L</div>
-                        <div className="cuadro201">M</div>
-                        <div className="cuadro201">M</div>
-                        <div className="cuadro201">J</div>
-                        <div className="cuadro201">V</div>
+                       
+                       { 
+                         data2.map((rules_Dia)=>(
+                          createArray(rules_Dia.Dia)
+                        ))
+                        
+                       }
+
+                       {
+                        
+                          numDias2?.map((item,index)=>(
+                            <div className="cuadro201" key={index}>{item.dia}</div>
+                          ))
+                          
+                       }
                       </div>
                     </li>
                   </ul>
@@ -3215,7 +3256,7 @@ const corroborarFestivo = async ()=>{
                       item.grupo == gp &&  
                       
                       <ul className='Separador' key={item._id}>
-                        <li className='liInspector' key={item._id}>
+                        <li className='liInspector'>
                           <span className={nombres == item.nombres + " " + item.apellidos ? 'nameUSActual' : 'nameUS'}>{item.nombres + " " + item.apellidos}</span>
                           <div className="cajaNumero">
                             <div className="cuadro20">10</div>
@@ -3249,6 +3290,16 @@ const corroborarFestivo = async ()=>{
                 
            </div>
           </div>
+
+
+
+
+
+
+
+
+
+
 
           <div className='aux2'>
           <div className="aux1_title">
