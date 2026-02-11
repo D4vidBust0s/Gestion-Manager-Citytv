@@ -601,7 +601,7 @@
     background-color: #D9D9D9;
     height: 17%;
     z-index: 100;
-    width: 60%;
+    width: 85%;
     padding: .3rem;
     font-size: .8rem;
     color: #000000;
@@ -612,25 +612,29 @@
 .aux1{
     background-color: #D9D9D9;
     position: absolute;
-    bottom: .5rem;
-    width: 10%;
+    bottom: 24%;
+    width: 5%;
     color: #DADADA;
-    left: 9.7%;
-    height: 17%;
+    left: 35%;
+    height: 10%;
     border-radius: .5rem;
-    z-index: 100;
+    z-index: 150;
+    box-shadow: #000000 2px 2px 20px;
+    
 }
     
 .aux2{
     background-color: #D9D9D9;
     position: absolute;
-    bottom: .5rem;
-    width: 10%;
+    bottom: 24%;
+    width: 5%;
     color: #DADADA;
-    right: 9.7%;
-    height: 17%;
+    right: 35%;
+    height: 10%;
     border-radius: .5rem;
-    z-index: 100;
+    z-index: 150;
+    box-shadow: #000000 2px 2px 20px;
+   
 }
 
 .aux1_title{
@@ -641,6 +645,7 @@
     font-size: 1.1rem;
     padding: .5rem;
     border-radius: .5rem;
+    height: 30%;
 }
 
 .aux1_label{
@@ -652,13 +657,13 @@
     justify-content: center;
     align-items: center;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-    font-size: 1.5rem;
+    font-size: 1rem;
 }
 
 .aux_label-1{
     color: #000000;
     font-weight: 900;
-    font-size: 1.2rem;
+    font-size: 1rem;
 }
 
 .inspectorContainer{
@@ -682,15 +687,15 @@
     align-items: center;
     margin-bottom: 2px;
     position: fixed;
-    left: 29.75%;
-    margin-top: -2.1rem;
+    left: 16.85%;
+    margin-top: -2.7rem;
     
 }
 
 .nameUS{
     font-weight: 900;
     font-size: .9rem;
-    width: 15%;
+    width: 10%;
     color: #FFFFFF;
     
 
@@ -699,7 +704,7 @@
 .nameUSActual{
     font-weight: 900;
     font-size: .9rem;
-    width: 15%;
+    width: 10%;
     color: #EB464B;
     
 
@@ -708,6 +713,7 @@
 .cajaNumero{
     margin-left: 3rem;
     display: flex;
+
  
 }
 
@@ -721,6 +727,20 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 0.8rem;
+}
+
+.cuadro21{
+    background: #DADADA;
+    color: #EB464B;
+    padding: .5rem;
+    margin-right: 1px;
+    font-weight: bold;
+    width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
 }
 
 .cuadro201{
@@ -733,6 +753,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    display: flex;
+    flex-direction: column;
 }
 
 .liListaItem{
@@ -743,7 +765,10 @@
     color: #EB464B;
 }
 
-
+.p_cuadro{
+    font-size: .5rem;
+    color: #FFFFFF;
+}
 
 
 

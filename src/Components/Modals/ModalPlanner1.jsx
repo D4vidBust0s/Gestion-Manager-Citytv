@@ -101,6 +101,11 @@ let validaDiaFestivo = 0;
 let mensaje = "-------";
 
 
+let pr = 0;
+let inicial;
+let final
+
+
 
 
 export default function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color,gp,gpid,holy,datos}) {
@@ -129,6 +134,7 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [data14, setData14] = useState([]);
   const [data15, setData15] = useState([]);
   const [data16, setData16] = useState([]);
+  const [data17, setData17] = useState([]);
   const [showNotas, setShowNotas] = useState(false);
   
 
@@ -327,6 +333,19 @@ const getSubstitutions = async () => {
   return await axios
     .get("http://localhost:3000/api/savedstacks/")
     .then((response) => setData16(response.data));
+};
+
+ //Funcion que obtiene la data de la api - listado de turnos segun rango de fechas para hacer mas ligero el sistema
+ const obtenerListadoTurnosDay = async () => {
+  return await axios
+    .get("http://localhost:3000/api/shifts/day",
+    {
+      params:{
+        in: inicial,
+        out: final
+      }
+    })
+    .then((response) => setData17(response.data));
 };
 
 
@@ -2447,6 +2466,40 @@ const llamarAño = async()=>{
     
  }
 
+ //Funcion que agrega un cero si el numero recibido es de 0 a 9
+const formatearNumero = (Nuevonumero)=>{
+   
+    
+  if(Nuevonumero == 0 || Nuevonumero == 1 || Nuevonumero == 2 || Nuevonumero == 3|| Nuevonumero == 4 || Nuevonumero == 5 || Nuevonumero == 6 || Nuevonumero == 7 || Nuevonumero == 8 || Nuevonumero == 9)
+  {
+      Nuevonumero = "0"+Nuevonumero;
+  }
+
+  else{
+    Nuevonumero =  Nuevonumero;
+  }
+
+  return Nuevonumero;
+}
+
+//Funcion que agrega un cero si el numero recibido es de 0 a 9
+const formatearNumero2 = (Nuevonumero)=>{
+   
+  Nuevonumero++;
+  
+  if(Nuevonumero == 0 || Nuevonumero == 1 || Nuevonumero == 2 || Nuevonumero == 3|| Nuevonumero == 4 || Nuevonumero == 5 || Nuevonumero == 6 || Nuevonumero == 7 || Nuevonumero == 8 || Nuevonumero == 9)
+  {
+      Nuevonumero = "0"+Nuevonumero;
+  }
+
+  else{
+    Nuevonumero =  Nuevonumero;
+  }
+
+  return Nuevonumero;
+}
+
+
  
  const createArray = (diasRules)=>{
 
@@ -2498,7 +2551,202 @@ const llamarAño = async()=>{
 
 }
 
+const traerRangoFechas = async ()=>{
 
+  //inicial = ( new Date (item.DiaPeriod).getDate() + " de " + validateMonts(new Date (item.DiaPeriod).getMonth()) + " de " + new Date (item.DiaPeriod).getFullYear()),
+  //final = ( sumaDias(item.DiaPeriod,item.Dia) + " de " + validateMonts(sumaMes(item.DiaPeriod,item.Dia)) + " de " + sumaAño(item.DiaPeriod,item.Dia)),
+
+  data2?.map((item)=>(
+
+    inicial = (""+ new Date (item.DiaPeriod).getFullYear()+"-"+formatearNumero2(new Date (item.DiaPeriod).getMonth())+"-"+ formatearNumero(new Date (item.DiaPeriod).getDate()) +"T00:00:00"),
+    final = (""+sumaAño(item.DiaPeriod,item.Dia)+"-"+formatearNumero(sumaMes(item.DiaPeriod,item.Dia)+1)+"-"+formatearNumero(sumaDias(item.DiaPeriod,item.Dia))+"T00:00:00")
+    
+    
+    ))
+}
+
+const extraerHorasProgram = (idPrograma)=>{
+
+  let fechaIn;
+  let fechaOut;
+
+  data?.map((programa)=>(
+    programa._id==idPrograma && (fechaIn=programa.Start, fechaOut=programa.End)
+  ))
+
+  let timeIn = new Date(fechaIn);
+  let timeOut = new Date(fechaOut);
+
+
+  let respuesta = timeOut.getTime()-timeIn.getTime();
+      respuesta = Math.round(respuesta / (1000 * 60 ));
+  
+
+
+  return respuesta;
+
+}
+
+const extraerHorasCustom = (inicio,final)=>{
+    
+  let timeIn = new Date(inicio);
+  let timeOut = new Date(final);
+  let respuesta = timeOut.getTime()-timeIn.getTime();
+      respuesta = Math.round(respuesta / (1000 * 60 ));
+
+  return respuesta;
+}
+
+const operarMatrizDias = (iduser,fechaEvaluada)=>{
+  let horas = 0;
+
+  
+
+  data17.map((shiftsLimited)=>(
+    shiftsLimited.ID_user == iduser && shiftsLimited.Fecha_clave == new Date(fechaEvaluada).toISOString() &&
+     (
+         //Tipo Null-30
+         shiftsLimited.Type == "Null" 
+         ?
+           (horas = horas +30 )
+
+         : 
+
+         
+         //Tipo Custom
+         shiftsLimited.Type == "Custom"
+         ?
+           (horas =  horas + extraerHorasCustom(shiftsLimited.Inicio_main,shiftsLimited.Out) )
+         : 
+        
+         
+         //Tipo Programa
+         shiftsLimited.Type == "Programa"
+         ?
+           (horas =  horas + extraerHorasProgram(shiftsLimited.Event_name) )
+         : 
+
+         
+         //Tipo Secondary
+         shiftsLimited.Type == "Secondary"
+         ?
+           (horas =  horas + extraerHorasProgram(shiftsLimited.Event_name) )
+         :  
+
+         
+         //Tipo Requerimiento  (PENDIENTE POR IMPLEMENTAR - PERO FUNCIONA IGUAL QUE UN PROGRAMA)
+         shiftsLimited.Type == "Requerimiento"
+         ?
+           (horas =  horas + extraerHorasProgram(shiftsLimited.Event_name) )
+         : 
+
+
+         //Tipo Programmer  
+         shiftsLimited.Type == "Programmer"
+         ?
+           (horas =  horas + extraerHorasCustom(shiftsLimited.Inicio_main, shiftsLimited.Out) )
+         : null
+
+     )
+  ));
+
+  return horas/60;
+}
+
+
+
+const operarDiaslaborados = (mes, dia, año, iduser)=>{
+
+  mes ++;
+  
+
+  let HorasLaboradas = 0;
+  let nuevafecha;
+ 
+
+  // 1) crear una fecha aprtir de un string
+  nuevafecha = ""+año+"-"+formatearNumero(mes)+"-"+formatearNumero(dia)+"T00:00:00";
+  nuevafecha = new Date(nuevafecha).toISOString();
+
+  // 2) Con la fecha y el id de usuario operar la base de datos coleccion shifts para saber las horas laboradas ese dia
+  HorasLaboradas = operarMatrizDias(iduser,nuevafecha);
+  
+  return HorasLaboradas;
+
+}
+
+const exist = (payrollId,payrollGrupo,groupNombre,payrollNombres, payrollApellidos ) =>{
+
+
+
+  return (
+    
+
+          numDias2?.map((item,index)=>(
+            
+            <div className={operarDiaslaborados(item.mes,item.dia,item.año,payrollId) != 0 ? "cuadro20" : "cuadro21"} key={index}>{operarDiaslaborados(item.mes,item.dia,item.año,payrollId)}</div>
+  
+          )) 
+  
+  );
+}
+
+const convertir= (dia,mes,año)=>{
+  mes ++;
+  
+
+  let HorasLaboradas = 0;
+  let nuevafecha;
+  let NameDay;
+  let respuesta = "-";
+ 
+
+  // 1) crear una fecha aprtir de un string
+  nuevafecha = ""+año+"-"+formatearNumero(mes)+"-"+formatearNumero(dia)+"T00:00:00";
+  nuevafecha = new Date(nuevafecha).toISOString();
+
+  NameDay = parseInt(new Date(nuevafecha).getUTCDay());
+
+  if(NameDay == 0)
+  {
+    respuesta = "D";
+  }
+
+  else if(NameDay == 1)
+  {
+    respuesta = "L";
+  }
+
+  else if(NameDay == 2)
+  {
+    respuesta = "Ma";
+  }
+
+  else if(NameDay == 3)
+  {
+    respuesta = "Mi";
+  }
+
+  else if(NameDay == 4)
+  {
+    respuesta = "J";
+  }
+
+  else if(NameDay == 5)
+  {
+    respuesta = "V";
+  }
+
+  else if(NameDay == 6)
+  {
+    respuesta = "S";
+  }
+
+
+
+  return respuesta;
+
+}
 
    /* *********************************************************************************************************************** */
      /* EFECTOS
@@ -2585,17 +2833,21 @@ const llamarAño = async()=>{
  },[]);
 
  useEffect(()=>{
-  //llamarAño();
- },[fechaBarra]);
-
-
-
+  setTimeout(function(){
+    obtenerListadoTurnosDay();
+}, 1000);
  
+},[]);
+
+useEffect(()=>{
+  traerRangoFechas();
+},[data2,data8]);
 
  
 
   return (
     <>
+    
     <Toaster />
       {estado && (
         <div className="container-modal1">
@@ -2621,7 +2873,7 @@ const llamarAño = async()=>{
               <div className="actividad_container">
               <div className="actividad_lista">
                   <ul>
-                    <li className='liLista' key={iduser}>Permissions<span className='indicador'>
+                    <li className='liLista' >Permissions<span className='indicador'>
                       {
                        fullPermissionsUser(iduser)
                       }
@@ -2632,7 +2884,7 @@ const llamarAño = async()=>{
                     </li>
 
 
-                    <li className='liLista' key={iduser}>Breaks<span className='indicador'>
+                    <li className='liLista'>Breaks<span className='indicador'>
                       {
                        fullBreaksUser(iduser)
                       }
@@ -2643,7 +2895,7 @@ const llamarAño = async()=>{
                     </li>
 
                     
-                    <li className='liLista' key={iduser}>Incapacitys<span className='indicador'>
+                    <li className='liLista' >Incapacitys<span className='indicador'>
                       {
                         fullIncapacitysUser(iduser)
                       }
@@ -2656,7 +2908,7 @@ const llamarAño = async()=>{
 
 
 
-                    <li className='liLista' key={iduser}>Recess<span className='indicador'>
+                    <li className='liLista'>Recess<span className='indicador'>
                        {
                         fullRecessUser(iduser)
                        }
@@ -2668,7 +2920,7 @@ const llamarAño = async()=>{
 
 
 
-                    <li className='liLista' key={iduser}>Licenses<span className='indicador'>
+                    <li className='liLista' >Licenses<span className='indicador'>
                        {
                         fullLicensesUser(iduser)
                        }
@@ -3243,7 +3495,10 @@ const llamarAño = async()=>{
                        {
                         
                           numDias2?.map((item,index)=>(
-                            <div className="cuadro201" key={index}>{item.dia}</div>
+                            <div className="cuadro201" key={index}>
+                              {item.dia}
+                              <p className='p_cuadro'>{convertir(item.dia,item.mes,item.año)}</p>
+                            </div>
                           ))
                           
                        }
@@ -3259,33 +3514,17 @@ const llamarAño = async()=>{
                         <li className='liInspector'>
                           <span className={nombres == item.nombres + " " + item.apellidos ? 'nameUSActual' : 'nameUS'}>{item.nombres + " " + item.apellidos}</span>
                           <div className="cajaNumero">
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
-                            <div className="cuadro20">10</div>
+                            
+                            {
+                              exist(item._id,item.grupo,"group.nombre",item.nombres,item.apellidos)
+                            }
                           </div>
                         </li>
                      </ul>
                       
                       
                     ))
+                    
                   }
                 
            </div>
