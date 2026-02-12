@@ -101,7 +101,7 @@ let validaDiaFestivo = 0;
 let mensaje = "-------";
 
 
-let pr = 0;
+let ax;
 let inicial;
 let final
 
@@ -2691,11 +2691,23 @@ const exist = (payrollId,payrollGrupo,groupNombre,payrollNombres, payrollApellid
   );
 }
 
+const exist2 = (payrollId,payrollGrupo,groupNombre,payrollNombres, payrollApellidos ) =>{
+
+  ax = 0;
+
+  numDias2?.map((item,index)=>(
+        
+    ax=ax + operarDiaslaborados(item.mes,item.dia,item.año,payrollId)
+      
+  ))
+
+  return ax;
+
+}
+
 const convertir= (dia,mes,año)=>{
   mes ++;
   
-
-  let HorasLaboradas = 0;
   let nuevafecha;
   let NameDay;
   let respuesta = "-";
@@ -2997,8 +3009,17 @@ useEffect(()=>{
                   <ul>
                     {
                       data8?.map((item)=>(
-                        item.grupo == gp && item.activo == true ? <li className={nombres == item.nombres + " " + item.apellidos ? 'liListaItemActual' : 'liListaItem'} key={item._id}>{item.nombres + "  " + item.apellidos} <span className='indicador'>75</span><progress value={75} max={100} className='progress'/></li>:null
-                        
+                        item.grupo == gp && item.activo == true 
+                        ? 
+                        <li className={nombres == item.nombres + " " + item.apellidos ? 'liListaItemActual' : 'liListaItem'} key={item._id}>
+                          {item.nombres + "  " + item.apellidos} 
+                          <span className='indicador'>
+                            {exist2(item._id,item.grupo,"-",item.nombres,item.apellidos)}
+                          </span>
+                          <progress value={exist2(item._id,item.grupo,"-",item.nombres,item.apellidos)} max={24} className='progress'/>
+                        </li>
+                        :
+                        null
                       ))
                     }
                    
@@ -3462,7 +3483,7 @@ useEffect(()=>{
 
           <div className='aux1'>
            <div className="aux1_title">
-            Time Remating
+            Objetivo
            </div>
            <div className="aux1_label">
             120.5
@@ -3542,7 +3563,7 @@ useEffect(()=>{
 
           <div className='aux2'>
           <div className="aux1_title">
-            Full Time
+            Acumulado
            </div>
            <div className="aux1_label">
             {fullTime() + " Minutos"}
