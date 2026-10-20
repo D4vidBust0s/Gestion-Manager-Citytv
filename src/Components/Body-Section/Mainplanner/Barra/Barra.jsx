@@ -37,6 +37,7 @@ let breaks = 0;                // Descansos - Breaks             -- color Verde
 let incapacitado = 0;          // incapacidades - incapacity     -- color rojo 
 let vacaciones = 0;            // Vacaciones - Recess            -- color naranja
 let licensia = 0;              // Licensias - License            -- color azul 
+let compensatorio = 0;         // Compensatorio - Compensatory   -- color morado 
 
 let IDUSERGLOBAL = "";
 let NOMBRETRABAJADORGLOBAL = "";
@@ -58,6 +59,7 @@ let verifyIncapacitado = 0;       //Incapacidades
 let verifyVacaciones = 0;         //Vacaciones o Recess
 let verifyLicensia = 0;           //Licensias
 let verifyBreaks = 0;             //Breaks
+let verifyCompensatory = 0;       //Compensatorio
 
 let auxi = 0;
 let aux = "";
@@ -98,6 +100,7 @@ export default function Barra() {
  const [data10, setData10] = useState([]);
  const [data11, setData11] = useState([]);
  const [data12, setData12] = useState([]);
+ const [data13, setData13] = useState([]);
 
  const [nombre, setNombre] = useState("");
  const [cargo, setCargo] = useState("");
@@ -146,6 +149,12 @@ const groupsRef = useRef();
     return await axios
     .get("http://localhost:3000/api/breaks/")
     .then((response) => setData6(response.data));
+  }
+
+   const getCompensatory = async ()=>{
+    return await axios
+    .get("http://localhost:3000/api/compensatories/")
+    .then((response) => setData13(response.data));
   }
 
   const getIncapacity = async ()=>{
@@ -253,6 +262,7 @@ const traerHolidays = async ()=>{
       verifyVacaciones = 0;
       verifyLicensia = 0;
       verifyBreaks = 0;
+      verifyCompensatory = 0;
 
 
       testPermissions(pid);
@@ -260,6 +270,7 @@ const traerHolidays = async ()=>{
       testRecess(pid);
       testLicenses(pid);
       testBreaks(pid);
+      testCompensatory(pid)
     
     data2?.map((idReg)=>(
         idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() && permissions == 1  && isChecked ? verifyDescanso=1 : null
@@ -287,6 +298,12 @@ const traerHolidays = async ()=>{
 
     data6?.map((idReg)=>(
       idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() && breaks == 1 && isChecked ? verifyBreaks=1 : null
+      //console.log("Licencias  "+verifyLicensia)
+      
+    ))
+
+     data13?.map((idReg)=>(
+      idReg.Id_Empleado == pid && idReg.Año == startDate.getFullYear() && compensatorio == 1 && isChecked ? verifyCompensatory=1 : null
       //console.log("Licencias  "+verifyLicensia)
       
     ))
@@ -323,6 +340,13 @@ const traerHolidays = async ()=>{
     else if(verifyBreaks==1)
     {
       setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#2f800d") + setTipoEvento("DESCANSO") + setGrupo(pg) + setModal2(!modal2)
+        //console.log("ES.... LICENSIA");
+       
+    }
+
+     else if(verifyCompensatory==1)
+    {
+      setNombre(pn+" "+pa) + setCargo(cargo) + setIduser(pid) + setSubgrupo(subgrupo) + setColorBorder("#a308a8") + setTipoEvento("COMPENSATORIO") + setGrupo(pg) + setModal2(!modal2)
         //console.log("ES.... LICENSIA");
        
     }
@@ -440,6 +464,26 @@ const testBreaks = (pid)=>{
 
 }
 
+
+const testCompensatory = (pid)=>{
+  //Busco en el array de breaks si hay registros con el id del usuario 
+
+  compensatorio=0;
+  let std= new Date(startDate.setHours(0,0,0,0));
+  let idregIni;
+  let idregEnd;
+
+  data13?.map((idReg)=>(
+    
+    idregIni = new Date (idReg.FechaInicio).setHours(0,0,0,0),
+    idregEnd = new Date (idReg.FechaFinal).setHours(0,0,0,0),
+    
+    idReg.Id_Empleado == pid &&  std.toISOString() >= new Date (idregIni).toISOString()  && std.toISOString() <= new Date(idregEnd).toISOString()  ? compensatorio = 1 : null
+    
+  ))
+
+}
+
 const noExist = () =>{
   auxi++
   return <ul  key={auxi}>
@@ -458,8 +502,8 @@ const noExist = () =>{
  const traerRemplazo = (pid,grupoid,pNombre) =>{
   let respuesta = " / ---------------";
   
-  //Para los remplazos tengo en cuenta todos menos el que descansa ya que un descanso no necesita ser relevado
-  if(permissions == 1 || incapacitado == 1 || licensia == 1 || vacaciones == 1 || pNombre == "UserBalancer")
+  //Para los remplazos tengo en cuenta todos 
+  if(permissions == 1 || breaks == 1 || incapacitado == 1 || licensia == 1 || vacaciones == 1 || compensatorio == 1 || pNombre == "UserBalancer")
   {
     data8?.map((sustituciones)=>(
       sustituciones.ID_grupo_der == grupoid && new Date(fechaBarra).toISOString() == sustituciones.Fecha_dia && sustituciones.ID_user_main == pid ? respuesta = " / " +sustituciones.NombreLeft : null)
@@ -486,10 +530,11 @@ const noExist = () =>{
     testRecess(pid)
     testLicenses(pid)
     testBreaks(pid)
+    testCompensatory(pid);
 
 
     return <ul className="ulMain" key={pid}>
-      <li className={permissions == 1 ? "liMain-var1" :  incapacitado == 1 ? "liMain-var2" : licensia == 1 ? "liMain-var3" : vacaciones == 1 ? "liMain-var4" : breaks == 1 ? "liMain-var5" : cargo == "USERBALANCER" ? "liMain-var6": "liMain"} key={pid}  onClick={() => verificar(pid,pn,pa,subgrupo,cargo,pg,grupoid) }>
+      <li className={permissions == 1 ? "liMain-var1" :  incapacitado == 1 ? "liMain-var2" : licensia == 1 ? "liMain-var3" : vacaciones == 1 ? "liMain-var4" : breaks == 1 ? "liMain-var5" : compensatorio == 1 ? "liMain-var7" : cargo == "USERBALANCER" ? "liMain-var6": "liMain"} key={pid}  onClick={() => verificar(pid,pn,pa,subgrupo,cargo,pg,grupoid) }>
         {
           data7?.map((rm)=>(
             rm.userId == pid && rm.fijo == true 
@@ -728,6 +773,10 @@ const noExist = () =>{
   useEffect(() => {
     getLicenses();
   }, []);
+
+  useEffect(() => {
+    getCompensatory();
+  }, [auxiliar]);
 
 
   useEffect(()=>{

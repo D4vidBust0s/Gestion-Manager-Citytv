@@ -140,6 +140,12 @@ const agregar = async ()=>{
 
   else
   {
+    // Obtenemos el usuario autenticado que inició sesión desde localStorage
+    const storedUser = JSON.parse(localStorage.getItem('userAuth') || '{}');
+    const loggedUserName = storedUser.nombres && storedUser.apellidos 
+      ? `${storedUser.nombres} ${storedUser.apellidos}` 
+      : (storedUser.nombre || "Usuario");
+
     await axios.post("http://localhost:3000/api/licenses/", {
       nombre: namePermissionRef.current.value,
       año:starIn.getFullYear().toString(),
@@ -147,7 +153,7 @@ const agregar = async ()=>{
       fechafinal: starOut,
       observacion: observacionesRef.current.value,
       estado: true,
-      nombreempleado: nameUser,
+      nombreempleado: loggedUserName,
       idempleado: idUser,
       });
 
@@ -265,7 +271,12 @@ const editar = async ()=>{
 
  else
  {
-  
+   // Obtenemos el usuario autenticado que inició sesión desde localStorage
+   const storedUser = JSON.parse(localStorage.getItem('userAuth') || '{}');
+   const loggedUserName = storedUser.nombres && storedUser.apellidos 
+     ? `${storedUser.nombres} ${storedUser.apellidos}` 
+     : (storedUser.nombre || "Usuario");
+
    await axios.put("http://localhost:3000/api/licenses/"+ idRegistro, {
      nombre: namePermissionRef.current.value,
      año:starIn.getFullYear().toString(),
@@ -273,7 +284,7 @@ const editar = async ()=>{
      fechafinal: starOut,
      observacion: observacionesRef.current.value,
      estado: true,
-     nombreempleado: nameUser,
+     nombreempleado: loggedUserName,
      id_empleado: idUser,
      });
 

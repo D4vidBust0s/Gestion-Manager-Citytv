@@ -118,7 +118,7 @@
             font-weight: 700;
             color: #000000;
             background:#E9BD1A;
-            
+            font-size: .80rem;
         }
 
         .liMain-var1:hover{
@@ -140,7 +140,7 @@
             padding-top: 4.5px;
             background:red;
             font-weight: 700;
-            
+            font-size: .80rem;
         }
 
         .liMain-var2:hover{
@@ -163,7 +163,7 @@
             padding-top: 4.5px;
             background:#00094B;
             font-weight: 700;
-            
+            font-size: .80rem;
         }
 
         .liMain-var3:hover{
@@ -184,7 +184,7 @@
             padding-top: 4.5px;
             background:  #dd6c21;
             font-weight: 700;
-            
+            font-size: .80rem;
         }
 
         .liMain-var4:hover{
@@ -197,7 +197,7 @@
         /* estilos para personal en descanso o break */
 
         .liMain-var5{
-            color: #000000;
+            color: #ffffff;
             width: 100%;
             border-bottom: 1px solid #545454;
             font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
@@ -205,10 +205,36 @@
             padding-top: 4.5px;
             background:  #2f800d;
             font-weight: 700;
+            font-size: .80rem;
             
         }
 
         .liMain-var5:hover{
+            cursor: pointer;
+              
+        }
+
+        /* ----------------------------------------------------------------------------------------------------------------- */
+
+
+          /* ----------------------------------------------------------------------------------------------------------------- */
+
+        /* estilos para personal en descanso o break */
+
+        .liMain-var7{
+            color: #ffffff;
+            width: 100%;
+            border-bottom: 1px solid #545454;
+            font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            height: 1.61rem;
+            padding-top: 4.5px;
+            background:  #bc09e9;
+            font-weight: 700;
+            font-size: .80rem;
+            
+        }
+
+        .liMain-var7:hover{
             cursor: pointer;
               
         }

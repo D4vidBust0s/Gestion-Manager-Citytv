@@ -239,6 +239,15 @@ function Sidebar({ onLogout }) {
 
               <li className="list__inside">
                 <Link
+                  to="/compensatory"
+                  className={`nav__link nav__link--inside ${isPathActive('/compensatory') ? 'nav__link--active' : ''}`}
+                >
+                  Compensatory
+                </Link>
+              </li>
+
+              <li className="list__inside">
+                <Link
                   to="/cv"
                   className={`nav__link nav__link--inside ${isPathActive('/cv') ? 'nav__link--active' : ''}`}
                 >

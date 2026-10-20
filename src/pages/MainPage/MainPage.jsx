@@ -18,7 +18,6 @@ import Rotations from '../../pages/Rotations/Rotations';
 
 /*Pages */
 import Chat from '/src/pages/Chat/ChatPage';
-import Tasks from '/src/pages/Tasks/TasksPage';
 import Dashboard from '/src/pages/Dasboard/DashboardPage';
 import Main from '/src/pages/Main/MainPage';
 import MainPlanner from '/src/pages/MainPlanner/MainPlannerPage';
@@ -34,6 +33,8 @@ import Programmer from '../../pages/Programmer/programmer';
 import Cv from '../../pages/Cv/cv';
 import Pm from '../../pages/PayrollMain/pmMain';
 import GroupNoveltiesPage from '../../pages/GroupNovelties/GroupNoveltiesPage';
+import Tasks from '../../pages/Tasks/Task';
+import Compensatory from '../../pages/Compensatory/Compensatory';
 
 /* Dependencias */
 import axios from "axios";
@@ -404,6 +405,7 @@ useEffect(()=>{
             <Route path="/programmer" element={<Programmer />} />
             <Route path="/cv" element={<Cv />} />
             <Route path="/payroll-main" element={<Pm />} />
+            <Route path="/compensatory" element={<Compensatory />} />
             <Route path="/group-novelties/:id/*" element={<GroupNoveltiesPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -147,6 +147,8 @@
 .sujetos{
     /*width: 24.55%;*/
     width: 243px;
+    font-weight: 700;
+    color: #00094B;
 }
 
 .pr{
@@ -288,3 +290,41 @@
     margin-left: -4.5rem;
     margin-top: -6rem;
 }
+
+
+
+
+
+
+/* --- ESTILOS EXCLUSIVOS PARA LA FILA ESPEJO DE PROYECCIÓN --- */
+.contenedor-usuario-bloque {
+    display: flex;
+    flex-direction: column;
+}
+
+.li-pr {
+    position: relative;
+    padding: 0 !important; /* Eliminamos paddings internos para que el input reine en la celda */
+}
+
+.input-manual-interno {
+    width: 100%;
+    height: 100%;
+    border: none;
+    text-align: center !important;
+    font-size: .85rem;
+    font-weight: 700;
+    outline: none;
+    background: transparent;
+    padding: 0;
+    color: #701CF5;
+    cursor: pointer;
+}
+
+.input-manual-interno:focus {
+    background-color: rgba(112, 28, 245, 0.15); /* Un tono ligeramente más visible al enfocar */
+    cursor: text;
+}
+
+
+

@@ -151,6 +151,12 @@ export default function RecesContent() {
       toast.error("Debe especificar una observación o descripción del periodo de vacaciones");
     } else {
       try {
+        // Obtenemos el usuario autenticado que inició sesión desde localStorage
+        const storedUser = JSON.parse(localStorage.getItem('userAuth') || '{}');
+        const loggedUserName = storedUser.nombres && storedUser.apellidos 
+          ? `${storedUser.nombres} ${storedUser.apellidos}` 
+          : (storedUser.nombre || "Usuario");
+
         await axios.post("http://localhost:3000/api/recess/", {
           nombre: namePermissionRef.current.value,
           año: starIn.getFullYear().toString(),
@@ -158,7 +164,7 @@ export default function RecesContent() {
           fechafinal: starOut,
           observacion: observacionesRef.current.value,
           estado: true,
-          nombreempleado: nameUser,
+          nombreempleado: loggedUserName,
           idempleado: idUser,
         });
 
@@ -260,6 +266,12 @@ export default function RecesContent() {
       toast.error("Debe especificar una observación o descripción para el periodo de vacaciones");
     } else {
       try {
+        // Obtenemos el usuario autenticado que inició sesión desde localStorage
+        const storedUser = JSON.parse(localStorage.getItem('userAuth') || '{}');
+        const loggedUserName = storedUser.nombres && storedUser.apellidos 
+          ? `${storedUser.nombres} ${storedUser.apellidos}` 
+          : (storedUser.nombre || "Usuario");
+
         await axios.put("http://localhost:3000/api/recess/" + idRegistro, {
           nombre: namePermissionRef.current.value,
           año: starIn.getFullYear().toString(),
@@ -267,7 +279,7 @@ export default function RecesContent() {
           fechafinal: starOut,
           observacion: observacionesRef.current.value,
           estado: true,
-          nombreempleado: nameUser,
+          nombreempleado: loggedUserName,
           id_empleado: idUser,
         });
 

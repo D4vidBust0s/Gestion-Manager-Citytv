@@ -92,6 +92,8 @@ let validador5 = 0;
 let validador6 = 0;
 let inicioMain;
 let validaUser = 0;
+let validador8 = 0;
+
 
 let fechaAuxGlobal;
 let fechaAuxGlobalIn = "--:--:--";
@@ -117,6 +119,7 @@ const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext);  //Define un e
 const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
 
 
+
   //Estados
   const [, setDate] = useState()
   const [data, setData] = useState([]);
@@ -137,6 +140,7 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [data15, setData15] = useState([]);
   const [data16, setData16] = useState([]);
   const [data17, setData17] = useState([]);
+  const [data18, setData18] = useState([]);
   const [showNotas, setShowNotas] = useState(false);
   
 
@@ -235,6 +239,15 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
     
   }
 
+  const traerCompensatoriesTrabajador = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/api/compensatories/");
+      setData18(response.data);
+    } catch (error) {
+      console.error("Error al traer compensatorios:", error);
+    }
+  };
+
   const traerIncapacitysTrabajador = async ()=>{
     return await axios
     .get("http://localhost:3000/api/incapacitys/")
@@ -255,6 +268,7 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
     .then((response) => setData7(response.data));
     
   }
+  
 
   const traerPayroll = async ()=>{
     return await axios
@@ -1657,11 +1671,32 @@ const validacion = ()=>{
 
   
 
-  const ok = async () => { 
+ const ok = async () => { 
 
     await obtenerListadoTurnosFull();
+    
+    // Asegurarnos de traer los compensatorios actualizados para validar
+    try {
+      const response = await axios.get("http://localhost:3000/api/compensatories/");
+      setData18(response.data);
+    } catch (error) {
+      console.error("Error trayendo compensatorios:", error);
+    }
 
-    //Validamos que tipo de agregado es, si es del stack sugerido o uno custom (0 => sugerido, 1 => custom)
+    let compensatorioAsignado = false;
+
+    // Validamos si ya tiene un compensatorio asignado en la fecha actual
+    data18?.forEach((compensatory) => {
+      if (
+        compensatory.FechaInicio && 
+        new Date(compensatory.FechaInicio).toISOString() === new Date(fechaPlaner).toISOString() && 
+        compensatory.Id_Empleado === iduser
+      ) {
+        compensatorioAsignado = true;
+      }
+    });
+
+    // Validamos que tipo de agregado es, si es del stack sugerido o uno custom (0 => sugerido, 1 => custom)
     if(validador == 0)
     {
       
@@ -1675,7 +1710,11 @@ const validacion = ()=>{
         breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser &&  (validador3 = 1)
       ))
 
-      if(validador2 == 1)
+      if(compensatorioAsignado) {
+        toast.error("El trabajador ya tiene asignado un compensatorio para esta fecha, no se le puede asignar una programación");
+      }
+
+      else if(validador2 == 1)
       {
         setIDUSER(iduser);
         validador2 = 0;
@@ -1747,62 +1786,71 @@ const validacion = ()=>{
   }
 
   
-  const regalo = async ()=>{
+ const regalo = async () => {
+    try {
+      // 1. Esperamos a que la API nos devuelva los compensatorios actualizados antes de validar
+      const response = await axios.get("http://localhost:3000/api/compensatories/");
+      const compensatoriosActuales = response.data;
 
-    traerBreaksTrabajador();
+      // Actualizamos también el estado por buena práctica
+      setData18(compensatoriosActuales);
 
-    //valido que no haya un registro realizado previamente 
-    data12.map((shifts)=>(
-      shifts.Fecha_clave == new Date(fechaPlaner).toISOString() && shifts.ID_user == iduser &&  (validador2 = 1)
-    ))
+      // Variables locales de validación para evitar problemas de sincronía con estados globales
+      let turnoAsignadoPreviamente = false;
+      let compensatorioAsignadoPreviamente = false;
 
-    /* valido que no se haya asignafdo un descanso al trabajador*/
-    data4?.map((breaks)=>(
-      breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser && (validador3 = 1)
-    ))
-
-    
-
-    if(validador2 == 1)
-    {
-      setIDUSER(iduser);
-      validador2 = 0;
-      toast.error("El trabajador ya tiene asiganado un turno para la fecha actual, para asignar un descanso, primero elimine el turno asignado")
-    }
-
-    else if(validador3 == 1)
-    {
-      validador3 = 0;
-      toast.error("El trabajador ya tiene asignado un descanso para esta fecha, no es necesario confirmarla") 
-    }
-
-    else{
-
-      validador2 = 0;
-      validador3 = 0;
-
-      //Asignamos un descanso al trabajador
-      await axios.post("http://localhost:3000/api/breaks/", {
-
-          nombre: "Descanso Normal o Genérico",
-          año:new Date(fechaBarra).getFullYear().toString(),
-          fechainicio: new Date(fechaBarra).toISOString(),
-          fechafinal:  new Date(fechaBarra).toISOString(),
-          observacion: "Este es un descanso asignado directamente desde el programador de turnos",
-          estado: true,
-          nombreempleado: nombres,
-          idempleado: iduser,
+      // Valido que no haya un turno registrado previamente en shifts (data12)
+      data12.map((shifts) => {
+        if (shifts.Fecha_clave == new Date(fechaPlaner).toISOString() && shifts.ID_user == iduser) {
+          turnoAsignadoPreviamente = true;
+        }
       });
 
-      toast.success("Se asignó un descanso al trabajador");
+      // Valido que no se haya asignado un compensatorio al trabajador en la fecha
+      compensatoriosActuales?.forEach((compensatory) => {
+        if (compensatory.FechaInicio && new Date(compensatory.FechaInicio).toISOString() === new Date(fechaPlaner).toISOString() && compensatory.Id_Empleado === iduser) {
+          compensatorioAsignadoPreviamente = true;
+        }
+      });
+
+      if (turnoAsignadoPreviamente) {
+        setIDUSER(iduser);
+        toast.error("El trabajador ya tiene asignado un turno para la fecha actual, para asignar un descanso, primero elimine el turno asignado");
+      } else if (compensatorioAsignadoPreviamente) {
+        toast.error("El trabajador ya tiene asignado un compensatorio para esta fecha, no es necesario confirmarla");
+      } else {
+        // Obtenemos el usuario autenticado que inició sesión desde localStorage
+        const storedUser = JSON.parse(localStorage.getItem('userAuth') || '{}');
+        const loggedUserName = storedUser.nombres && storedUser.apellidos 
+          ? `${storedUser.nombres} ${storedUser.apellidos}` 
+          : (storedUser.nombre || "Usuario");
+
+        // Si deseas activar el POST a la API de compensatorios, des comenta estas líneas:
+        
+        await axios.post("http://localhost:3000/api/compensatories/", {
+            nombre: "Compensatorio General",
+            año: new Date(fechaBarra).getFullYear().toString(),
+            fechainicio: new Date(fechaPlaner).toISOString(),
+            fechafinal: new Date(fechaPlaner).toISOString(),
+            observacion: "Este es un compensatorio asignado directamente desde el programador de turnos",
+            estado: true,
+            nombreempleado: loggedUserName,
+            idempleado: iduser,
+        });
+        
+
+        // Notificamos el cambio al contexto para refrescar listados
+        refrescar();
+        setAuxiliar(!auxiliar);
+
+        toast.success("Se asignó un compensatorio al trabajador");
+      }
+
+    } catch (error) {
+      console.error("Error al procesar el compensatorio:", error);
+      toast.error("Error al registrar el compensatorio");
     }
-
-
-    //Notificamos de el cambio a la barra para que se ponga en color verde de fondo que es el color asignado a un descanso
-    setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-
-    
-  }
+  };
 
   const clean = ()=>{
 
@@ -2419,6 +2467,7 @@ const traerValores =()=>{
 }
 
 
+
 const aplicarStack = ()=>{
   if(nameEventSavedGlobal == "")
   {
@@ -2773,6 +2822,17 @@ const calcular = ()=>{
   resultado = (data2[0].Horas) - globalCantidad;
   return resultado;
 }
+
+
+const refrescar = async ()=>{
+  // Asegurarnos de traer los compensatorios actualizados para validar
+    try {
+      const response = await axios.get("http://localhost:3000/api/compensatories/");
+      setData18(response.data);
+    } catch (error) {
+      console.error("Error trayendo compensatorios:", error);
+    }
+}
    /* *********************************************************************************************************************** */
      /* EFECTOS
    /* *********************************************************************************************************************** */
@@ -2781,6 +2841,10 @@ const calcular = ()=>{
   useEffect(() => {
     obtenerListadoPrograms();
   }, []);
+
+  useEffect(() => {
+    traerCompensatoriesTrabajador();
+  }, [iduser, fechaPlaner]); // Se ejecuta al abrir o cambiar de usuario/fecha
 
   useEffect(()=> {
     obtenerListadoTurnos();
@@ -2809,6 +2873,10 @@ const calcular = ()=>{
 
  useEffect(()=>{
   traerRecessTrabajador();
+ },[])
+
+ useEffect(()=>{
+  traerLicensesTrabajador();
  },[])
 
  useEffect(()=>{
@@ -3319,9 +3387,9 @@ useEffect(()=>{
               {/* ANTES QUE NADA DEBO VALIDAR SI YA HAY O NO UNA PROGRAMACION GUARDADA PARA EL USUARIO  */}
 
               {
-                /* valido que no se haya asignado un descanso al trabajador*/
-                  data4.map((breaks)=>(
-                    breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser &&  (validador4 = 1)
+                /* valido que no se haya asignado un compensatorio al trabajador*/
+                  data18.map((compensatory)=>(
+                    compensatory.FechaInicio == new Date(fechaPlaner).toISOString() && compensatory.Id_Empleado == iduser &&  (validador4 = 1)
                   ))
               }
 
@@ -3333,7 +3401,7 @@ useEffect(()=>{
                 data1.length == 0 
                 ?
                 
-                <ul className="ulLista-rotation">
+                <ul className={validador4==1 ? "ulLista-rotation-compensatory" : "ulLista-rotation"}>
 
                   {/* Esta imagen se debe mostrar solo si se asigno un descanso al trabajador*/}
                   {validador5 == 1 

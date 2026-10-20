@@ -39,6 +39,7 @@ export default function RulesContent() {
   
   const [dias, setDias]= useState();
   const [horas, setHoras]= useState();
+  const [intensidadDiaria, setIntensidadDiaria] = useState(); // NUEVO ESTADO
   const [startDate, setStartDate] = useState(new Date());
   const [dialert, setDialert]= useState();
   const [alertDiasPeriodo, setAlertDiasPeriodo]= useState();
@@ -52,6 +53,7 @@ export default function RulesContent() {
   const periodRef = useRef();
   const diasRef = useRef();
   const targetHorasRef = useRef();
+  const intensidadDiariaRef = useRef(); // NUEVA REFERENCIA
   const diasAlertRef = useRef();
   const diasPeriodoRef = useRef();
 
@@ -70,6 +72,7 @@ export default function RulesContent() {
       DiaPeriod: startDate,
       Dia:dias,
       Horas: horas,
+      IntensidadHorariaDiaria: intensidadDiaria, // NUEVO CAMPO
       DiasAlert: dialert,
       DiasPeriodo: alertDiasPeriodo,
 
@@ -124,13 +127,18 @@ export default function RulesContent() {
       targetHorasRef.current.focus();
       toast.error("El campo que especifica el objetivo de horas laborales, no debe estar vacio");
     }
-     else if(diasAlertRef.current.value=="")
+    else if(intensidadDiariaRef.current.value=="")
+    {
+      intensidadDiariaRef.current.focus();
+      toast.error("El campo de intensidad horaria diaria no debe estar vacío");
+    }
+    else if(diasAlertRef.current.value=="")
     {
       diasAlertRef.current.focus();
       toast.error("El campo que especifica el número de dias desde el que inicia la alerta para fin de periodo, no debe estar vacio");
     }
 
-     else if(diasAlertRef.current.value=="")
+    else if(diasPeriodoRef.current.value=="")
     {
       diasPeriodoRef.current.focus();
       toast.error("El campo que especifica el número de dias del periodo de un trabajador, no debe estar vacio");
@@ -148,6 +156,7 @@ export default function RulesContent() {
         diaPeriod: startDate,
         dia: dias,
         horas: horas,
+        IntensidadHorariaDiaria: intensidadDiaria, // NUEVO CAMPO
         diaalert: dialert,
         diasPeriodo: alertDiasPeriodo, 
       });
@@ -176,6 +185,10 @@ export default function RulesContent() {
     setHoras(targetHorasRef.current.value);
   }
 
+  const setIntensidadDiariaFunc = () =>{
+    setIntensidadDiaria(intensidadDiariaRef.current.value);
+  }
+
    const setAlert = () =>{
     setDialert(diasAlertRef.current.value);
   }
@@ -184,10 +197,7 @@ export default function RulesContent() {
     setAlertDiasPeriodo(diasPeriodoRef.current.value);
   }
 
-  
-
-  
-  //Funcion que obtiene la data de la api - listado de de rules
+  //Funcion que obtiene la data de la api - listado de rules
   const obtenerListadoRules = async () => {
     return await axios
       .get("http://localhost:3000/api/rules")
@@ -204,9 +214,6 @@ export default function RulesContent() {
    }
   }
 
-  
-
-  //-------------------------------------------------------------------------------------
   //HOOCKS
 
   useEffect(()=>{
@@ -230,6 +237,13 @@ export default function RulesContent() {
       diasRef.current.value=rule.Dia;
       setHoras(rule.Horas);
       targetHorasRef.current.value = rule.Horas;
+
+      // CARGAR NUEVO CAMPO
+      if (rule.IntensidadHorariaDiaria && intensidadDiariaRef.current) {
+        setIntensidadDiaria(rule.IntensidadHorariaDiaria);
+        intensidadDiariaRef.current.value = rule.IntensidadHorariaDiaria;
+      }
+
       diasAlertRef.current.value = rule.DiasAlert;
       diasPeriodoRef.current.value = rule.DiasPeriodo;
     });
@@ -312,7 +326,6 @@ export default function RulesContent() {
               ref={endDiurnoRef}
             />
   
-          
         </div>
       </div>
 
@@ -322,7 +335,6 @@ export default function RulesContent() {
         </div>
         <div className="texto">Jornada Laboral Nocturna</div>
         <div className="controls">
-
           
         <DatePicker
             className ='selectedBox'
@@ -390,6 +402,17 @@ export default function RulesContent() {
         </div>
       </div>
 
+      {/* NUEVA FILA: INTENSIDAD HORARIA DIARIA */}
+      <div className="filaContentRules">
+        <div className="fila_img">
+          <img src={Time} alt="Intensidad" />
+        </div>
+        <div className="texto">Intensidad horaria diaria (Proyección)</div>
+        <div className="controls">
+          <input type="text" className='inputRules' placeholder='Ej. 8' ref={intensidadDiariaRef} onChange={setIntensidadDiariaFunc}/>
+        </div>
+      </div>
+
        <div className="filaContentRules">
         <div className="fila_img">
           <img src={Alerta} alt="Calendar" />
@@ -402,8 +425,6 @@ export default function RulesContent() {
       </div>
 
     </div>
-
-    
 
     {/* ACTIONS */}
     <div className="contentActions">

@@ -130,6 +130,12 @@ export default function Content() {
       );
     } else {
       try {
+        // Obtenemos el usuario autenticado que inició sesión desde localStorage
+        const storedUser = JSON.parse(localStorage.getItem('userAuth') || '{}');
+        const loggedUserName = storedUser.nombres && storedUser.apellidos 
+          ? `${storedUser.nombres} ${storedUser.apellidos}` 
+          : (storedUser.nombre || "Usuario");
+
         await axios.post("http://localhost:3000/api/breaks/", {
           nombre: namePermissionRef.current.value,
           año: starIn.getFullYear().toString(),
@@ -137,7 +143,7 @@ export default function Content() {
           fechafinal: starOut,
           observacion: observacionesRef.current.value,
           estado: true,
-          nombreempleado: nameUser,
+          nombreempleado: loggedUserName,
           idempleado: idUser,
         });
 
@@ -244,6 +250,12 @@ export default function Content() {
       );
     } else {
       try {
+        // Obtenemos el usuario autenticado que inició sesión desde localStorage
+        const storedUser = JSON.parse(localStorage.getItem('userAuth') || '{}');
+        const loggedUserName = storedUser.nombres && storedUser.apellidos 
+          ? `${storedUser.nombres} ${storedUser.apellidos}` 
+          : (storedUser.nombre || "Usuario");
+
         await axios.put("http://localhost:3000/api/breaks/" + idRegistro, {
           nombre: namePermissionRef.current.value,
           año: starIn.getFullYear().toString(),
@@ -251,7 +263,7 @@ export default function Content() {
           fechafinal: starOut,
           observacion: observacionesRef.current.value,
           estado: true,
-          nombreempleado: nameUser,
+          nombreempleado: loggedUserName,
           id_empleado: idUser,
         });
 

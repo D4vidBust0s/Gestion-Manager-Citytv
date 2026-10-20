@@ -154,6 +154,23 @@
             
         }
 
+        .ulLista-rotation-compensatory{
+            padding: 0;
+            margin: 0;
+            margin-top: 2rem;
+            text-align: center;
+            font-size: .9rem;
+            width: 100%;
+            background: #bc09e9;
+            height: 73%;
+            padding: 1.5rem;
+            border-radius: 2rem;
+            overflow: auto;
+            padding-bottom: 5rem;
+
+            
+        }
+
         .ulLista-rotation-ok{
             padding: 0;
             margin: 0;
