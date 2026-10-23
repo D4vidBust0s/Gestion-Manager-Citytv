@@ -9,6 +9,7 @@ import Cake from '../../../../assets/bx-cake.svg';
 import Save from '../../../../assets/bxs-save.svg';
 import Period from '../../../../assets/period.svg';
 import Time from '../../../../assets/bx-time-five.svg';
+import Alerta from '../../../../assets/alert-black.svg';
 
 /* DEPENDENCIAS */
 import {useState,useRef, useEffect} from 'react';
@@ -39,6 +40,8 @@ export default function RulesContent() {
   const [dias, setDias]= useState();
   const [horas, setHoras]= useState();
   const [startDate, setStartDate] = useState(new Date());
+  const [dialert, setDialert]= useState();
+  const [alertDiasPeriodo, setAlertDiasPeriodo]= useState();
  
   /* Referencias */
   const diaRef = useRef();
@@ -49,6 +52,8 @@ export default function RulesContent() {
   const periodRef = useRef();
   const diasRef = useRef();
   const targetHorasRef = useRef();
+  const diasAlertRef = useRef();
+  const diasPeriodoRef = useRef();
 
 
   //FUNCIONES
@@ -65,6 +70,8 @@ export default function RulesContent() {
       DiaPeriod: startDate,
       Dia:dias,
       Horas: horas,
+      DiasAlert: dialert,
+      DiasPeriodo: alertDiasPeriodo,
 
     });
 
@@ -117,6 +124,17 @@ export default function RulesContent() {
       targetHorasRef.current.focus();
       toast.error("El campo que especifica el objetivo de horas laborales, no debe estar vacio");
     }
+     else if(diasAlertRef.current.value=="")
+    {
+      diasAlertRef.current.focus();
+      toast.error("El campo que especifica el número de dias desde el que inicia la alerta para fin de periodo, no debe estar vacio");
+    }
+
+     else if(diasAlertRef.current.value=="")
+    {
+      diasPeriodoRef.current.focus();
+      toast.error("El campo que especifica el número de dias del periodo de un trabajador, no debe estar vacio");
+    }
 
     else{
       if(validador == 0)
@@ -130,6 +148,8 @@ export default function RulesContent() {
         diaPeriod: startDate,
         dia: dias,
         horas: horas,
+        diaalert: dialert,
+        diasPeriodo: alertDiasPeriodo, 
       });
 
       setValidador(1);
@@ -154,6 +174,14 @@ export default function RulesContent() {
 
   const setTarget = () =>{
     setHoras(targetHorasRef.current.value);
+  }
+
+   const setAlert = () =>{
+    setDialert(diasAlertRef.current.value);
+  }
+
+   const setDiasPeriodo = () =>{
+    setAlertDiasPeriodo(diasPeriodoRef.current.value);
   }
 
   
@@ -202,6 +230,8 @@ export default function RulesContent() {
       diasRef.current.value=rule.Dia;
       setHoras(rule.Horas);
       targetHorasRef.current.value = rule.Horas;
+      diasAlertRef.current.value = rule.DiasAlert;
+      diasPeriodoRef.current.value = rule.DiasPeriodo;
     });
   },[data]);
 
@@ -357,6 +387,17 @@ export default function RulesContent() {
         <div className="texto">Objetivo de horas laborales</div>
         <div className="controls">
           <input type="text" className='inputRules' placeholder='Horas' ref={targetHorasRef} onChange={setTarget}/>
+        </div>
+      </div>
+
+       <div className="filaContentRules">
+        <div className="fila_img">
+          <img src={Alerta} alt="Calendar" />
+        </div>
+        <div className="texto">Alerta fin de contrato Alerta/Periodo</div>
+        <div className="controls">
+          <input type="text" className='inputRules' placeholder='Dias' ref={diasAlertRef} onChange={setAlert}/>
+          <input type="text" className='inputRules' placeholder='Dias' ref={diasPeriodoRef} onChange={setDiasPeriodo}/>
         </div>
       </div>
 

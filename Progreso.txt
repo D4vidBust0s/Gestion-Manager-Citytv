@@ -187,10 +187,44 @@
       linea 3497 
 
       ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-      (R 0%)
+      (R 100%)
       ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+
+      ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+     implemetacion de chat en tiempo real con socketIO 
+
+      ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      (R 1.5%)
+      ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+DESPUES DE LA SOCIALIZACION CON EDWIN SE LLEGO A LAS SIGUIENTES MODIFICACIONES
+
+1) -APARTIR DE UNA PROGRAMACION ANTERIOR - En MainPlanner partir no desde cero si no dar la opcion de arrancar desde un mainplanner anterior
+   R/ 100%  hay que validar las distintas opciones al clonar, ya que no de debe volver a crear registros con la mima fecha
+             y si el dia al que quiere clonar un dia ya tiene datos. debe borrarce o actualizar la fecha (HECHO PAPE)
+
+2) -COMPENSATORIOS- Debo implemetar o modificar los descansos para dar y resgistrar compensatorios dentro del sistema
+   R/ 0%
+
+3) -ESTADO ACTIVO Y TIEMPO DE CONTRATO- para los practicantes definir fecha de inicio y finalizacion de contrato, y replresentarlo
+                                        en el main planner de alguna manera o implemetar un popup notificandol
+   * Maquetacion (100%)
+   * Logica en barra (50%)
+   
+   R/ %
+
+4) -RUTAS- hacer de la generacion de informe de rutas algo asistido pero tambien manual, que genere un documento para notificarlo a transportes
+   R/ 0%
+
+5) -BALANCER ADMINISTRATIVO- Actualmente mi Balancer solo muestra las horas laboradas en tiempo real de un trabajador. pero debo
+                             hacer que se pueda modificar manualmente con todo lo que esto conlleva. ademas que no inicie el registros
+                             en cero(0) si no que mas bien sea una proyeccion de horas laboradas y el contraste con las reales trabajadas
+
+   R/ 0%
 
 
 

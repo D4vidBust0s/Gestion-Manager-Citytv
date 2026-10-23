@@ -66,12 +66,21 @@
             justify-content: center;
         }
 
+
         .liMain{
             width: 100%;
             border-bottom: 1px solid #545454;
             font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
             height: 1.61rem;
             padding-top: 4.5px;
+            
+        }
+
+        .bye{
+            width: 100%;
+            font-weight: 500;
+            color: #aa0117;
+            animation: latido 1.4s infinite ease-in-out;
             
         }
 
@@ -213,10 +222,11 @@
             width: 100%;
             border-bottom: 1px solid #545454;
             font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            font-size: .85rem;
             height: 1.61rem;
-            padding-top: 4.5px;
-            background:  #000000;
-            font-weight: 700;
+            padding-top: 4px;
+            background:  #641212;
+            font-weight: 200;
             
         }
 
@@ -457,3 +467,22 @@
     justify-content: center;
     
 }
+
+/* Definición de la animación del latido */
+        @keyframes latido {
+            0% {
+                transform: scale(1);
+            }
+            14% {
+                transform: scale(1.1);
+            }
+            28% {
+                transform: scale(1);
+            }
+            42% {
+                transform: scale(1.1);
+            }
+            70% {
+                transform: scale(1);
+            }
+        }

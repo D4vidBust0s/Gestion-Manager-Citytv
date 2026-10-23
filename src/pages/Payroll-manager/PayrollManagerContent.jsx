@@ -1,314 +1,281 @@
 /* ESTILOS */
-import './PayrollManagerContent.css'
+import "./PayrollManagerContent.css";
 
 /* DEPENDENCIAS */
-import {useState,useEffect} from 'react';
-import { createPortal } from 'react-dom';
-import axios from 'axios';
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import axios from "axios";
 import { Toaster, toast } from "react-hot-toast";
 import Swal from "sweetalert2";
+import { GetUsers } from "./getUsers";
 
 /* COMPONENTES MODALES*/
 import ModalBase1 from "../../Components/Modals/ModalBases/ModalBase1";
-import ModalPayrollManager from '../../Components/Modals/ModalManagerPayroll'
+import ModalPayrollManager from "../../Components/Modals/ModalManagerPayroll";
 
 /* IMAGENES */
-import Plus from '../../assets/Plus.svg'
-import Edit from '../../assets/pencil.svg'
-import Delete from '../../assets/trash.svg'
-
-/* VARIABLES */
-let idGroupGlobal = "";
-
+import Plus from "../../assets/Plus.svg";
+import Edit from "../../assets/pencil.svg";
+import Delete from "../../assets/trash.svg";
 
 export default function PayrollManagerContent() {
+  // Estado para la ventana modal de agregar usuario
+  const [modal1, setModal1] = useState(false);
 
-   
-// estado para la ventana modal de agregar usuario
-  const [modal1, setModal1] = useState(false); 
-
-  //Estados para los grupos
+  // Estados para los grupos
   const [data, setData] = useState([]);
 
-  //Estado para el payroll completo
-   //Estados para los grupos
-   const [data2, setData2] = useState([]);
+  // Estado para el payroll completo / filtrado por grupo
+  const [data2, setData2] = useState([]);
 
-  //Estados para recuperar la informacion de un trabajador
+  // Estado para recuperar la informacion de un trabajador
   const [data3, setData3] = useState([]);
 
-  //Estado para la persona seleccionada
+  // Estado para la persona seleccionada
   const [selectPerson, setSelectPerson] = useState("-----");
 
-  //Estado para guardar el id de la persona seleccionada, para usarlo en el momento de actualizacion o eliminacion
-  const [selectPersonId, setSelectPersonId] = useState();
+  // Estado para guardar el id de la persona seleccionada
+  const [selectPersonId, setSelectPersonId] = useState(null);
 
-  //Estado para guardar el id del grupo de  la persona seleccionada,
-  const [selectPersonIdgroup, setSelectPersonIdgroup] = useState();
+  // Estado para guardar el id del grupo de la persona seleccionada
+  const [selectPersonIdgroup, setSelectPersonIdgroup] = useState(null);
 
-  //Estado para definir si se va a agregar editar o eliminar
-  const [operation, setOperation]= useState("0");
+  // Estado para guardar el ID del grupo activo (reemplaza la variable global suelta)
+  const [idGroupGlobal, setIdGroupGlobal] = useState("");
 
-  
-  //FUNCIONES
-  //Funcion que obtiene la data de la api - listado de grupos
+  // Estado para definir si se va a agregar (0) o editar (1)
+  const [operation, setOperation] = useState("0");
+
+  // ==================== FUNCIONES ====================
+
+  // Obtiene la lista de grupos
   const obtenerListadoGrupos = async () => {
-    return await axios
-      .get("http://localhost:3000/api/groups")
-      .then((response) => setData(response.data));
-  };
-
- //Funcion para obtener la data de  la persona
- const obtenerSinglePayroll = async () => {
-  return await axios
-    .get("http://localhost:3000/api/payroll/"+selectPersonId)
-    .then((response) => setData3(response.data))
-  };
-
-
- //Funcion para actualizar el Usuario seleccionado en el label de la parte inferior
- const operationPerson = (id,name, apellido,idGroup,e) =>{
-   setSelectPerson(name + " " + apellido);
-   setSelectPersonId(id);
-   setSelectPersonIdgroup(idGroup);
-
-
-    //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
-    if (e.target.classList=="ListLI") 
-    {
-
-      let aux = document.getElementsByClassName("active2");
-
-      for (let index = 0; index < aux.length; index++) 
-      {
-        aux[index].classList.remove("active2");
-      }
-
-      e.target.classList.add("active2");
+    try {
+      const response = await axios.get("http://localhost:3000/api/groups");
+      setData(response.data);
+    } catch (error) {
+      console.error("Error al obtener grupos:", error);
     }
- };
-
-
-  //Funcion que obtiene la data de la api - listado de grupos
-  const showUsersGroup = async (groupID,e) => {
-
-    //guardo el id de grupo en una variable global para posteriores usos
-    idGroupGlobal = groupID;
-
-    //reinicio el nombre del usuario previamente seleccionado
-    setSelectPerson("-----");
-
-     //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
-     if (e.target.classList=="contentForma") 
-     {
- 
-       let aux = document.getElementsByClassName("activo");
- 
-       for (let index = 0; index < aux.length; index++) 
-       {
-         aux[index].classList.remove("activo");
-       }
- 
-       e.target.classList.add("activo");
-     }
-
-
-    return await axios
-      .get("http://localhost:3000/api/payroll/idGroup/"+groupID)
-      .then((response) => setData2(response.data));
-      
   };
 
-//funcion que se ejecuta cuando se da click en el boton de agreagar
-const addPerson = () =>{
-  setOperation(0);
-  setModal1(!modal1);
-}
+  // Obtiene la data de un trabajador específico
+  const obtenerSinglePayroll = async () => {
+    try {
+      const response = await axios.get(`http://localhost:3000/api/payroll/${selectPersonId}`);
+      setData3(response.data);
+    } catch (error) {
+      console.error("Error al obtener información del trabajador:", error);
+    }
+  };
 
+  // Actualiza la persona seleccionada (Enfoque declarativo, sin alterar el DOM directamente)
+  const operationPerson = (id, name, apellido, idGroup) => {
+  setSelectPerson(`${name} ${apellido}`);
+  setSelectPersonId(id);
+  setSelectPersonIdgroup(idGroup);
+  setIdGroupGlobal(idGroup); // <--- ¡Aseguramos que el ID del grupo global nunca esté vacío!
+};
 
- //Funcion para editar el usuario seleccionado
- const EditPerson = () =>{
+  // Muestra los usuarios pertenecientes a un grupo
+  const showUsersGroup = async (groupID) => {
+    setIdGroupGlobal(groupID);
+    setSelectPerson("-----");
+    setSelectPersonId(null);
 
-  if (selectPerson == "-----" ) {
-    toast.error("Para editar una persona del listado, primero debe seleccionarla dando clic");
-  } 
+    try {
+      const response = await axios.get(`http://localhost:3000/api/payroll/idGroup/${groupID}`);
+      setData2(response.data);
+    } catch (error) {
+      console.error("Error al obtener usuarios del grupo:", error);
+    }
+  };
 
-  else{
-    if(selectPersonId)
-        {
-          setModal1(!modal1);
-          obtenerSinglePayroll();
-          setOperation(1);
-        }
-  }
-   
- };
+  // Abre el modal para agregar persona
+  const addPerson = () => {
+    setOperation(0);
+    setModal1(!modal1);
+  };
 
- //eliminar Registro completo en rotations manager
- const deleteFromRm = async ()=>{
+  // Abre el modal para editar persona seleccionada
+  const EditPerson = () => {
+    if (selectPerson === "-----") {
+      toast.error("Para editar una persona del listado, primero debe seleccionarla dando clic");
+    } else {
+      if (selectPersonId) {
+        setModal1(!modal1);
+        obtenerSinglePayroll();
+        setOperation(1);
+      }
+    }
+  };
 
-    await axios.delete("http://localhost:3000/api/rotationsmanager/delsimplereg/" + selectPersonId);
- }
+  // Eliminar registro en rotations manager
+  const deleteFromRm = async () => {
+    await axios.delete(`http://localhost:3000/api/rotationsmanager/delsimplereg/${selectPersonId}`);
+  };
 
- //eliminar Registro completo en rotations manager fines de semana
- const deleteFromRmFS = async ()=>{
+  // Eliminar registro en rotations manager fines de semana
+  const deleteFromRmFS = async () => {
+    await axios.delete(`http://localhost:3000/api/rotationsmanager-fs/delsimplereg/${selectPersonId}`);
+  };
 
-  await axios.delete("http://localhost:3000/api/rotationsmanager-fs/delsimplereg/" + selectPersonId);
-}
+  // Actualiza el número total de usuarios en rotationsmanager y rotationsmanagerFS
+  const updateTotalGrupo = async () => {
+    if (!idGroupGlobal) return;
 
+    let totalGroupsActual = data2?.filter((rm) => String(rm.activo) === "true").length || 0;
+    totalGroupsActual = Math.max(0, totalGroupsActual - 1);
 
-//Funcion que al ser ejecutada me permite actualizar el nuevo numero de usuarios en rotationsmanager y rotationsmangerFS
-const updateTotalGrupo = async ()=>{
+    await axios.put(`http://localhost:3000/api/rotationsmanager/uptdatetotalgroup/${idGroupGlobal}`, {
+      nuevovalor: totalGroupsActual,
+    });
 
-  let totalGroupsActual = 0;
-  
-  data2?.map((rm)=>(
-      String(rm.activo) == "true" ? totalGroupsActual ++ :null
-     ));
+    await axios.put(`http://localhost:3000/api/rotationsmanager-fs/uptdatetotalgroup/${idGroupGlobal}`, {
+      nuevovalor: totalGroupsActual,
+    });
+  };
 
-     totalGroupsActual = totalGroupsActual-1;
-
-      await axios.put("http://localhost:3000/api/rotationsmanager/uptdatetotalgroup/" + idGroupGlobal,{
-        nuevovalor: totalGroupsActual,
-      }); 
-
-      await axios.put("http://localhost:3000/api/rotationsmanager-fs/uptdatetotalgroup/" + idGroupGlobal,{
-        nuevovalor: totalGroupsActual,
-      }); 
-  
-}
-
-
-   //Eliminar grupo
-   const deletePerson = async () => {
-    if (selectPerson == "-----" || idGroupGlobal == "") {
+  // Dispara la alerta de confirmación para eliminar
+  const deletePerson = () => {
+    if (selectPerson === "-----" || !idGroupGlobal) {
       toast.error("Para eliminar una persona del listado, primero debe seleccionar un grupo y luego dar clic en el listado");
-    } 
-    else 
-    {
+    } else {
       Swal.fire({
-        title: "¿Realmente desea eliminar a "+selectPerson+"?",
+        title: `¿Realmente desea eliminar a ${selectPerson}?`,
         showDenyButton: true,
         showCancelButton: true,
         confirmButtonText: "No",
         denyButtonText: `Confirmar`,
-        footer: '<h6>Gestión Manager Citytv</h6>',
-        
+        footer: "<h6>Gestión Manager Citytv</h6>",
       }).then((result) => {
-        /* Read more about isConfirmed, isDenied below */
-        if (result.isConfirmed) {
-          //Swal.fire("Saved!", "", "success");
-        } else if (result.isDenied) 
-        {
+        if (result.isDenied) {
           EliminarPerson();
-          //Swal.fire("Registro eliminado del sistema", "", "success");
         }
       });
     }
   };
 
-  const EliminarPerson = async ()=>{
+  // Lógica asíncrona limpia para la eliminación completa
+  const EliminarPerson = async () => {
+    try {
+      await axios.delete(`http://localhost:3000/api/payroll/${selectPersonId}`);
+      await obtenerListadoGrupos();
+      setSelectPerson("-----");
+      setSelectPersonId(null);
+      await obtenerListadoPayroll();
+      await deleteFromRm();
+      await deleteFromRmFS();
+      await updateTotalGrupo();
+      toast.success("Usuario eliminado del sistema correctamente");
+    } catch (error) {
+      toast.error("Hubo un error al eliminar el usuario");
+      console.error(error);
+    }
+  };
 
-    
-    await axios.delete("http://localhost:3000/api/payroll/" + selectPersonId)
-    .then((response) => obtenerListadoGrupos())
-    .then((response) => setSelectPerson("-----"))
-    .then((response) => obtenerListadoPayroll())
-    .then((response) => deleteFromRm())
-    .then((response) => deleteFromRmFS())
-    .then((response) => updateTotalGrupo())
-    .then((response) => toast.success("Usuario eliminado del sistema correctamente"))
-    
-     
-  }
+  // Obtiene la lista general de todos los usuarios
+  const obtenerListadoPayroll = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/api/payroll");
+      setData2(response.data);
+    } catch (error) {
+      console.error("Error al obtener listado de payroll:", error);
+    }
+  };
 
- 
-
-
-  
-
-
-
-
-
+  // Carga inicial unificada
   useEffect(() => {
     obtenerListadoGrupos();
-  }, []);
- 
- 
-   //Funcion que obtiene la data de la api - listado todos los usurios del sistema
-   const obtenerListadoPayroll = async () => {
-     return await axios
-       .get("http://localhost:3000/api/payroll")
-       .then((response) => setData2(response.data));
-   };
- 
-   useEffect(() => {
     obtenerListadoPayroll();
   }, []);
 
   return (
     <>
-    <Toaster />
-    {createPortal(<ModalBase1 estado={modal1} 
-                              cambiarEstado={setModal1} 
-                              title="Gestión del personal" 
-                              content={<ModalPayrollManager 
-                              id={selectPersonId} 
-                              op={operation} 
-                              idGrupo ={selectPersonIdgroup}/>}/>,document.querySelector('#portal'))}
+      <Toaster />
+      {createPortal(
+        <ModalBase1
+          estado={modal1}
+          cambiarEstado={setModal1}
+          title="Gestión del personal"
+          content={
+            <ModalPayrollManager
+              id={selectPersonId}
+              op={operation}
+              idGrupo={selectPersonIdgroup}
+            />
+          }
+        />,
+        document.querySelector("#portal"),
+      )}
 
       <div className="contenPAYROLL">
-      <h3 className="subTitulo1">Grupos o Áreas </h3>
+        <h3 className="subTitulo1">Grupos o Áreas</h3>
         <div className="sectionAdd">
-    
-          <ul className='ulListado'>
-              {
-                  data?.map((group)=>(
-                    <li key={group._id} className="contentForma" onClick={(e)=>showUsersGroup(group._id,e)}>
-                      <img src={group.logo} alt={group.nombre} className='img-cam'/>
-                      {group.nombre}
-                    </li>
-                  ))
-              }
+          {/* Componente externo encargado de pintar o gestionar la selección de grupos */}
+          <GetUsers set={setData2} />
 
-          </ul>
-
-         
-
-           
           <div className="seccionButons">
-          <div className="person">{selectPerson}</div>
-                <div className="containerSingleButtom" onClick={() => addPerson()}>
-                  <img src={Plus} alt="pencil" className='img-butons'/>
-                </div>
-                <div className="containerSingleButtom">
-                 <img src={Edit} alt="plus" className='img-butons' onClick={()=>EditPerson()}/>
-                </div>
-                <div className="containerSingleButtomDel">
-                 <img src={Delete} alt="trash" className='img-butons' onClick={()=>deletePerson()}/>
-                </div>
-              </div>
+            <div className="person">{selectPerson}</div>
+            <div className="containerSingleButtom" onClick={() => addPerson()}>
+              <img src={Plus} alt="Agregar" className="img-butons" />
+            </div>
+            <div className="containerSingleButtom">
+              <img
+                src={Edit}
+                alt="Editar"
+                className="img-butons"
+                onClick={() => EditPerson()}
+              />
+            </div>
+            <div className="containerSingleButtomDel">
+              <img
+                src={Delete}
+                alt="Eliminar"
+                className="img-butons"
+                onClick={() => deletePerson()}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="sectionListPayroll">
-        <h3 className="subTitulo2">Listado de personas del grupo</h3>
-          <ul className='ListUL'>
-
-            {
-               data2.map((payroll,index)=>(
-
-                payroll.cargo != "USERBALANCER" ?
-                <div className="sb" key={index}>
-                  <div className="subGrupo">{payroll.subGrupo}</div>
-                   <li className={payroll.activo==false?'ListLI2':'ListLI'} key={payroll._id} onClick={(e)=> operationPerson(payroll._id,payroll.nombres,payroll.apellidos,payroll.grupoID,e)}>{payroll.nombres} {payroll.apellidos}</li>
-                </div>
-                :null
-               ))
-            } 
-          </ul>
+          <h3 className="subTitulo2">Listado de personas del grupo</h3>
+          <ul className="ListUL">
+  {data2.map((payroll) =>
+    payroll.cargo !== "USERBALANCER" ? (
+      <div className="sb" key={payroll._id}>
+        <div className="subGrupo">{payroll.subGrupo}</div>
+        <li
+          className={
+            payroll._id === selectPersonId
+              ? "ListLI active2"
+              : payroll.activo === false
+              ? "ListLI2"
+              : "ListLI"
+          }
+          onClick={() =>
+            operationPerson(
+              payroll._id,
+              payroll.nombres,
+              payroll.apellidos,
+              payroll.grupoID,
+            )
+          }
+        >
+          {payroll.nombres} {payroll.apellidos}
+          {/* Si está inactivo, añadimos un indicador visual */}
+          {payroll.activo === false && (
+            <span style={{ fontSize: "0.8rem", marginLeft: "8px", fontStyle: "italic", opacity: 0.8 }}>
+              (Desactivado)
+            </span>
+          )}
+        </li>
+      </div>
+    ) : null,
+  )}
+</ul>
         </div>
       </div>
     </>
-  )
+  );
 }

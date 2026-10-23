@@ -613,12 +613,12 @@
     background-color: #D9D9D9;
     position: absolute;
     bottom: 24%;
-    width: 5%;
+    width: 6%;
     color: #DADADA;
     left: 35%;
-    height: 10%;
+    height: 12%;
     border-radius: .5rem;
-    z-index: 150;
+    z-index: 10;
     box-shadow: #000000 2px 2px 20px;
     
 }
@@ -627,10 +627,10 @@
     background-color: #D9D9D9;
     position: absolute;
     bottom: 24%;
-    width: 5%;
+    width: 6%;
     color: #DADADA;
     right: 35%;
-    height: 10%;
+    height: 12%;
     border-radius: .5rem;
     z-index: 150;
     box-shadow: #000000 2px 2px 20px;
@@ -905,7 +905,7 @@
     position: absolute;
     height: 60%;
     width: 50%;
-    z-index: 500;
+    z-index: 1000;
     top: 13%;
     left: 25%;
     padding: 1rem;

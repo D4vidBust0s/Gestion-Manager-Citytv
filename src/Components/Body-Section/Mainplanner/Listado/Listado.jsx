@@ -1,26 +1,29 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-unused-vars */
 /* ESTILOS */
 import  './Listado.css'
 
 //Imagenes 
-import savedNull from '/src/assets/save-null.png';
-import savedOk from '/src/assets/save-ok.png';
+//import savedNull from '/src/assets/save-null.png';
+//import savedOk from '/src/assets/save-ok.png';
 import trash from '/src/assets/trash.svg';
 import flecha from '/src/assets/arrow3.svg';
+import calendario from '/src/assets/calendar.webp';
 
 /* COMPONENTES MODALES*/
 import ModalPlanner2 from "../../../Modals/ModalPlanner2";
 
 
 /* DEPENDENCIAS */
-import {useState,useEffect,useContext} from 'react'
+import {useState,useEffect,useContext,useRef} from 'react'
 import { createPortal } from 'react-dom';
 import axios from 'axios';
-import {toast, Toaster} from 'react-hot-toast'
+import {toast} from 'react-hot-toast'
 import { FechaBarraContext } from '../../../../context/FechaBarraProvider';
 import { PronosticoContext } from '../../../../context/PronosticoTurnosProvider';
 import { AuxSustitutions } from '../../../../context/AuxSustitutionsProvider';
 import Swal from "sweetalert2";
-
+import DatePicker from 'react-datepicker';
 
 
 export default function Listado() {
@@ -44,6 +47,9 @@ export default function Listado() {
   const [data13, setData13] = useState([]);
   const [data14, setData14] = useState([]);
   const [data15, setData15] = useState([]);
+  const [data16, setData16] = useState([]);
+  const [data17, setData17] = useState([]);
+  
 
   const [saved, setSaved] = useState(false);
   const [semanasP, setSemanasP] = useState("----------");
@@ -74,6 +80,9 @@ export default function Listado() {
   const [selectPersonIdDer, setSelectPersonIdDer] = useState("-----");
   const [selectPersonGroupDer, setSelectPersonGroupDer] = useState("-----");
 
+  //Estado para mostrar la ventana de copiar programacion de un dia a otro
+  const [ventana, setVentana] = useState(false);
+  const [starIn, setStarIn] = useState(new Date());
 
 
   //Variables 
@@ -95,7 +104,11 @@ export default function Listado() {
   let globalDomingos;
   
   let auxi = 0;
+  
+  // eslint-disable-next-line no-unused-vars
   let idGroupGlobal = "";
+
+  const fechaFinalRef = useRef();
   
   
   
@@ -206,6 +219,35 @@ const getProgrammers = async () => {
       }
     })
     .then((response) => setData15(response.data));
+};
+
+//Funcion que obtiene la data de la api - shifts
+const obtenerListadoTurnosDayKey = async () => {
+  
+  return await axios
+    .get("http://localhost:3000/api/shifts/daykey",
+    {
+       params:{    
+       daykey: new Date(new Date(starIn).setHours(0,0,0,0)).toISOString()
+    }}
+    )
+    .then((response) => setData16(response.data));
+
+};
+
+
+//Funcion que obtiene la data de la api - shifts
+const obtenerListadoTurnosDayKey2 = async () => {
+  
+  return await axios
+    .get("http://localhost:3000/api/shifts/daykey",
+    {
+       params:{    
+       daykey: new Date(new Date(fechaBarra).setHours(0,0,0,0)).toISOString()
+    }}
+    )
+    .then((response) => setData17(response.data));
+
 };
 
 
@@ -1283,7 +1325,7 @@ const getMinutes = (fecha) =>{
 
   else{
     inicio = 0;
-    console.log("Entro aqui " + horas + "--" + minutos);
+    //console.log("Entro aqui " + horas + "--" + minutos);
   }
 
  
@@ -1738,13 +1780,97 @@ const asignar = () =>{
 
 
   else{
-
+ 
       saveSustitucion();
       setAux(!Aux);
   }
  
 }
 
+
+const cleanTurnos = async() =>{
+  
+    axios.delete("http://localhost:3000/api/shifts/all/"+new Date(new Date(fechaBarra).setHours(0,0,0,0)).toISOString()
+ )
+}
+
+const copiarTurnos = async() =>{
+  
+ data16?.map((shifts)=>(
+    axios.post("http://localhost:3000/api/shifts/", {
+    idUser: shifts.ID_user,
+    nombres: shifts.Nombres,
+    index: shifts.Index,
+    idPrograma: shifts.Event_name,
+    eventId: shifts.ID_event,
+    color: shifts.Color,
+    observacion: shifts.Observacion,
+    fechaClave: new Date(new Date(fechaBarra).setHours(0,0,0,0)).toISOString(),
+    idSchema:  shifts.Id_Schema,
+    inicioMain: shifts.Inicio_main,
+    out: shifts.Out,
+    tipo: shifts.Type,
+    })
+
+
+ ))
+}
+
+const copiar = ()=>{
+ let aux = 0;
+
+  obtenerListadoTurnosDayKey();
+
+  //Validacion de fechaclave
+    data17?.map((shifts)=>(
+    shifts.Fecha_clave == new Date(new Date(fechaBarra).setHours(0,0,0,0)).toISOString() && (aux = 1 )
+  )) 
+
+
+  //if(aux == 1) {toast.error("YA HAY DATA"); aux = 0;} else{toast.success("Esta vacio")}
+
+  if(aux == 1)
+  {
+    aux = 0;
+
+    Swal.fire({
+      title: "Ya existen turnos registrados para esta fecha, ¿Desea sobreescribir la información con los turnos del día " + new Date(fechaBarra).toLocaleDateString() + "?",
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: "No",
+      denyButtonText: `Sí`,
+      footer: '<h6>Gestión Manager Citytv</h6>',
+  }).then((result) => {
+    
+    if (result.isConfirmed) 
+    {
+      //No hacemos nada
+    } 
+    
+    else if (result.isDenied) 
+    {
+      cleanTurnos();
+      copiarTurnos();
+      setAuxiliar(!auxiliar);
+      Swal.fire("Turnos replicados con éxito", "", "success");
+    }
+  });
+  }
+
+  else{
+    cleanTurnos();
+    copiarTurnos();
+    setAuxiliar(!auxiliar);
+    Swal.fire("Turnos replicados con éxito", "", "success");
+  }
+
+ setVentana(!ventana);
+}
+
+
+const cancelar = () =>{
+  setVentana(!ventana);
+}
 
 
 //************************************************************************************************************* */
@@ -1795,9 +1921,45 @@ const asignar = () =>{
   useEffect(() => {
     getProgrammers();
   }, [fechaBarra]);
+
+   useEffect(() => {
+      obtenerListadoTurnosDayKey();
+      obtenerListadoTurnosDayKey2();
+  }, [starIn,fechaBarra]);
+
+   
   
+
   return (
     <>
+     
+     { ventana == true &&
+      <div className="ventana">
+          <h2 className='ventana_titulo'>Selecione el dia que desea replicar </h2>
+          <h2 className='ventana_titulo'>Hay {data16.length} Registros </h2>
+          <p className='ventana_fecha'>{fechaBarra}</p>
+        
+        {
+           <DatePicker
+            selected={starIn}
+            onChange={(date) => setStarIn(date)}
+            inline
+            showWeekNumbers
+            showMonthDropdown
+            startDate={starIn}
+            ref={fechaFinalRef}
+          />
+        }
+
+        <div className="ventana_boton" onClick={() => data16.length == 0 ? toast.error("El dia seleccionado no tiene registros") : copiar()}>
+          Replicar
+        </div>
+         <div className="ventana_boton_cancel" onClick={() => cancelar()}>
+          Cancelar
+        </div>
+     </div>
+     
+     }
      
       
       {createPortal(
@@ -1808,6 +1970,8 @@ const asignar = () =>{
 
       {data?.map((group) => (
         auxi = 0,
+
+        group.mainplanner == "MainPlanner" &&
 
         <div className="mainRow" key={group._id}>
           <div className="ContentImgCargos">
@@ -1849,7 +2013,7 @@ const asignar = () =>{
 
      <div className="sectionSave">
       <div className="disket">
-        <img src={savedOk} alt="disket" className='savedNull'/>
+        <img src={calendario} alt="disket" className='savedNull' onClick={() => setVentana(!ventana)}/>
       </div>
         <div className={saved ? "circleSaved" : "circle"} onClick={save}>
         {saved ? "Rotations" : "Prog"} 

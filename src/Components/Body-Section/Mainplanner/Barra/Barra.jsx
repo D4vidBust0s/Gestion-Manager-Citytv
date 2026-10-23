@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
 /* ESTILOS */
 import './Barra.css'
 
@@ -61,7 +63,7 @@ let auxi = 0;
 let aux = "";
 
 let vAño = 0;
-
+let bye = 0;
 
 export default function Barra() {
 
@@ -72,10 +74,10 @@ export default function Barra() {
   const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Este contexto hace referencia a la fecha que se selecciona 
                                                                     //en la barra del mainplanner
 
-  const [Aux,setAux] = useContext(AuxSustitutions); //Este contexto referencia un estado que avisa si hubo un cambio
+  const [Aux,] = useContext(AuxSustitutions); //Este contexto referencia un estado que avisa si hubo un cambio
                                                                     //para volver a llamar las sustituciones nuevamente
                                                                   
-  const [auxiliar,setAuxiliar] = useContext(PronosticoContext); // notifica de cambios en descansos
+  const [auxiliar,] = useContext(PronosticoContext); // notifica de cambios en descansos
   
 //estado para la ventana modal1 
  const [modal1, setModal1] = useState(false); 
@@ -95,6 +97,7 @@ export default function Barra() {
  const [data9, setData9] = useState([]);
  const [data10, setData10] = useState([]);
  const [data11, setData11] = useState([]);
+ const [data12, setData12] = useState([]);
 
  const [nombre, setNombre] = useState("");
  const [cargo, setCargo] = useState("");
@@ -183,6 +186,13 @@ const getPeopleOfGroup = async ()=>{
 
 }
 
+const getRules = async ()=>{
+  return await axios
+  .get("http://localhost:3000/api/rules/")
+  .then((response) => setData12(response.data));  
+
+}
+
 const traerHolidays = async ()=>{
   
   const year = startDate.getFullYear().toString();
@@ -212,6 +222,26 @@ const traerHolidays = async ()=>{
 
     ))
 
+  }
+
+
+  const comprobarAlert = (diasRules,diasPeriodo,idUser)=>{
+    let respuesta = 0;
+    //let fechaMenos = new Date(fechaBarra).setDate(new Date(fechaBarra).getDate()-diasRules)
+
+    //Traemos la fecha de ingreso del trabajador
+    data1?.map((payroll)=>(
+      payroll._id == idUser && payroll.estadoCivil == "Casado"
+
+       //payroll._id == idUser && new Date(new Date(payroll.fechaIngreso).setHours(0,0,0,0)).toISOString()
+
+      ?
+         respuesta = 1
+
+      : null
+    ))
+
+     return respuesta;
   }
 
   const verificar = (pid,pn,pa,subgrupo,cargo,pg,gid)=>{
@@ -473,7 +503,27 @@ const noExist = () =>{
           ))
         }
         
-        {pn +" "+pa + traerRemplazo(pid,grupoid,pn)}
+        {
+          
+            
+              data12?.map((rules)=>(
+                comprobarAlert(rules.DiasAlert,rules.DiasPeriodo,pid) == 1
+                 
+                ?
+                  <div className='bye'>
+                    { pn +" "+pa + traerRemplazo(pid,grupoid,pn)}
+                  </div> 
+
+                :
+                   <div>
+                    { pn +" "+pa + traerRemplazo(pid,grupoid,pn)}
+                  </div> 
+              ))
+                    
+            
+          
+              
+        }
       </li>
     </ul>
 
@@ -653,6 +703,10 @@ const noExist = () =>{
     getPeople();
   }, [Aux]);
 
+   useEffect(() => {
+    getPeople();
+  }, []);
+
 
   useEffect(() => {
     getPermissions();
@@ -678,6 +732,10 @@ const noExist = () =>{
 
   useEffect(()=>{
     getRotationsmanager();
+  },[])
+
+  useEffect(()=>{
+    getRules();
   },[])
 
   useEffect(()=>{
@@ -734,6 +792,8 @@ const noExist = () =>{
             //Ciclo que trae el numero de grupos del sistema
             data?.map((group)=>(
               auxi = 0,
+
+              group.mainplanner == "MainPlanner" &&
 
                 <div key={group._id}>
                   {

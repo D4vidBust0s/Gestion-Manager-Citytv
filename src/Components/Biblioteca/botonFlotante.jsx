@@ -1,23 +1,30 @@
 /* Estilos */
-import './botonFlotante.css'
+import './botonFlotante.css';
 
 /* Imagenes */
-import flecha from '../../assets/arrow.svg'
+import flecha from '../../assets/arrow.svg';
 
-const botonFlotante = ({actual,cambio}) => {
+// eslint-disable-next-line react/prop-types
+const BotonFlotante = ({ actual, cambio, totalNovelties }) => {
+  const tienePendientes = totalNovelties > 0;
+
   return (
     <>
-      <div className="floatBtn" onClick={() => cambio(!actual)}>
+      <div 
+        className={`floatBtn ${tienePendientes ? 'pulse-alert' : ''}`} 
+        onClick={() => cambio(!actual)}
+      >
+        {tienePendientes && (
           <div className="numFull">
             <span>
-              24
+              {totalNovelties}
             </span>
           </div>
-          <img src={flecha} alt="flecha" />
-        </div>
-
+        )}
+        <img src={flecha} alt="flecha" />
+      </div>
     </>
-  )
-}
+  );
+};
 
-export default botonFlotante
+export default BotonFlotante;

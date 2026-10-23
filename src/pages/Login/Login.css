@@ -1,0 +1,219 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Previene scroll en toda la ventana */
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+/* Estilos para la pantalla de Login y Bienvenida */
+
+.login-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background-color: #00094b; /* Azul oscuro profundo corporativo */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+/* =========================================
+   SECCIÓN SUPERIOR: BIENVENIDA / SPLASH
+   ========================================= */
+.welcome-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.5s ease-in-out;
+  position: absolute;
+  z-index: 2;
+}
+
+.welcome-section.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50px);
+}
+
+.welcome-logo-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.welcome-title {
+  color: #ffffff;
+  font-size: 4rem;
+  font-weight: bold;
+  margin: 0;
+  letter-spacing: -2px;
+}
+
+.welcome-title sup {
+  font-size: 1.5rem;
+}
+
+.welcome-subtitle {
+  color: #ffffff;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+/* BOTÓN DE LOGIN PRINCIPAL (BIENVENIDA) */
+.btn-login-main {
+  background-color: #5b13ec; /* Tono morado institucional */
+  color: #ffffff;
+  border: none;
+  padding: 12px 70px;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(91, 19, 236, 0.4);
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.btn-login-main:hover {
+  background-color: #6b26ff;
+  transform: scale(1.05);
+}
+
+/* =========================================
+   SECCIÓN INFERIOR: TARJETA DE FORMULARIO
+   ========================================= */
+.form-card-section {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(30px);
+  transition: all 0.5s ease-in-out;
+  position: absolute;
+  z-index: 1;
+}
+
+.form-card-section.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  z-index: 3;
+}
+
+.login-card {
+  background-color: #ffffff;
+  width: 400px;
+  padding: 30px;
+  border-radius: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.card-header-logo {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.card-header-logo span {
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  color: #222;
+  font-weight: bold;
+  display: block;
+}
+
+.card-header-logo h3 {
+  font-size: 1.8rem;
+  color: #111;
+  margin: 0;
+  font-weight: bold;
+}
+
+.input-group-login {
+  width: 100%;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.input-group-login label {
+  display: block;
+  font-size: 0.80rem;
+  color: #555;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.input-login-field {
+  position: relative;
+  width: 100%;
+  background-color: #e5e5e5;
+  border: none;
+  padding: 12px 15px;
+  border-radius: 20px;
+  font-size: 1.2rem;
+  color: #333;
+  outline: none;
+ 
+ text-align: center;
+}
+
+.input-login-field:focus {
+  background-color: #dcdcdc;
+}
+
+.card-footer-icons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 15px 0 20px 0;
+}
+
+.icon-info, .icon-lock {
+  font-size: 1.1rem;
+  cursor: pointer;
+  background-color: #555;
+  color: white;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-login-submit {
+  background-color: #5b13ec;
+  color: #ffffff;
+  border: none;
+  width: 100%;
+  padding: 12px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(91, 19, 236, 0.3);
+  transition: background 0.3s ease;
+}
+
+.btn-login-submit:hover {
+  background-color: #6b26ff;
+}
+.formMain{
+    width: 90%;
+}
+
+.logo{
+    width: 70%;
+}

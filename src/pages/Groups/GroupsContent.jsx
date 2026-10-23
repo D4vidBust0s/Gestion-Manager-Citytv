@@ -14,114 +14,98 @@ import Edit from "../../assets/pencil.svg";
 import Delete from "../../assets/trash.svg";
 import coleccionLogos from "../../assets/logos/logos";
 
-/* API */
-
-export default function ProgramsContent() {
-  //ESTADOS
-  //Estados para los grupos
+export default function GroupsContent() {
+  // ESTADOS
   const [data, setData] = useState([]);
 
-  //Estados para los controles HTML
-  const [nameGroup, setNameGroup] = useState("Default");
-  const [description, setDescription] = useState("Description default group");
+  // Estados para los controles HTML
+  const [nameGroup, setNameGroup] = useState("");
+  const [description, setDescription] = useState("");
   const [logo, setLogo] = useState(Default);
   const [valueLogo, setValueLogo] = useState("Default");
   const [ID, setId] = useState(null);
-  const [order,setOrder] = useState("Seleccione");
-  const [planner,setPlanner] = useState("Seleccione");
+  const [order, setOrder] = useState("1");
+  const [planner, setPlanner] = useState("MainPlanner");
 
-  //Referencias
+  // Referencias
   const refName = useRef();
   const refLogo = useRef();
   const refDescripcion = useRef();
   const refOrder = useRef();
   const refMainplanner = useRef();
-  //------------------------------------------------------------------------------------
 
-  const setNew = (orden)=>{
-
-    refOrder.current.value=orden;
-  }
-
-  //FUNCIONES
-  //Funcion que obtiene la data de la api - listado de grupos
+  // Función que obtiene la data de la api - listado de grupos
   const obtenerListadoGrupos = async () => {
-    return await axios
-      .get("http://localhost:3000/api/groups")
-      .then((response) => setData(response.data));
-  };
-
-  //Funcion para traer y actualizar la informacion al dar click sobre el grupo
-  const grupoClick = async (id,e) => {
-    await axios
-      .get("http://localhost:3000/api/groups/" + id)
-      .then(
-        (response) =>
-          setNameGroup(response.data.nombre) +
-          setDescription(response.data.descripcion) +
-          setLogo(response.data.logo) +
-          setValueLogo(response.data.logo) +
-          setOrder(response.data.orden) +
-          setNew(response.data.orden) +
-          (refMainplanner.current.value = response.data.mainplanner)
-
-      );
-    setId(id);
-
-
-     //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
-     if (e.target.classList=="ListLI") 
-     {
- 
-       let aux = document.getElementsByClassName("activo");
- 
-       for (let index = 0; index < aux.length; index++) 
-       {
-         aux[index].classList.remove("activo");
-       }
- 
-       e.target.classList.add("activo");
-     }
-  };
-
-  //Agregar grupo
-  const agregarGrupo = async () => {
-    if (refName.current.value == "") {
-      toast.error("El campo nombre del grupo no puede estar vacio");
-    } else if (refLogo.current.value == "") {
-      toast.error("El campo logo no puede estar vacio");
-    } else if (refDescripcion.current.value == "") {
-      toast.error("El campo Descripción debe tener un contenido");
-    } else if (refOrder.current.value == "") {
-      toast.error("El campo Orden no debe estar vacio");
-    } 
-    
-    else 
-    {
-      await axios.post("http://localhost:3000/api/groups/", {
-        nombre: nameGroup,
-        logo: logo,
-        order: order,
-        descripcion: description,
-        mainplanner: refMainplanner.current.value,
-      });
-
-      obtenerListadoGrupos();
-
-      toast.success("Grupo agregado");
-      setNameGroup("");
-      setLogo(logo);
-      setDescription("");
+    try {
+      const response = await axios.get("http://localhost:3000/api/groups");
+      setData(response.data);
+    } catch (error) {
+      console.error("Error al obtener listado de grupos:", error);
     }
   };
 
-  //Eliminar grupo
+  // Limpieza unificada del formulario
+  const limpiarFormulario = () => {
+    setNameGroup("");
+    setDescription("");
+    setLogo(Default);
+    setValueLogo("Default");
+    setOrder("1");
+    setPlanner("MainPlanner");
+    setId(null);
+  };
+
+  // Función para traer y cargar la información al dar clic sobre el grupo
+  const grupoClick = async (id) => {
+    try {
+      const response = await axios.get("http://localhost:3000/api/groups/" + id);
+      const g = response.data;
+
+      setNameGroup(g.nombre || "");
+      setDescription(g.descripcion || "");
+      setLogo(g.logo || Default);
+      setValueLogo(g.logo || "Default");
+      const ord = (g.orden ?? g.order ?? "1").toString();
+      setOrder(ord);
+      const mp = (g.mainplanner || "MainPlanner").trim();
+      setPlanner(mp);
+      setId(id);
+    } catch (error) {
+      toast.error("Error al cargar los datos del grupo");
+    }
+  };
+
+  // Agregar grupo
+  const agregarGrupo = async () => {
+    if (!nameGroup || nameGroup.trim() === "") {
+      toast.error("El campo nombre del grupo no puede estar vacío");
+    } else if (!logo) {
+      toast.error("El campo logo no puede estar vacío");
+    } else if (!description || description.trim() === "") {
+      toast.error("El campo Descripción debe tener un contenido");
+    } else if (!order) {
+      toast.error("El campo Orden no debe estar vacío");
+    } else {
+      await axios.post("http://localhost:3000/api/groups/", {
+        nombre: nameGroup,
+        logo: logo,
+        order: Number(order) || order,
+        orden: Number(order) || order,
+        descripcion: description,
+        mainplanner: planner,
+      });
+
+      obtenerListadoGrupos();
+      toast.success("Grupo agregado");
+      limpiarFormulario();
+    }
+  };
+
+  // Eliminar grupo con confirmación
   const eliminarGrupo = async () => {
-    if (refName.current.value == "" || ID == null) {
-      toast.error("No ha seleccionado ningun grupo para eliminar");
-    } 
-    else 
-    {
+    if (!nameGroup || ID == null) {
+      toast.error("No ha seleccionado ningún grupo para eliminar");
+    } else {
       Swal.fire({
         title: "¿Realmente desea eliminar el Grupo " + nameGroup + "?",
         showDenyButton: true,
@@ -129,65 +113,54 @@ export default function ProgramsContent() {
         confirmButtonText: "No",
         denyButtonText: `Confirmar`,
         footer: '<h6>Gestión Manager Citytv</h6>',
-        
       }).then((result) => {
-        /* Read more about isConfirmed, isDenied below */
-        if (result.isConfirmed) {
-          //Swal.fire("Saved!", "", "success");
-        } else if (result.isDenied) 
-        {
+        if (result.isDenied) {
           EliminarGP();
-          //Swal.fire("Registro eliminado del sistema", "", "success");
         }
       });
     }
   };
 
-   const EliminarGP = async ()=>{
-        await axios.delete("http://localhost:3000/api/groups/" + ID);
-
-        obtenerListadoGrupos();
-
-        toast.error("Grupo Eliminado");
-        setNameGroup("");
-        setLogo(Default);
-        setDescription("");
-   }
-
-  //Actualizar grupo
-  const updateGrupo = async () => {
-    if (refName.current.value == "") {
-      toast.error("El campo nombre del grupo no puede estar vacio");
-    } else if (refLogo.current.value == "") {
-      toast.error("El campo logo no puede estar vacio");
-    } else if (refDescripcion.current.value == "") {
-      toast.error("El campo Descripción debe tener un contenido");
-    } else if (refOrder.current.value == "") {
-      toast.error("El campo Orden debe especificar el número de orden");
-    }
-    
-    else 
-    {
-      await axios.put("http://localhost:3000/api/groups/" + ID, {
-        nombre: nameGroup,
-        logo: logo,
-        orden: order,
-        descripcion: description,
-        mainplanner: refMainplanner.current.value,
-      });
-
+  const EliminarGP = async () => {
+    try {
+      await axios.delete("http://localhost:3000/api/groups/" + ID);
       obtenerListadoGrupos();
-
-      toast.success("Grupo Actualizado");
-      setNameGroup("");
-      setLogo(Default);
-      setDescription("");
-      setValueLogo("");
+      toast.error("Grupo Eliminado");
+      limpiarFormulario();
+    } catch (error) {
+      toast.error("Error al eliminar el grupo");
     }
   };
 
-  //-----------------------------------------------------------------------------------
-  //ESCRITURA EN CONTROLES HTML
+  // Actualizar grupo
+  const updateGrupo = async () => {
+    if (!nameGroup || nameGroup.trim() === "") {
+      toast.error("El campo nombre del grupo no puede estar vacío");
+    } else if (!logo) {
+      toast.error("El campo logo no puede estar vacío");
+    } else if (!description || description.trim() === "") {
+      toast.error("El campo Descripción debe tener un contenido");
+    } else if (!order) {
+      toast.error("El campo Orden debe especificar el número de orden");
+    } else if (!ID) {
+      toast.error("No ha seleccionado ningún grupo para actualizar");
+    } else {
+      await axios.put("http://localhost:3000/api/groups/" + ID, {
+        nombre: nameGroup,
+        logo: logo,
+        order: Number(order) || order,
+        orden: Number(order) || order,
+        descripcion: description,
+        mainplanner: planner,
+      });
+
+      obtenerListadoGrupos();
+      toast.success("Grupo Actualizado");
+      limpiarFormulario();
+    }
+  };
+
+  // Escritura en controles HTML
   const cambiarNombre = (e) => {
     setNameGroup(e.target.value);
   };
@@ -204,11 +177,16 @@ export default function ProgramsContent() {
     setDescription(e.target.value);
   };
 
-  //----------------------------------------------------------------------------------
-
   useEffect(() => {
     obtenerListadoGrupos();
   }, []);
+
+  // Lista ordenada ascendentemente por número de orden
+  const sortedData = [...data].sort((a, b) => {
+    const ordenA = Number(a.orden ?? a.order ?? 999);
+    const ordenB = Number(b.orden ?? b.order ?? 999);
+    return ordenA - ordenB;
+  });
 
   return (
     <>
@@ -217,7 +195,7 @@ export default function ProgramsContent() {
       </div>
       <div className="contenPGM">
         <div className="sectionAdd">
-          <h3 className="subTitulo">Nombre del Grupo {" "+ order}</h3>
+          <h3 className="subTitulo">Nombre del Grupo {order ? " (" + order + ")" : ""}</h3>
           <input
             type="text"
             className="inputName"
@@ -225,53 +203,39 @@ export default function ProgramsContent() {
             value={nameGroup}
             id="name"
             onChange={cambiarNombre}
+            placeholder="Nombre del grupo..."
           />
 
           <h3 className="subTitulo">Orden</h3>
           <div className="contentSectionLogo2">
-            <select className="inputDir" ref={refOrder} onChange={cambiarOrden}>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-            <option value="11">11</option>
-            <option value="12">12</option>
-            <option value="13">13</option>
-            <option value="14">14</option>
-            <option value="15">15</option>
-            <option value="16">16</option>
-            <option value="17">17</option>
-            <option value="18">18</option>
-            <option value="19">19</option>
-            <option value="20">20</option>
-            <option value="21">21</option>
-            <option value="22">22</option>
-            <option value="23">23</option>
-            <option value="24">24</option>
-            <option value="25">25</option>
-            <option value="26">26</option>
-            <option value="27">27</option>
-            <option value="28">28</option>
-            <option value="29">29</option>
-            <option value="30">30</option>
-             
+            <select
+              className="inputDir"
+              ref={refOrder}
+              value={order}
+              onChange={cambiarOrden}
+            >
+              {Array.from({ length: 30 }, (_, i) => (
+                <option key={i + 1} value={(i + 1).toString()}>
+                  {i + 1}
+                </option>
+              ))}
             </select>
           </div>
 
-
           <h3 className="subTitulo">Logo</h3>
           <div className="contentSectionLogo">
-            <select className="inputDir" ref={refLogo} onChange={cambiarLogo}>
-            <option key={0} value={Default}>{valueLogo}</option>
+            <select
+              className="inputDir"
+              ref={refLogo}
+              value={logo}
+              onChange={cambiarLogo}
+            >
+              <option key={0} value={Default}>
+                Seleccione un Logo
+              </option>
               {coleccionLogos.map((option) => (
                 <option key={option.id} value={option.img}>
-                  {option.titulo} 
+                  {option.titulo}
                 </option>
               ))}
             </select>
@@ -283,9 +247,18 @@ export default function ProgramsContent() {
 
           <h3 className="subTitulo">MainPlanner</h3>
           <div className="contentSectionLogo">
-            <select className="inputDir" ref={refMainplanner} >
-            <option key={1} value="MainPlanner">MainPlanner </option>
-            <option key={2} value="MainPlanner +">MainPlanner +</option>
+            <select
+              className="inputDir"
+              ref={refMainplanner}
+              value={planner}
+              onChange={(e) => setPlanner(e.target.value)}
+            >
+              <option key={1} value="MainPlanner">
+                MainPlanner
+              </option>
+              <option key={2} value="MainPlanner +">
+                MainPlanner +
+              </option>
             </select>
           </div>
 
@@ -295,26 +268,27 @@ export default function ProgramsContent() {
             ref={refDescripcion}
             value={description}
             onChange={cambiarDescripcion}
+            placeholder="Descripción del área o responsabilidades..."
           ></textarea>
 
           <div className="seccionButons">
-            <div className="containerSingleButtom">
+            <div className="containerSingleButtom" title="Agregar Grupo">
               <img
                 src={Plus}
-                alt="pencil"
+                alt="plus"
                 className="img-butons"
                 onClick={agregarGrupo}
               />
             </div>
-            <div className="containerSingleButtom">
+            <div className="containerSingleButtom" title="Actualizar Grupo">
               <img
                 src={Edit}
-                alt="plus"
+                alt="pencil"
                 className="img-butons"
                 onClick={updateGrupo}
               />
             </div>
-            <div className="containerDeleteButtom">
+            <div className="containerDeleteButtom" title="Eliminar Grupo">
               <img
                 src={Delete}
                 alt="trash"
@@ -327,15 +301,29 @@ export default function ProgramsContent() {
 
         <div className="sectionList">
           <ul className="ListUL">
-            {data?.map((group) => (
-              <li
-                key={group._id}
-                className="ListLI"
-                onClick={(e) => grupoClick(group._id,e)}
-              >
-                {group.nombre}
-              </li>
-            ))}
+            {sortedData?.map((group) => {
+              const numOrden = group.orden ?? group.order;
+              return (
+                <li
+                  key={group._id}
+                  className={`ListLI ${ID === group._id ? "activo" : ""}`}
+                  onClick={() => grupoClick(group._id)}
+                >
+                  <span
+                    style={{
+                      fontWeight: "700",
+                      marginRight: "0.5rem",
+                      color: ID === group._id ? "#FFFFFF" : "#7ED957",
+                      display: "inline-block",
+                      minWidth: "1.6rem",
+                    }}
+                  >
+                    {numOrden ? `${numOrden}.` : "-"}
+                  </span>
+                  {group.nombre}
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>

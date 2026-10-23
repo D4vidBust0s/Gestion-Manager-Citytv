@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-self-assign */
+/* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 
 import  './ModalPlanner1.css'
@@ -21,7 +24,6 @@ import save from '../../assets/bxs-save.svg';
 import flechaLeft from '../../assets/arrow4.svg';
 import handStop from '../../assets/handStop.gif';
 import trashFull from '../../assets/trashFull.svg';
-import savedShift from '../../assets/savedShift.svg';
 import bandera from '../../assets/Flag-Colombia.gif';
 
 
@@ -80,8 +82,7 @@ let IDGLOBAL;
 let IDSCHEMAGLOBAL;
 let HORAINGLOBAL;
 let INDEXGLOBAL;
-//let FECHAINICIOGLOBAL  = new Date();
-//let FECHAFINALGLOBAL;
+let DURACIONGLOBAL  = 0;
 
 let validador = 0;
 let validador2 = 0;
@@ -414,8 +415,8 @@ const getSubstitutions = async () => {
         fch: new Date(fechaBarra).toISOString()
 
       })
-      .then((response) => obtenerListadoTurnos())
-      .then((response) => obtenerListadoTurnosFull());
+      .then(() => obtenerListadoTurnos())
+      .then(() => obtenerListadoTurnosFull());
 
       
       
@@ -1372,7 +1373,7 @@ const validacion = ()=>{
     //para el antes debo contar cuantas semanas han pasado desde la registrada hasta la semana actual y hacer la operacion correcta
     //para dejar al dia la rotacion correcta de los turnos
   
-    console.log("Entró a ANTES")
+    //console.log("Entró a ANTES")
     return "Respuesta desde antes"
   }
 
@@ -1594,7 +1595,7 @@ const validacion = ()=>{
    } 
 
    const entre = (idUsuario,FECHAINICIO,FECHAFINAL)=>{
-    console.log("LA FECHA ACTUAL CORRESPONDE A LA SEMANA ACTUAL " + new Date(FECHAINICIO).toDateString() + " ---- " + new Date(FECHAFINAL).toDateString())
+    //console.log("LA FECHA ACTUAL CORRESPONDE A LA SEMANA ACTUAL " + new Date(FECHAINICIO).toDateString() + " ---- " + new Date(FECHAFINAL).toDateString())
     
     let turno = "";
   
@@ -1656,9 +1657,9 @@ const validacion = ()=>{
 
   
 
-  const ok =  ()=>{ 
+  const ok = async () => { 
 
-    obtenerListadoTurnosFull();
+    await obtenerListadoTurnosFull();
 
     //Validamos que tipo de agregado es, si es del stack sugerido o uno custom (0 => sugerido, 1 => custom)
     if(validador == 0)
@@ -1673,9 +1674,6 @@ const validacion = ()=>{
       data4?.map((breaks)=>(
         breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser &&  (validador3 = 1)
       ))
-
-      
-      
 
       if(validador2 == 1)
       {
@@ -1695,38 +1693,47 @@ const validacion = ()=>{
         
         setIDUSER(iduser);
       
-      data11.map((stacks,index)=>(stacks.ID_esquema == IDSCHEMAGLOBAL 
-        ?
-         crear(iduser,
-          nombres,
-          index,
-          stacks.ID_programa,
-          stacks._id,
-          "Brown",
-          observationRef.current.value,
-          new Date(fechaPlaner),
-          stacks.ID_esquema,
-          inicioMain,
-          "------",
-          stacks.Type,
-          stacks.Value,
+        // Recorremos y creamos cada elemento del stack sugerido
+        const promesasCreacion = data11.map((stacks, index) => {
+          if (stacks.ID_esquema == IDSCHEMAGLOBAL) {
+            return crear(
+              iduser,
+              nombres,
+              index,
+              stacks.ID_programa,
+              stacks._id,
+              "Brown",
+              observationRef.current.value,
+              new Date(fechaPlaner),
+              stacks.ID_esquema,
+              inicioMain,
+              "------",
+              stacks.Type,
+              stacks.Value
+            );
+          }
+          return null;
+        });
 
-         )
-        : null))
+        // Esperamos a que se terminen de guardar todos los registros en la API
+        await Promise.all(promesasCreacion);
 
-        
-         setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-         toast.success("Stack sugerido agregado correctamente");
-         
+        // =========================================================================
+        // PASO CLAVE DE REACTIVIDAD: Actualizamos los turnos y el rango de días (data17)
+        // para que el Restante, el Balancer y la Matriz inferior se refresquen solos.
+        // =========================================================================
+        await obtenerListadoTurnos();
+        await obtenerListadoTurnosDay();
 
-        }
+        setAuxiliar(!auxiliar);  // este estado notifica al contexto para ser usado en listado
+        toast.success("Stack sugerido agregado correctamente");
+      }
       
 
-      if(observationRef.current.value=="")
-        {
-          observationRef.current.value = "-----"
-        }
-
+      if(observationRef.current.value == "")
+      {
+        observationRef.current.value = "-----"
+      }
         
     }
 
@@ -1737,25 +1744,6 @@ const validacion = ()=>{
     else{
         toast.error("NO SE PUDO DEFINIR EL TIPO DE OPERACION QUE SE DESEA REALIZAR");
     }
-
-
-
-    //setIdUsuario(iduser);
-    //setIdTurno(IDSCHEMAGLOBAL);
-    //setNombreCompleto(nombres);
-    //setSubG(subGrupo);
-    //setFechaActiva(new Date(fechaPlaner).toString());
-    //setStart(new Date(startHour).toString());
-    //setEnd(new Date(EndHour).toString());
-    //setNombreEvento(Pronostico(iduser));
-    //setClr("Brown");
-    //setObservacion(observationRef.current.value);
-
-    //agregarTurno(iduser,IDSCHEMAGLOBAL,nombres,subGrupo,fechaPlaner,startHour,EndHour,Pronostico(iduser),"Brown",observationRef.current.value);
-
-
-    //-----------------------------------------------------------------------------------------------------------------------
-    //toast.success("Turno aprobado");
   }
 
   
@@ -1928,7 +1916,7 @@ const validacion = ()=>{
 
     else if(id == "Turno Custom" || tipo == "Custom")
     {
-
+      DURACIONGLOBAL = duracion;
        //Sumo tiempos
        auxOut = new Date(new Date(HORAINGLOBAL).setMinutes(new Date(HORAINGLOBAL).getMinutes() + parseInt(duracion))).getTime();
        HORAINGLOBAL = new Date(auxOut);
@@ -1995,20 +1983,33 @@ const validacion = ()=>{
     
   }
 
-   const devolverIN = ()=>{
-    let respuesta;
-    let fecha;
+  const devolverIN = () => {
+    const schemaEncontrado = data9?.find((rotations) => rotations._id === IDSCHEMAGLOBAL);
 
-    data9?.map((rotations)=>(
-      rotations._id == IDSCHEMAGLOBAL && (respuesta = rotations.HoraInicio, HORAINGLOBAL = rotations.HoraInicio )
-    ))
+    let respuesta = "--:--:--";
 
-    respuesta = new Date(respuesta);
-    inicioMain = respuesta;
-    respuesta = new Date(respuesta).toLocaleTimeString();
-  
+    if (schemaEncontrado && schemaEncontrado.HoraInicio) {
+      respuesta = schemaEncontrado.HoraInicio;
+      HORAINGLOBAL = schemaEncontrado.HoraInicio;
+    }
+
+    const fechaObj = new Date(respuesta);
+    inicioMain = fechaObj;
     
-    return respuesta;
+    if (isNaN(fechaObj.getTime())) return "--:--:--";
+
+    // Extraemos horas, minutos y segundos por separado
+    let horas = fechaObj.getHours();
+    let minutos = fechaObj.getMinutes();
+    let segundos = fechaObj.getSeconds();
+
+    // Les aplicamos formato de doble dígito (agregando el '0' si son menores a 10)
+    let horaFormateada = 
+      (horas < 10 ? "0" + horas : horas) + ":" +
+      (minutos < 10 ? "0" + minutos : minutos) + ":" +
+      (segundos < 10 ? "0" + segundos : segundos);
+    
+    return horaFormateada;
    }
 
    const fullTime = () =>{
@@ -2590,10 +2591,10 @@ const extraerHorasProgram = (idPrograma)=>{
 
 const extraerHorasCustom = (inicio,final)=>{
     
-  let timeIn = new Date(inicio);
-  let timeOut = new Date(final);
-  let respuesta = timeOut.getTime()-timeIn.getTime();
-      respuesta = Math.round(respuesta / (1000 * 60 ));
+ 
+
+  let respuesta = DURACIONGLOBAL;
+      
 
   return respuesta;
 }
@@ -2617,7 +2618,7 @@ const operarMatrizDias = (iduser,fechaEvaluada)=>{
          //Tipo Custom
          shiftsLimited.Type == "Custom"
          ?
-           (horas =  horas + extraerHorasCustom(shiftsLimited.Inicio_main,shiftsLimited.Out) )
+           (horas =  horas + extraerHorasCustom(shiftsLimited.Inicio_main,shiftsLimited.Out) )  //AQUI ESTA EL ERROR
          : 
         
          
@@ -2657,7 +2658,6 @@ const operarMatrizDias = (iduser,fechaEvaluada)=>{
 
 
 const operarDiaslaborados = (mes, dia, año, iduser)=>{
-
   mes ++;
   
 
@@ -2671,7 +2671,7 @@ const operarDiaslaborados = (mes, dia, año, iduser)=>{
 
   // 2) Con la fecha y el id de usuario operar la base de datos coleccion shifts para saber las horas laboradas ese dia
   HorasLaboradas = operarMatrizDias(iduser,nuevafecha);
-  
+ 
   return HorasLaboradas;
 
 }
@@ -2895,7 +2895,7 @@ useEffect(()=>{
 
           <div className="actividad">
               <div className="actividad_title">
-                Time Out
+                Tiempo fuera - en dias
               </div>
               <div className="actividad_container">
               <div className="actividad_lista">
@@ -3347,9 +3347,11 @@ useEffect(()=>{
                   
                   
                   {
-                    validador5 == 0 && validador4 == 0 &&
-                    <span className='horaIN' key={data1.length}>{devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN() }{validador6=1}</span>
-                    
+                    validador5 == 0 && validador4 == 0 && (
+    <span className='horaIN' key={data1.length}>
+      {devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN()}
+    </span>
+  )
                   }
 
                  
@@ -3492,11 +3494,8 @@ useEffect(()=>{
                 </div>
               </div>
             </div>
-          </div> 
 
-         
-
-          <div className='aux1'>
+            <div className='aux1'>
            <div className="aux1_title">
             Restante
            </div>
@@ -3507,6 +3506,21 @@ useEffect(()=>{
            <span className='aux_label-1'>Horas</span>
            </div>
           </div>
+
+          <div className='aux2'>
+          <div className="aux1_title">
+            Acumulado
+           </div>
+           <div className="aux1_label">
+            {fullTime() + " Minutos"}
+            <p className='aux_label-1'>{(fullTime()/60).toFixed(1) + " Horas"}</p>
+           </div>
+          </div>
+          </div> 
+
+         
+
+          
 
 
 
@@ -3579,15 +3593,7 @@ useEffect(()=>{
 
 
 
-          <div className='aux2'>
-          <div className="aux1_title">
-            Acumulado
-           </div>
-           <div className="aux1_label">
-            {fullTime() + " Minutos"}
-            <p className='aux_label-1'>{(fullTime()/60).toFixed(1) + " Horas"}</p>
-           </div>
-          </div>
+          
         </div>
 
       )}
