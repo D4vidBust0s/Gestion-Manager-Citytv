@@ -2,7 +2,7 @@
     background-color: #EB464B;
     position: absolute;
     top: 87.9%;
-    left: 12%;
+    left: var(--float-left, 12%);
     height: 5rem;
     width: 5rem;
     box-shadow: .4rem .3rem .8rem #363636;
@@ -11,7 +11,7 @@
     justify-content: center;
     z-index: 1000;
     border-radius: .5rem;
-  
+    transition: left .3s ease, transform .1s ease;
     
   }
   .floatBtn:hover{

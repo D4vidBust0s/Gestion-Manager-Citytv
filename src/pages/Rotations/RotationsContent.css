@@ -290,7 +290,7 @@
     background-color: var(--Base2);
     width: 75%;
     height: auto;
-    margin-top: 7rem;
+    margin-top: 4.5rem;
     display: flex;
     justify-content: space-between;
 
@@ -581,7 +581,7 @@
     border-radius: .5rem;
     box-shadow: .2rem .2rem .8rem #545454;
     height: 3.5rem;
-    margin-left: 4.5rem;
+    margin-left: 2.5rem;
 
 
     .img-butons{
@@ -598,7 +598,7 @@
     border-radius: .5rem;
     box-shadow: .2rem .2rem .8rem #545454;
     height: 3.5rem;
-    margin-left: 4.5rem;
+    margin-left: 2.5rem;
 
 
     .img-butons{
@@ -638,12 +638,60 @@
     width: 109.5%;
    }
 
+   /* Acumulado del stack bajo cada tarjeta Horario (entre semana / fin de semana) */
+   .stackAcumulado{
+    margin-top: .6rem;
+    padding: .5rem .6rem;
+    background-color: #00094B;
+    border-radius: .4rem;
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    font-size: .68rem;
+    line-height: 1.25;
+    font-weight: 600;
+    color: #DADADA;
+    word-break: break-word;
+   }
+
+   .stackAcumulado-total{
+    font-size: .74rem;
+    font-weight: 800;
+   }
+
+   .stackAcumulado-estado{
+    font-weight: 600;
+   }
+
+   .stackAcumulado--ok{
+    color: #7ED957;
+   }
+
+   .stackAcumulado--faltante{
+    color: #FFD166;
+   }
+
+   .stackAcumulado--excede{
+    color: #EB464B;
+   }
+
+   .stackAcumulado--sin-ventana{
+    color: #DADADA;
+   }
+
+   /* Esquemas de Descanso: el acumulado no se evalúa */
+   .stackAcumulado--no-aplica{
+    color: #DADADA;
+    font-style: italic;
+   }
+
 
 
 
    .pgms{
     padding-top: 1.2rem;
     padding-bottom: 22%;
+    font-size: .85rem;
    }
 
 
@@ -746,31 +794,10 @@
         transform: scale(1.1);
     }
 
-    .active:hover{
-       
-        cursor: pointer;
-    }
-
-    .activo{
-        background-color:#547725;
-        cursor: pointer;
-        width: 100%;
-    }
-
     .activo1{
         background-color: #00094B;
         cursor: pointer;
     } 
-
-    .arrow{
-        width: 1rem;
-        margin-right: .5rem;
-    }
-
-    .active{
-        display: flex;
-        align-items: center;
-    }
 
     .pgms-actions{
         position: absolute;
@@ -835,25 +862,81 @@
         margin-top: 2rem;
     }
 
-    .main1{
-        display: flex;
-        align-items: center;
+    /* Tabla del stack: Inicio · Evento · Final */
+    .stack-tabla{
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .stack-tabla th{
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background-color: #000000;
+        color: #DADADA;
+        font-size: .66rem;
+        font-weight: 700;
+        text-align: left;
+        padding: .22rem .2rem;
+        border-bottom: 1px solid #17429e;
+    }
+
+    .stack-tabla td{
+        padding: .22rem .2rem;
+        vertical-align: middle;
+        text-align: left;
+    }
+
+    .stack-tabla th:first-child,
+    .stack-tabla td:first-child{
+        width: 3.8rem;
+    }
+
+    .stack-tabla th:last-child,
+    .stack-tabla td:last-child{
+        width: 3.8rem;
+        text-align: right;
+    }
+
+    .stack-tabla tbody tr{
+        cursor: pointer;
+    }
+
+    .stack-tabla tbody tr:hover{
+        background-color: rgba(255, 255, 255, .07);
+    }
+
+    .stack-tabla tbody tr.stack-fila--activa{
+        background-color: #00094B;
+    }
+
+    .stack-evento{
+        word-break: break-word;
+        line-height: 1.15;
+    }
+
+    .stack-evento--programa{
         color: #EB464B;
         font-weight: 700;
     }
 
-    .main2{
-        display: flex;
-        align-items: center;
+    .stack-evento--custom{
         color: #DADADA;
         font-weight: 600;
     }
 
-    .main3{
-        display: flex;
-        align-items: center;
+    .stack-evento--operativo{
         color: #547725;
         font-weight: 600;
+    }
+
+    /* Horas de inicio y fin */
+    .stack-hora{
+        color: #FFFFFF;
+        font-size: .68rem;
+        font-weight: 600;
+        white-space: nowrap;
     }
 
     .pgm-bottom-del{
@@ -883,3 +966,7 @@
 
 
 
+.separadorHR{
+    margin-top: 20px;
+    margin-bottom: 20px;
+}

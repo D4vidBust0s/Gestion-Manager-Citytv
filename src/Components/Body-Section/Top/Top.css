@@ -26,7 +26,8 @@
 .container{
     background: var(--Base);
     position: absolute;
-    width: 86%;
+    left: var(--panel-left, 14%);
+    width: auto;
     top: 3.4%;
     right: 0;
     height: 80px;
@@ -36,6 +37,7 @@
     align-items: center;
     justify-content: center;
     z-index: 300;  /* 300 */
+    transition: left .3s ease;
 
     .content-avatar{
         position: absolute;
@@ -59,15 +61,40 @@
     .content-menu{
         position: absolute;
         left: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        color: var(--Base2);
+    }
+
+    .content-menu:focus-visible{
+        outline: 2px solid var(--Secondary);
+        outline-offset: 4px;
+        border-radius: 6px;
     }
 
     .menu{
+        width: 2.5rem;
         height: 2.5rem;
+        object-fit: contain;
+        transition: transform .3s ease;
     }
 
     .menu:hover{
         transform: scale(1.1);
         cursor: pointer;
+    }
+
+    .menu--collapsed{
+        transform: rotate(180deg);
+    }
+
+    .menu--collapsed:hover{
+        transform: rotate(180deg) scale(1.1);
     }
 
     .nombre{

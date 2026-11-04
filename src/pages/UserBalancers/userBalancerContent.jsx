@@ -3,240 +3,263 @@
 import './userBalancer.css'
 
 /* DEPENDENCIAS */
-import {useState,useEffect} from 'react';
-import axios from 'axios';
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {Toaster, toast} from 'react-hot-toast';
 import Swal from "sweetalert2";
+
+/* SERVICIOS */
+import { groupsApi } from '../../api/groups';
+import {
+  getNextUserBalancerNumber,
+  getUserBalancerCountsByGroup,
+  isBalancerUser,
+  payrollApi,
+} from '../../api/payroll';
+import {
+  rotationsManagerApi,
+  rotationsManagerFsApi,
+} from '../../api/rotationsManager';
 
 /* IMAGENES */
 import Plus from '../../assets/Plus.svg';
 import Menos from '../../assets/menos.svg'
 
+const USER_BALANCER_NAME = "UserBalancer";
+
+const buildBalancerName = (sequence) => `${USER_BALANCER_NAME}-${sequence}`;
+
+//Body con el que se crea el usuario virtual en /payroll
+const buildPayrollPayload = (groupId, balancerName) => ({
+  Nombres: balancerName,
+  Apellidos: "",
+  Edad: "",
+  FechaDeNacimiento: "",
+  Genero: "",
+  EstadoCivil: "",
+  CelularPrioritario: "",
+  CelularAux: "",
+  TelefonoFijo: "",
+  DireccionResidencia: "",
+  Email: "",
+  Cc: "",
+  Pasaporte: "",
+  TarjetaProfesional: "",
+  Cargo: "USERBALANCER",
+  Grupo: groupId,
+  GrupoID: groupId,
+  FechaIngreso: new Date(),
+  RH: "",
+  ContactoPrincipal: "",
+  ContactoAux: "",
+  Activo: true,
+  Mainplanner: "",
+  SubGrupo: 0,
+});
+
+//Body con el que se registra el usuario en el planificador (ES y FS)
+const buildPlannerPayload = (userId, groupId) => ({
+  nombreusuario: USER_BALANCER_NAME,
+  userid: userId,
+  groupname: groupId,
+  groupid: groupId,
+  schemaname: "------------",
+  schemaid: "------------",
+  totalschema: 0,
+  totalgroup: 0,
+  actual: 0,
+  dayKey: new Date().setHours(0, 0, 0, 0),
+});
+
 const userBalancerContent = () => {
 
-    //Estados para los grupos
-  const [data, setData] = useState([]);
-  const [data2, setData2] = useState([]);
+  /* ESTADOS */
+  const [groups, setGroups] = useState([]);
+  const [groupPayroll, setGroupPayroll] = useState([]);
+  const [allPayroll, setAllPayroll] = useState([]);
+  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  
-  const [GLOBALIDGRUPO, setGLOBALIDGRUPO] = useState([]);
+  /* REFERENCIAS */
+  const savingRef = useRef(false);
+  const groupRequestRef = useRef(0);
 
-//VARIABLES
-let aux;
-let idUserGlobal = "";
-  
+  /* CARGA DE DATOS */
 
+  const cargarGrupos = useCallback(async () => {
+    try {
+      const data = await groupsApi.getAll();
+      setGroups(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error al cargar los grupos:", error);
+      toast.error(error?.message || "Error al cargar los grupos");
+    }
+  }, []);
 
-  //FUNCIONES
-  //Funcion que obtiene la data de la api - listado de grupos
-  const obtenerListadoGrupos = async () => {
-    return await axios
-      .get("http://localhost:3000/api/groups")
-      .then((response) => setData(response.data));
-  };
+  const cargarTodoElPayroll = useCallback(async () => {
+    try {
+      const data = await payrollApi.getAll();
+      setAllPayroll(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error al cargar los UserBalancers:", error);
+      toast.error(error?.message || "Error al cargar los UserBalancers");
+    }
+  }, []);
 
-  //Funcion que obtiene la data de la api - listado de grupos
-  const showUsersGroup = async (groupID,e) => {
-
-    
-    setGLOBALIDGRUPO(groupID);
-   
-
-     //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
-     if (e.target.classList=="contentForma") 
-     {
- 
-       let aux = document.getElementsByClassName("activo");
- 
-       for (let index = 0; index < aux.length; index++) 
-       {
-         aux[index].classList.remove("activo");
-       }
- 
-       e.target.classList.add("activo");
-     }
-
-
-    return await axios
-      .get("http://localhost:3000/api/payroll/idGroup/"+groupID)
-      .then((response) => setData2(response.data));
-      
-  };
-
-   //Funcion que obtiene la data de la api - payroll
-   const getPayroll = async () => {
-
-    return await axios
-      .get("http://localhost:3000/api/payroll/")
-      .then((response) => setData2(response.data));
-      
-  };
-
-  //Funcion que agrega un registro del usuario en rotations manager
-  const enviar = async (iduser)=>{
-
-    await axios.post("http://localhost:3000/api/rotationsmanager/", {
-  
-       nombreusuario: "UserBalancer",
-       userid: iduser,
-       groupname: GLOBALIDGRUPO,
-       groupid: GLOBALIDGRUPO,
-       schemaname:"------------",
-       schemaid:"------------",
-       totalschema:0,
-       totalgroup:0,
-       actual:0,
-       dayKey: new Date().setHours(0,0,0,0)
-      });
-  }
-
-  //Funcion que agrega un registro del usuario en rotations managerFS
-  const enviarFS = async (iduser)=>{
-
-    await axios.post("http://localhost:3000/api/rotationsmanager-fs/", {
-  
-       nombreusuario: "UserBalancer",
-       userid: iduser,
-       groupname: GLOBALIDGRUPO,
-       groupid: GLOBALIDGRUPO,
-       schemaname:"------------",
-       schemaid:"------------",
-       totalschema:0,
-       totalgroup:0,
-       actual:0,
-       dayKey: new Date().setHours(0,0,0,0)
-      });
-  }
-
-  //Funcion que agrega un usuario balancer a un grupo con su id de grupo respectivo
-  const addUserBalancer = async ()=>
-  {
-    let contador = 0;
-
-    if(GLOBALIDGRUPO!="")
-    {
-      await axios.post("http://localhost:3000/api/payroll/", {
-
-      Nombres: "UserBalancer",
-      Apellidos: "",
-      Edad: "",
-      FechaDeNacimiento: "",
-      Genero: "",
-      EstadoCivil: "",
-      CelularPrioritario: "",
-      CelularAux: "",
-      TelefonoFijo: "",
-      DireccionResidencia: "",
-      Email: "",
-      Cc: "",
-      Pasaporte: "",
-      TarjetaProfesional: "",
-      Cargo: "USERBALANCER",
-      Grupo: GLOBALIDGRUPO,
-      GrupoID: GLOBALIDGRUPO,
-      FechaIngreso: new Date(),
-      RH: "",
-      ContactoPrincipal: "",
-      ContactoAux: "",
-      Activo: true,
-      Mainplanner: "",
-      SubGrupo:0 
-  })
-  .then((response) => aux = response.data._id)
-  .then(((response) => enviar(aux)))
-  .then(((response) => enviarFS(aux)))
-  .then(getPayroll); 
-  
-      
+  const cargarPayrollDelGrupo = useCallback(async (groupId) => {
+    if (!groupId) {
+      groupRequestRef.current += 1;
+      setGroupPayroll([]);
+      return;
     }
 
-    else{
-      toast.error("No ha seleccionado un grupo. Para agregar user balancers al sistema, primero seleccione el grupo al que lo va a agregar");
+    const requestId = ++groupRequestRef.current;
+    setGroupPayroll([]);
+
+    try {
+      const data = await payrollApi.getByGroup(groupId);
+      if (requestId !== groupRequestRef.current) return;
+      setGroupPayroll(Array.isArray(data) ? data : []);
+    } catch (error) {
+      if (requestId !== groupRequestRef.current) return;
+      console.error("Error al cargar el personal del grupo:", error);
+      toast.error(error?.message || "Error al cargar el personal del grupo");
     }
-    
-    
-  }
+  }, []);
 
-  const eliminar =async ()=>{
-   
-     
-        await axios.delete("http://localhost:3000/api/payroll/userbalancer/"+idUserGlobal)
-
-        await axios.delete("http://localhost:3000/api/rotationsmanager/" + idUserGlobal);
-
-        await axios.delete("http://localhost:3000/api/rotationsmanager-fs/"+idUserGlobal)
-        .then(getPayroll); 
-      
-
-      
-  }
-
-
-  const delUserBalancer = async ()=>
-  {
-
-    if(idUserGlobal!="")
-    {
-
-    Swal.fire({
-      title: "¿Realmente desea eliminar el userBalancer seleccionado?",
-      showDenyButton: true,
-      showCancelButton: true,
-      confirmButtonText: "No estoy seguro",
-      denyButtonText: `Confirmar`,
-      footer: '<h6>Gestión Manager Citytv</h6>',
-      
-    }).then((result) => {
-      /* Read more about isConfirmed, isDenied below */
-      if (result.isConfirmed) {
-        //Swal.fire("Saved!", "", "success");
-      } else if (result.isDenied) 
-      {
-        eliminar();
-        //Swal.fire("Registro eliminado del sistema", "", "success");
-      }
-    });
-    
-    }
-
-    
-    else{
-      toast.error("Para eliminar un UserBalancer primero debe seleccionarlo");
-   }
-  }
-
-
- const changeID  = (idUser,e)=>{
-
-    //Guardamos el id de usuario o del payroll en una variable global
-     idUserGlobal=idUser;
-
-     toast.success(idUserGlobal);
-
-     //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
-     if (e.target.classList=="ListLI") 
-     {
- 
-       let aux = document.getElementsByClassName("activo11");
- 
-       for (let index = 0; index < aux.length; index++) 
-       {
-         aux[index].classList.remove("activo11");
-       }
- 
-       e.target.classList.add("activo11");
-     }
- }
- 
-
-  
+  const refrescarDatos = useCallback(
+    async (groupId) => {
+      await Promise.all([
+        groupId ? cargarPayrollDelGrupo(groupId) : Promise.resolve(),
+        cargarTodoElPayroll(),
+      ]);
+    },
+    [cargarPayrollDelGrupo, cargarTodoElPayroll]
+  );
 
   useEffect(() => {
-   obtenerListadoGrupos();
- }, []);
+    cargarGrupos();
+    cargarTodoElPayroll();
+  }, [cargarGrupos, cargarTodoElPayroll]);
 
- 
+  /* CONTADORES POR GRUPO */
+  const balancerCountsByGroup = useMemo(
+    () => getUserBalancerCountsByGroup(allPayroll),
+    [allPayroll]
+  );
 
+  /* SELECCIONES */
+
+  const showUsersGroup = (groupId) => {
+    setSelectedGroupId(groupId);
+    setSelectedUserId(null);
+    cargarPayrollDelGrupo(groupId);
+  };
+
+  const changeID = (idUser) => {
+    setSelectedUserId(idUser);
+  };
+
+  /* OPERACIONES CONTRA LA API */
+
+  const addUserBalancer = async () => {
+    if (!selectedGroupId) {
+      toast.error("No ha seleccionado un grupo. Para agregar user balancers al sistema, primero seleccione el grupo al que lo va a agregar");
+      return;
+    }
+
+    if (savingRef.current) return;
+
+    savingRef.current = true;
+    setIsSaving(true);
+
+    try {
+      // Se consulta el grupo de nuevo para calcular el consecutivo con datos
+      // actuales y no con una lista que pudo quedar desactualizada.
+      const payrollDelGrupo = await payrollApi.getByGroup(selectedGroupId);
+
+      if (!Array.isArray(payrollDelGrupo)) {
+        throw new Error(
+          "No fue posible consultar los UserBalancers del grupo"
+        );
+      }
+
+      const numero = getNextUserBalancerNumber(
+        payrollDelGrupo,
+        selectedGroupId
+      );
+      const nombre = buildBalancerName(numero);
+
+      const creado = await payrollApi.create(
+        buildPayrollPayload(selectedGroupId, nombre)
+      );
+      const createdId = creado?._id;
+
+      if (!createdId) {
+        throw new Error(
+          "La API no devolvió el identificador del UserBalancer creado"
+        );
+      }
+
+      const plannerPayload = buildPlannerPayload(createdId, selectedGroupId);
+      await rotationsManagerApi.create(plannerPayload);
+      await rotationsManagerFsApi.create(plannerPayload);
+
+      await refrescarDatos(selectedGroupId);
+      toast.success(`${nombre} agregado correctamente`);
+    } catch (error) {
+      console.error("Error al agregar el UserBalancer:", error);
+      toast.error(error?.message || "Error al agregar el UserBalancer");
+      await refrescarDatos(selectedGroupId);
+    } finally {
+      savingRef.current = false;
+      setIsSaving(false);
+    }
+  };
+
+  const eliminar = async (userId) => {
+    await payrollApi.removeUserBalancer(userId);
+    await rotationsManagerApi.remove(userId);
+    await rotationsManagerFsApi.remove(userId);
+  };
+
+  const delUserBalancer = async () => {
+    if (!selectedUserId) {
+      toast.error("Para eliminar un UserBalancer primero debe seleccionarlo");
+      return;
+    }
+
+    if (savingRef.current) return;
+
+    const userId = selectedUserId;
+    savingRef.current = true;
+
+    try {
+      const result = await Swal.fire({
+        title: "¿Realmente desea eliminar el userBalancer seleccionado?",
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: "No estoy seguro",
+        denyButtonText: `Confirmar`,
+        footer: '<h6>Gestión Manager Citytv</h6>',
+      });
+
+      if (!result.isDenied) return;
+
+      setIsSaving(true);
+      await eliminar(userId);
+      setSelectedUserId(null);
+      await refrescarDatos(selectedGroupId);
+      toast.success("UserBalancer eliminado correctamente");
+    } catch (error) {
+      console.error("Error al eliminar el UserBalancer:", error);
+      toast.error(error?.message || "Error al eliminar el UserBalancer");
+      await refrescarDatos(selectedGroupId);
+    } finally {
+      savingRef.current = false;
+      setIsSaving(false);
+    }
+  };
 
   return (
     <>
@@ -244,23 +267,36 @@ let idUserGlobal = "";
     <div className="contenPAYROLL">
     <h3 className="subTitulo1">Grupos o Áreas </h3>
       <div className="sectionAdd">
-  
+
         <ul className='ulListado'>
             {
-                data?.map((group)=>(
-                  <li key={group._id} className="contentForma" onClick={(e)=>showUsersGroup(group._id,e)}>
-                    <img src={group.logo} alt={group.nombre} className='img-cam'/>
-                    {group.nombre}
-                  </li>
-                ))
+                groups?.map((group)=>{
+                  const count = balancerCountsByGroup[String(group._id)] ?? 0;
+
+                  return (
+                    <li
+                      key={group._id}
+                      className={`contentForma groupRow${selectedGroupId === group._id ? " activo" : ""}`}
+                      onClick={() => showUsersGroup(group._id)}
+                    >
+                      <img src={group.logo} alt={group.nombre} className='img-cam'/>
+                      {group.nombre}
+                      {count > 0 && (
+                        <span
+                          className="balancer-count"
+                          title={`${count} UserBalancer(s)`}
+                          aria-label={`${count} UserBalancers en ${group.nombre}`}
+                        >
+                          {count}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })
             }
 
         </ul>
 
-       
-
-         
-        
       </div>
 
       <div className="sectionListPayroll">
@@ -268,39 +304,45 @@ let idUserGlobal = "";
         <ul className='ListUL2'>
 
           {
-             data2.map((payroll,index)=>(
+             groupPayroll.map((payroll)=>(
               payroll.activo==false ?
-              <div className="sb" key={index} >
+              <div className="sb" key={payroll._id} >
                 <div className="subGrupo">{"*"}</div>
                  <li className='ListLI' key={payroll._id}> {payroll.nombres} {payroll.apellidos}</li>
               </div>
               : null
              ))
-             
-          } 
+
+          }
         </ul>
 
         <h3 className="subT">Usuarios para equilibrar el grupo</h3>
         <ul className='ListUL2'>
-            
+
           {
-             data2.map((payroll,index)=>(
-              payroll.cargo=="USERBALANCER" && payroll.grupo == GLOBALIDGRUPO ?
-              <div className="sb" key={index}>
+             groupPayroll.map((payroll)=>(
+              isBalancerUser(payroll) ?
+              <div className="sb" key={payroll._id}>
                 <div className="subGrupo">{"*"}</div>
-                 <li className='ListLI' key={payroll._id}  onClick={(e)=> changeID(payroll._id,e)}>{payroll.nombres} {payroll.apellidos}</li>
+                 <li
+                   className={`ListLI${selectedUserId === payroll._id ? " activo11" : ""}`}
+                   key={payroll._id}
+                   onClick={() => changeID(payroll._id)}
+                 >
+                   {payroll.nombres} {payroll.apellidos}
+                 </li>
               </div>
               :null
              ))
-             
-          } 
+
+          }
         </ul>
-        
+
       </div>
     </div>
     <div className="btns">
-        <div className="mas" onClick={()=>addUserBalancer()}><img src={Plus} alt="Plus" className='img-plus'/></div>
-        <div className="menos" onClick={()=>delUserBalancer()}><img src={Menos} alt="Plus" className='img-plus'/></div>
+        <div className={`mas${isSaving ? " is-saving" : ""}`} onClick={()=>addUserBalancer()}><img src={Plus} alt="Plus" className='img-plus'/></div>
+        <div className={`menos${isSaving ? " is-saving" : ""}`} onClick={()=>delUserBalancer()}><img src={Menos} alt="Plus" className='img-plus'/></div>
     </div>
     </>
   )

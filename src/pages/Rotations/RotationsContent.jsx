@@ -11,15 +11,63 @@ import Brush from '../../assets/brush.svg';
 import Coffee from '../../assets/coffee.svg';
 import Up from '../../assets/up.svg';
 import Down from '../../assets/down.svg';
-import Arrow from '../../assets/arrow3.svg';
 
 /* DEPENDENCIAS */
 import DatePicker from 'react-datepicker';
-import { useState, useEffect } from 'react';
-import axios from 'axios'
-import { useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
 import Swal from "sweetalert2";
+
+/* SERVICIOS */
+import { groupsApi } from '../../api/groups';
+import { payrollApi } from '../../api/payroll';
+import { rotationsApi } from '../../api/rotations';
+import { rotationsManagerApi, rotationsManagerFsApi } from '../../api/rotationsManager';
+import {
+  stacksApi,
+  duracionItemStack,
+  minutosEntreFechas,
+  resumirStackDuracion,
+} from '../../api/stacks';
+import { stacksSavedApi } from '../../api/stacksSaved';
+import { programsApi } from '../../api/programs';
+
+/* CONSTANTES */
+const SIN_ESQUEMA = "------------------";
+const SIN_ESQUEMA_UNIVERSAL = "------------";
+const SIN_GRUPO = "none";
+const TIPO_ES = "ES";
+const TIPO_FS = "FS";
+
+/* FUNCIONES AUXILIARES */
+
+// Normaliza una fecha al lunes de su semana
+const obtenerLunesSemana = (fechaRef = new Date()) => {
+  let d = new Date(fechaRef);
+  let day = d.getDay();
+  let diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(d.setDate(diff)).setHours(0, 0, 0, 0);
+};
+
+// Convierte lo que devuelve la API en Date, sin romper si viene vacío o inválido
+const aFecha = (valor) => {
+  if (!valor) return null;
+  const fecha = new Date(valor);
+  return Number.isNaN(fecha.getTime()) ? null : fecha;
+};
+
+// Hora corta para el listado del stack: "9:00 AM" / "--:--" si no hay fecha
+const formatearHora = (fecha) => {
+  if (!fecha) return "--:--";
+
+  const horas24 = fecha.getHours();
+  const horas = horas24 % 12 === 0 ? 12 : horas24 % 12;
+  const minutos = String(fecha.getMinutes()).padStart(2, "0");
+  return `${horas}:${minutos} ${horas24 < 12 ? "AM" : "PM"}`;
+};
+
+// api/client.js ya normaliza el error de axios; aquí solo se elige el texto
+const mensajeError = (error, porDefecto) => error?.message || porDefecto;
 
 const RotationsContent = () => {
 
@@ -28,521 +76,619 @@ const RotationsContent = () => {
   const [endDate1, setEndDate1] = useState(new Date());
   const [startDate2, setStartDate2] = useState(new Date());
   const [endDate2, setEndDate2] = useState(new Date());
-  const [data, setData] = useState([]);
 
-  const [data4, setData4] = useState([]);
-  const [data5, setData5] = useState([]);
-  const [data6, setData6] = useState([]);
-  const [data7, setData7] = useState([]);
-  const [data8, setData8] = useState([]);
-  const [data9, setData9] = useState([]);
-  const [data10, setData10] = useState([]);
-  const [data11, setData11] = useState([]);
-  const [data12, setData12] = useState([]);
-  const [data13, setData13] = useState([]);
-  const [data14, setData14] = useState([]);
-  const [data15, setData15] = useState([]);
+  /* Catálogos y Datos principales de la API */
+  const [data, setData] = useState([]);         // Grupos
+  const [data4, setData4] = useState([]);       // Esquemas Entre Semana
+  const [data5, setData5] = useState([]);       // Esquemas Fin de Semana
+  const [data6, setData6] = useState([]);       // Personal del grupo seleccionado
+  const [data8, setData8] = useState([]);       // Rotations Manager ES
+  const [data10, setData10] = useState([]);     // Programs
+  const [data11, setData11] = useState([]);     // Secondary Programs
+  const [data12, setData12] = useState([]);     // Primary Programs
+  const [data13, setData13] = useState([]);     // Stacks por esquema
+  const [stacksPorEsquema, setStacksPorEsquema] = useState({}); // Stacks cacheados por id de esquema
+  const [data15, setData15] = useState([]);     // Stacks Guardados (Saved)
+  const [data16, setData16] = useState([]);     // Rotations Manager FS
 
-  const [data16, setData16] = useState([]);
-  const [data17, setData17] = useState([]);
-
+  /* Estados de controles UI */
   const [coffeeES, setCoffeeES] = useState(false);
   const [coffeeFS, setCoffeeFS] = useState(false);
 
-  const [checkLunes, setCheckLunes] = useState(true);
-
-  const [titleDaily, setTitleDaily] = useState("------------------");
-  const [titleFs, setTitleFs] = useState("------------------");
+  const [titleDaily, setTitleDaily] = useState(SIN_ESQUEMA);
+  const [titleFs, setTitleFs] = useState(SIN_ESQUEMA);
 
   const [newValueOne, setNweValueOne] = useState("");
-  const [idRegES, setIdRegES] = useState();
+  const [idRegES, setIdRegES] = useState("");
 
   const [newValueTwo, setNweValueTwo] = useState("");
-  const [idRegFS, setIdRegFS] = useState();
+  const [idRegFS, setIdRegFS] = useState("");
 
-  const [order, setOrder] = useState(0);
-  const [orderFS, setOrderFS] = useState(0);
+  const [order, setOrder] = useState("");
+  const [orderFS, setOrderFS] = useState("");
 
   const [excluirES, setexcluirES] = useState(false);
   const [excluirFS, setexcluirFS] = useState(false);
 
-  const [idItem, setIdItem] = useState([]);
+  /* Elemento seleccionado del Stack para mover/borrar */
+  const [idItem, setIdItem] = useState(null);
 
-  const [titleDailyUniversal, setTitleDailyUniversal] = useState("------------");
+  /* Identificadores visuales activos para esquemas */
+  const [activeSchemaESId, setActiveSchemaESId] = useState(null);
+  const [activeSchemaFSId, setActiveSchemaFSId] = useState(null);
+
+  const [titleDailyUniversal, setTitleDailyUniversal] = useState(SIN_ESQUEMA_UNIVERSAL);
   const [idRegUniversal, setIdRegUniversal] = useState("");
 
-  /* Variables */
-  let aux = "";
-  let aux2;
-  let pg = [];
-  let ID;
-  let orderactual;
-  let itemGlobal;
+  /* Stack guardado seleccionado */
+  const [savedStackId, setSavedStackId] = useState("");
 
-  /* Referencias */
+  /* Referencias DOM */
   const groupsRef = useRef();
   const newEntresemana = useRef();
   const newFinsemana = useRef();
   const newOrder = useRef();
   const newOrderFS = useRef();
-  const excluirESref = useRef();
-  const excluirFSref = useRef();
-  const descandoESref = useRef();
-  const descandoFSref = useRef();
-  const fijoRef = useRef();
 
   const progRef = useRef();
   const secondaryRef = useRef();
   const customRef = useRef();
-  const labelRef = useRef();
   const nameStackRef = useRef();
   const timeOutRef = useRef();
-  const itemLoadRef = useRef();
   const durationRef = useRef();
 
-  // FUNCIÓN AUXILIAR PARA NORMALIZAR AL LUNES DE LA SEMANA (CORRECCIÓN DE DESFASE)
-  const obtenerLunesSemana = (fechaRef = new Date()) => {
-    let d = new Date(fechaRef);
-    let day = d.getDay();
-    let diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(d.setDate(diff)).setHours(0, 0, 0, 0);
+  /* Referencias de control */
+  const savingRef = useRef(false);
+  // Identifican la última petición de cada recurso para descartar respuestas tardías
+  const schemasEsRequestRef = useRef(0);
+  const schemasFsRequestRef = useRef(0);
+  const peopleRequestRef = useRef(0);
+  const stacksRequestRef = useRef(0);
+
+  /* ==========================================
+     DATOS DERIVADOS
+     ========================================== */
+  // Solo las personas activas cuentan para el balance esquemas / personas
+  const personasActivas = useMemo(
+    () => data6.filter((persona) => persona?.activo === true),
+    [data6]
+  );
+
+  const getGroupId = () => groupsRef.current?.value ?? SIN_GRUPO;
+
+  const buscarEsquema = (tipo, schemaId) =>
+    (tipo === TIPO_FS ? data5 : data4).find((esquema) => esquema._id === schemaId);
+
+  const corroborarNombre = (schemaId, tipo) => buscarEsquema(tipo, schemaId)?.Nombre;
+  const corroborarActual = (schemaId, tipo) => buscarEsquema(tipo, schemaId)?.Order;
+
+  const managerEsDe = (userId) => data8.find((rm) => rm?.userId === userId);
+  const managerFsDe = (userId) => data16.find((rm) => rm?.userId === userId);
+
+  // Esquema que el planificador tiene asignado a un trabajador (valores controlados de los selects)
+  const esquemaAsignado = (userId, tipo) => {
+    const manager = tipo === TIPO_FS ? managerFsDe(userId) : managerEsDe(userId);
+    return manager?.schemaId ?? "";
   };
 
-  //FUNCIONES
-  const obtenerListadoGroups = async () => {
-    return await axios
-      .get("http://localhost:3000/api/groups")
-      .then((response) => setData(response.data));
+  const nombreSchemaAsignado = (userId, tipo) => {
+    const manager = tipo === TIPO_FS ? managerFsDe(userId) : managerEsDe(userId);
+    return manager?.SchemaName ?? "";
   };
 
-  const obtenerListadoGroupsPorID = async () => {
-    if (!groupsRef.current || groupsRef.current.value === "none") return;
-    return await axios
-      .get("http://localhost:3000/api/rotations/" + groupsRef.current.value)
-      .then((response) => setData4(response.data));
-  }
+  // Esquema seleccionado de cada día: cada acumulado usa el suyo
+  const esquemaEs = useMemo(
+    () => data4.find((esquema) => esquema._id === idRegES) ?? null,
+    [data4, idRegES]
+  );
 
-  const obtenerListadoGroupsPorIDFs = async () => {
-    if (!groupsRef.current || groupsRef.current.value === "none") return;
-    return await axios
-      .get("http://localhost:3000/api/rotations/fs/" + groupsRef.current.value)
-      .then((response) => setData5(response.data));
-  }
+  const esquemaFs = useMemo(
+    () => data5.find((esquema) => esquema._id === idRegFS) ?? null,
+    [data5, idRegFS]
+  );
 
-  const getPeopleOfGroup = async () => {
-    return await axios
-      .get("http://localhost:3000/api/payroll/people/" + aux)
-      .then((response) => setData6(response.data));
-  }
+  // Acumulado independiente por día, a partir del stack cacheado de su esquema
+  const resumenEs = useMemo(
+    () => resumirStackDuracion(stacksPorEsquema[idRegES] ?? [], esquemaEs, data10),
+    [stacksPorEsquema, idRegES, esquemaEs, data10]
+  );
 
-  const getAllPayroll = async () => {
-    return await axios
-      .get("http://localhost:3000/api/payroll/")
-      .then((response) => setData7(response.data));
-  }
+  const resumenFs = useMemo(
+    () => resumirStackDuracion(stacksPorEsquema[idRegFS] ?? [], esquemaFs, data10),
+    [stacksPorEsquema, idRegFS, esquemaFs, data10]
+  );
 
-  const getAllRotationsManager = async () => {
-    return await axios
-      .get("http://localhost:3000/api/rotationsmanager/")
-      .then((response) => setData8(response.data));
-  }
+  const textoTotalAcumulado = (resumen) =>
+    `Acumulado: ${resumen.total} min (${(resumen.total / 60).toFixed(1)} h)`;
 
-  const getAllRotations = async () => {
-    return await axios
-      .get("http://localhost:3000/api/rotations/")
-      .then((response) => setData9(response.data));
-  }
+  const esEsquemaDescanso = (esquema) =>
+    Boolean(esquema?.Descanso || esquema?.descanso);
 
-  const obtenerListadoPrograms = async () => {
-    return await axios
-      .get("http://localhost:3000/api/programs")
-      .then((response) => setData10(response.data));
+  const textoEstadoAcumulado = (resumen) => {
+    if (resumen.ventana === null) return "Turno: --";
+    if (resumen.estado === "ok") return `Turno ${resumen.ventana} min · Coincide`;
+    if (resumen.estado === "faltante") {
+      return `Turno ${resumen.ventana} min · Faltan ${resumen.diferencia} min`;
+    }
+    return `Turno ${resumen.ventana} min · Excede ${Math.abs(resumen.diferencia)} min`;
   };
 
-  const obtenerListadoProgramsPrimary = async () => {
-    return await axios
-      .get("http://localhost:3000/api/programs/primary")
-      .then((response) => setData12(response.data));
-  };
+  /* Horas del stack que se está editando en el panel */
+  const esquemaDelPanel = useMemo(() => {
+    if (!idRegUniversal) return null;
+    return (
+      data4.find((esquema) => esquema._id === idRegUniversal) ??
+      data5.find((esquema) => esquema._id === idRegUniversal) ??
+      null
+    );
+  }, [data4, data5, idRegUniversal]);
 
-  const obtenerListadoProgramsSecondary = async () => {
-    return await axios
-      .get("http://localhost:3000/api/programs/secondary")
-      .then((response) => setData11(response.data));
-  };
+  const stackEnOrden = useMemo(
+    () => [...data13].sort((a, b) => (Number(a.Order) || 0) - (Number(b.Order) || 0)),
+    [data13]
+  );
 
-  const obtenerStacksByIdEsquema = async (id) => {
-    if (!id) return;
-    return await axios
-      .get("http://localhost:3000/api/stacks/" + id)
-      .then((response) => setData13(response.data));
-  };
+  // Hora de inicio y fin de cada elemento, encadenadas desde la hora del esquema
+  const tiemposStack = useMemo(() => {
+    const inicio = aFecha(esquemaDelPanel?.HoraInicio ?? esquemaDelPanel?.horaInicio);
+    const mapa = new Map();
+    let cursor = inicio ? new Date(inicio.getTime()) : null;
 
-  const obtenerStacks = async () => {
-    return await axios
-      .get("http://localhost:3000/api/stacks/")
-      .then((response) => setData14(response.data));
-  };
+    stackEnOrden.forEach((item) => {
+      const duracion = duracionItemStack(item, data10);
+      const desde = cursor ? new Date(cursor.getTime()) : null;
+      let hasta = null;
 
-  const obtenerStackSaved = async () => {
-    return await axios
-      .get("http://localhost:3000/api/stacks-saved/")
-      .then((response) => setData15(response.data));
-  };
+      if (cursor) {
+        hasta = new Date(cursor.getTime() + duracion * 60000);
+        cursor = hasta;
+      }
 
-  const getAllRotationsManagerFS = async () => {
-    return await axios
-      .get("http://localhost:3000/api/rotationsmanager-fs/")
-      .then((response) => setData16(response.data));
-  }
+      mapa.set(item._id, { inicio: desde, fin: hasta, duracion });
+    });
 
-  const updateIndex = async (idUs, nameSchema, Actual, IdSchema, TotalSchema, TotalGrupo) => {
-    return await axios
-      .put("http://localhost:3000/api/rotationsmanager/update/" + idUs, {
-        nameschema: nameSchema,
-        actual: Actual,
-        idschema: IdSchema,
-        totalsc: parseInt(TotalSchema),
-        totalgr: parseInt(TotalGrupo),
-      })
-  }
+    return { mapa, inicio, fin: cursor };
+  }, [stackEnOrden, data10, esquemaDelPanel]);
 
-  const updateIndexFS = async (idUs, nameSchema, Actual, idSchema, TotalSchema, TotalGrupo) => {
-    try {
-      await axios.put("http://localhost:3000/api/rotationsmanager-fs/update/" + idUs, {
-        nameschema: nameSchema,
-        actual: Actual,
-        idschema: idSchema,
-        totalsc: parseInt(TotalSchema),
-        totalgr: parseInt(TotalGrupo),
+  /**
+   * Un Program o Secondary solo se puede agregar si la hora acumulada del stack
+   * coincide con su hora de inicio. Null, Custom y Time Out no se validan.
+   */
+  const validarHoraPrograma = async (tipo, idProg) => {
+    const etiqueta = tipo === "Secondary" ? "Secondary Event" : "Programa";
+    const inicioEsquema = aFecha(esquemaDelPanel?.HoraInicio ?? esquemaDelPanel?.horaInicio);
+
+    if (!inicioEsquema) {
+      await Swal.fire({
+        title: "El esquema no tiene hora de inicio",
+        html: `<p>No se puede validar el ${etiqueta} porque el esquema seleccionado no tiene una hora de inicio válida.</p>`,
+        icon: "warning",
+        confirmButtonText: "Entendido",
+        footer: "<h6>Gestión Manager Citytv</h6>",
       });
-      await getAllRotationsManagerFS();
-    } catch (error) {
-      console.error(error);
+      return false;
     }
-  }
 
-  // Actualizar el dia clave con normalización al Lunes (Corrección aplicada)
-  const updateDayKeyGroup = async (idG) => {
-    return await axios
-      .put("http://localhost:3000/api/rotationsmanager/" + idG, {
-        newDayKey: new Date(obtenerLunesSemana()),
-        totalschema: data4.length,
-        totalgrupo: data6.length
-      })
-  }
+    const programa = data10.find((p) => p._id === idProg);
+    const horaEvento = aFecha(programa?.Start ?? programa?.start);
 
-  // Actualizar el dia clave FS con normalización al Lunes (Corrección aplicada)
-  const updateDayKeyGroupFS = async (idG) => {
-    return await axios
-      .put("http://localhost:3000/api/rotationsmanager-fs/" + idG, {
-        newDayKey: new Date(obtenerLunesSemana()),
-        totalschema: data4.length,
-        totalgrupo: data6.length
-      })
-  }
-
-  const addStack = async () => {
-    try {
-      await axios.post("http://localhost:3000/api/stacks/", {
-        idschema: idRegUniversal,
-        type: "Programa",
-        order: data13.length + 1,
-        idprograma: progRef.current.value
+    if (!horaEvento) {
+      await Swal.fire({
+        title: "El evento no tiene hora de inicio",
+        html: `<p>No se puede validar el ${etiqueta} <b>${programa?.nombre ?? ""}</b> porque no tiene una hora de inicio válida.</p>`,
+        icon: "warning",
+        confirmButtonText: "Entendido",
+        footer: "<h6>Gestión Manager Citytv</h6>",
       });
-      await obtenerStacksByIdEsquema(idRegUniversal);
-    } catch (error) {
-      console.error(error);
+      return false;
     }
-  }
 
-  const addStack2 = async () => {
+    const acumulada = tiemposStack.fin ?? inicioEsquema;
+    const minutosAcumulados = acumulada.getHours() * 60 + acumulada.getMinutes();
+    const minutosEvento = horaEvento.getHours() * 60 + horaEvento.getMinutes();
+
+    if (minutosAcumulados === minutosEvento) return true;
+
+    await Swal.fire({
+      title: "La hora acumulada no corresponde",
+      html: `
+        <p>Hora acumulada del stack: <b>${formatearHora(acumulada)}</b></p>
+        <p>Hora de inicio del ${etiqueta} <b>${programa?.nombre ?? ""}</b>: <b>${formatearHora(horaEvento)}</b></p>
+        <p>El stack debe llegar a esa hora antes de agregar el evento.</p>
+      `,
+      icon: "warning",
+      confirmButtonText: "Entendido",
+      footer: "<h6>Gestión Manager Citytv</h6>",
+    });
+    return false;
+  };
+
+  /* Texto y color del evento en la tabla del stack */
+  const claseEventoStack = (item) => {
+    if (item.Type === "Programa" || item.Type === "Secondary" || item.Type === "Label") {
+      return "stack-evento--programa";
+    }
+    if (item.Type === "Custom") return "stack-evento--custom";
+    return "stack-evento--operativo"; // Null y Time Out
+  };
+
+  const textoEventoStack = (item, duracion) => {
+    if (item.Type === "Programa" || item.Type === "Secondary" || item.Type === "Label") {
+      const programa = data10.find((p) => p._id === item.ID_programa);
+      return programa
+        ? `${programa.nombre} (${duracion} Minutos)`
+        : item.ID_programa ?? item.Type;
+    }
+    if (item.Type === "Custom") {
+      return `${item.ID_programa ?? "Custom"} (${item.Duration} Minutos)`;
+    }
+    if (item.Type === "Null" || item.ID_programa === "Null-30") {
+      return `${item.ID_programa ?? "Null"} (${duracion} Minutos)`;
+    }
+    return `${item.ID_programa ?? item.Type}${
+      item.Value !== undefined ? " " + item.Value + " Minutos" : ""
+    }`;
+  };
+
+  /* ==========================================
+     PETICIONES A LA API (GETTERS)
+     ========================================== */
+  const cargarGrupos = useCallback(async () => {
     try {
-      await axios.post("http://localhost:3000/api/stacks/", {
-        idschema: idRegUniversal,
-        type: "Secondary",
-        order: data13.length + 1,
-        idprograma: secondaryRef.current.value
-      });
-      await obtenerStacksByIdEsquema(idRegUniversal);
+      const listado = await groupsApi.getAll();
+      setData(Array.isArray(listado) ? listado : []);
     } catch (error) {
-      console.error(error);
+      console.error("Error al cargar los grupos:", error);
+      toast.error(mensajeError(error, "Error al cargar los grupos"), { id: "rotations-groups" });
     }
-  }
+  }, []);
 
-  const addStack3 = async () => {
+  const cargarProgramas = useCallback(async (tipo) => {
     try {
-      await axios.post("http://localhost:3000/api/stacks/", {
-        idschema: idRegUniversal,
-        type: "Custom",
-        order: data13.length + 1,
-        idprograma: customRef.current.value,
-        duration: durationRef.current.value
-      });
-      await obtenerStacksByIdEsquema(idRegUniversal);
-    } catch (error) {
-      console.error(error);
-    }
-  }
+      let listado;
+      if (tipo === "primary") listado = await programsApi.getPrimary();
+      else if (tipo === "secondary") listado = await programsApi.getSecondary();
+      else listado = await programsApi.getAll();
 
-  const addStack4 = async () => {
+      const programas = Array.isArray(listado) ? listado : [];
+      if (tipo === "primary") setData12(programas);
+      else if (tipo === "secondary") setData11(programas);
+      else setData10(programas);
+    } catch (error) {
+      console.error("Error al cargar los programas:", error);
+      toast.error(mensajeError(error, "Error al cargar los programas"), { id: "rotations-programs" });
+    }
+  }, []);
+
+  const cargarStacksGuardados = useCallback(async () => {
     try {
-      await axios.post("http://localhost:3000/api/stacks/", {
-        idschema: idRegUniversal,
-        type: "Label",
-        order: data13.length + 1,
-        idprograma: labelRef.current.value
-      });
-      await obtenerStacksByIdEsquema(idRegUniversal);
+      const listado = await stacksSavedApi.getAll();
+      setData15(Array.isArray(listado) ? listado : []);
     } catch (error) {
-      console.error(error);
+      console.error("Error al cargar los stacks guardados:", error);
+      toast.error(mensajeError(error, "Error al cargar los stacks guardados"), { id: "rotations-saved-stacks" });
     }
-  }
+  }, []);
 
-  const addStack5 = async () => {
+  const cargarManager = useCallback(async (tipo) => {
     try {
-      await axios.post("http://localhost:3000/api/stacks/", {
-        idschema: idRegUniversal,
-        type: "Null",
-        order: data13.length + 1,
-        idprograma: "Null-30"
-      });
-      await obtenerStacksByIdEsquema(idRegUniversal);
-    } catch (error) {
-      console.error(error);
-    }
-  }
+      const listado =
+        tipo === TIPO_FS
+          ? await rotationsManagerFsApi.getAll()
+          : await rotationsManagerApi.getAll();
 
-  const addStack6 = async () => {
+      const registros = Array.isArray(listado) ? listado : [];
+      if (tipo === TIPO_FS) setData16(registros);
+      else setData8(registros);
+    } catch (error) {
+      console.error("Error al cargar el planificador:", error);
+      toast.error(mensajeError(error, "Error al cargar el planificador"), { id: "rotations-manager" });
+    }
+  }, []);
+
+  const cargarPersonal = useCallback(async (groupId) => {
+    if (!groupId || groupId === SIN_GRUPO) {
+      // Invalida la petición en curso para que no repinte datos del grupo anterior
+      peopleRequestRef.current += 1;
+      setData6([]);
+      return;
+    }
+
+    const requestId = ++peopleRequestRef.current;
     try {
-      await axios.post("http://localhost:3000/api/stacks/", {
-        idschema: idRegUniversal,
-        type: "TimeOut",
-        order: data13.length + 1,
-        idprograma: "TimeOut",
-        valor: timeOutRef.current.value,
-      });
-      await obtenerStacksByIdEsquema(idRegUniversal);
-      timeOutRef.current.value = "0";
+      const listado = await payrollApi.getPeopleByGroup(groupId);
+      if (requestId !== peopleRequestRef.current) return;
+      setData6(Array.isArray(listado) ? listado : []);
     } catch (error) {
-      console.error(error);
+      if (requestId !== peopleRequestRef.current) return;
+      console.error("Error al cargar el personal:", error);
+      toast.error(mensajeError(error, "Error al cargar el personal"), { id: "rotations-people" });
     }
-  }
+  }, []);
 
-  const updateFijo = async (fijo, idus) => {
-    return await axios
-      .put("http://localhost:3000/api/rotationsmanager/actfijo/" + idus, {
-        fijo: fijo
-      })
-  }
+  const cargarEsquemas = useCallback(async (groupId, tipo) => {
+    const esFinDeSemana = tipo === TIPO_FS;
+    const requestRef = esFinDeSemana ? schemasFsRequestRef : schemasEsRequestRef;
 
-  const getTotalSchemas = () => {
-    let respuesta = 0; 
-    if (groupsRef.current) {
-      data8.map((rotationmanager) => (
-        rotationmanager.groupId == groupsRef.current.value ? respuesta = rotationmanager.totalSchema : null
-      ))
+    if (!groupId || groupId === SIN_GRUPO) {
+      // Invalida la petición en curso para que no repinte esquemas del grupo anterior
+      requestRef.current += 1;
+      if (esFinDeSemana) setData5([]);
+      else setData4([]);
+      return [];
     }
-    if (respuesta == 0) {
-      respuesta = 0;
+
+    const requestId = ++requestRef.current;
+
+    try {
+      const listado = esFinDeSemana
+        ? await rotationsApi.getByGroupFs(groupId)
+        : await rotationsApi.getByGroup(groupId);
+
+      if (requestId !== requestRef.current) return [];
+
+      const esquemas = Array.isArray(listado) ? listado : [];
+      if (esFinDeSemana) setData5(esquemas);
+      else setData4(esquemas);
+      return esquemas;
+    } catch (error) {
+      if (requestId !== requestRef.current) return [];
+      console.error("Error al cargar los esquemas:", error);
+      toast.error(mensajeError(error, "Error al cargar los esquemas"), { id: "rotations-schemas" });
+      return [];
     }
-    else {
-      respuesta = respuesta - 1;
+  }, []);
+
+  const cargarStacksDelEsquema = useCallback(async (schemaId) => {
+    if (!schemaId) {
+      // Invalida la petición en curso de un esquema anterior
+      stacksRequestRef.current += 1;
+      setData13([]);
+      return [];
     }
-    return respuesta;
-  }
 
-  const getTotalSchemasFS = () => {
-    let respuesta = 0; 
-    if (groupsRef.current) {
-      data16.map((rotationmanagerFS) => (
-        rotationmanagerFS.groupId == groupsRef.current.value ? respuesta = rotationmanagerFS.totalSchema : null
-      ))
+    const requestId = ++stacksRequestRef.current;
+    try {
+      const listado = await stacksApi.getBySchema(schemaId);
+      const stacks = Array.isArray(listado) ? listado : [];
+
+      // Se cachea siempre para que el acumulado de cada día tenga su propio stack,
+      // aunque la respuesta ya no sea la que debe mostrar el panel
+      setStacksPorEsquema((prev) => ({ ...prev, [schemaId]: stacks }));
+
+      if (requestId !== stacksRequestRef.current) return stacks;
+
+      setData13(stacks);
+      return stacks;
+    } catch (error) {
+      if (requestId !== stacksRequestRef.current) return [];
+      console.error("Error al cargar el stack:", error);
+      toast.error(mensajeError(error, "Error al cargar el stack"), { id: "rotations-stacks" });
+      return [];
     }
-    if (respuesta == 0) {
-      respuesta = 0;
+  }, []);
+
+  /* ==========================================
+     ESCRITURAS COMPARTIDAS ES / FS
+     ========================================== */
+  const actualizarDiaClave = async (groupId, tipo) => {
+    const payload = {
+      newDayKey: new Date(obtenerLunesSemana()),
+      totalschema: (tipo === TIPO_FS ? data5 : data4).length,
+      totalgrupo: personasActivas.length,
+    };
+
+    if (tipo === TIPO_FS) return rotationsManagerFsApi.updateGroup(groupId, payload);
+    return rotationsManagerApi.updateGroup(groupId, payload);
+  };
+
+  const actualizarTotalSchema = async (groupId, tipo) => {
+    // Se invoca justo después de borrar y antes de recargar: la lista aún tiene el esquema borrado
+    const total = Math.max(0, (tipo === TIPO_FS ? data5 : data4).length - 1);
+    const payload = { total };
+
+    if (tipo === TIPO_FS) return rotationsManagerFsApi.updateTotalSchema(groupId, payload);
+    return rotationsManagerApi.updateTotalSchema(groupId, payload);
+  };
+
+  const limpiarSeleccionDeEsquema = (tipo, limpiarStacks) => {
+    if (tipo === TIPO_FS) {
+      setTitleFs(SIN_ESQUEMA);
+      setActiveSchemaFSId(null);
+      setIdRegFS("");
+      setNweValueTwo("");
+      setOrderFS("");
+      setexcluirFS(false);
+    } else {
+      setTitleDaily(SIN_ESQUEMA);
+      setActiveSchemaESId(null);
+      setIdRegES("");
+      setNweValueOne("");
+      setOrder("");
+      setexcluirES(false);
     }
-    else {
-      respuesta = respuesta - 1;
+
+    if (limpiarStacks) {
+      setIdItem(null);
+      setData13([]);
+      setIdRegUniversal("");
+      setTitleDailyUniversal(SIN_ESQUEMA_UNIVERSAL);
     }
-    return respuesta;
-  }
+  };
 
-  const actualizarTotalSchema = async (idgrupo) => {
-    return await axios
-      .put("http://localhost:3000/api/rotationsmanager/actualizartotalschema/" + idgrupo, {
-        total: getTotalSchemas()
-      })
-  }
+  const borrarEsquema = async (schemaId, tipo) => {
+    const groupId = getGroupId();
+    const eraUniversal = idRegUniversal === schemaId;
+    let rotacionEliminada = false;
 
-  const actualizarTotalSchemaFS = async (idgrupo) => {
-    return await axios
-      .put("http://localhost:3000/api/rotationsmanager-fs/actualizartotalschema/" + idgrupo, {
-        total: getTotalSchemasFS()
-      })
-  }
+    const olvidarStacks = () => {
+      setStacksPorEsquema((prev) => {
+        if (!(schemaId in prev)) return prev;
+        const siguiente = { ...prev };
+        delete siguiente[schemaId];
+        return siguiente;
+      });
+    };
 
-  const updatePostDel = async (id) => {
-    return await axios
-      .put("http://localhost:3000/api/rotationsmanager/actualizarpostdel/" + id)
-  }
+    try {
+      await rotationsApi.removeByBody({ idreg: schemaId });
+      rotacionEliminada = true;
+      await stacksApi.removeAllBySchema(schemaId);
+      olvidarStacks();
 
-  const updatePostDelFS = async (id) => {
-    return await axios
-      .put("http://localhost:3000/api/rotationsmanager-fs/actualizarpostdel/" + id)
-  }
+      if (tipo === TIPO_FS) await rotationsManagerFsApi.updatePostDelete(schemaId);
+      else await rotationsManagerApi.updatePostDelete(schemaId);
 
+      await actualizarTotalSchema(groupId, tipo);
+
+      await Promise.all([cargarEsquemas(groupId, tipo), cargarManager(tipo)]);
+      limpiarSeleccionDeEsquema(tipo, eraUniversal);
+      return true;
+    } catch (error) {
+      console.error("Error al eliminar el esquema:", error);
+      toast.error(mensajeError(error, "Error al eliminar el esquema"));
+
+      // Si la rotación ya se había borrado, se resincroniza la pantalla con el servidor
+      await Promise.all([cargarEsquemas(groupId, tipo), cargarManager(tipo)]);
+      if (rotacionEliminada) {
+        olvidarStacks();
+        limpiarSeleccionDeEsquema(tipo, eraUniversal);
+      }
+      return false;
+    }
+  };
+
+  /* ==========================================
+     AGREGAR / ACTUALIZAR / ELIMINAR ESQUEMAS
+     ========================================== */
   const agregar = async () => {
-    if (groupsRef.current.value == "none") {
-      toast.error("Antes de agregar un esquema seleccione un grupo de la lista");
-      groupsRef.current.focus();
+    const groupId = getGroupId();
+
+    if (groupId === SIN_GRUPO || groupId === "") {
+      toast.error("Para agregar o editar un registro, primero debe seleccionar un grupo de la lista");
+      groupsRef.current?.focus();
+      return;
     }
-    else if (newEntresemana.current.value == "") {
-      toast.error("Debe especificar un nombre para el registro");
-      newEntresemana.current.focus();
+    if (!newEntresemana.current?.value || newEntresemana.current.value === SIN_ESQUEMA) {
+      toast.error("Debe especificar un nombre válido para el esquema");
+      newEntresemana.current?.focus();
+      return;
     }
-    else if (newEntresemana.current.value == "------------------") {
-      toast.error("Debe especificar un nombre valido para el nombre del esquema");
-      newEntresemana.current.focus();
-    }
-    else if (groupsRef.current.value == "") {
-      toast.error("Para agregar o editar un registro, primero debe seleccionar un grupo de la lista ");
-      groupsRef.current.focus();
-    }
-    else if (startDate1 == "") {
-      startDate1.current.focus();
-      toast.error("Debe especificar una hora de incio");
-    }
-    else if (endDate1 == "") {
-      endDate1.current.focus();
-      toast.error("Debe especificar una hora final");
-    }
-    else if (newOrder.current.value == "") {
-      newOrder.current.focus();
+    const orderValue = parseInt(newOrder.current?.value, 10);
+    if (!newOrder.current?.value || Number.isNaN(orderValue) || orderValue <= 0) {
+      newOrder.current?.focus();
       toast.error("Debe especificar un número que defina el orden de la rotación");
+      return;
     }
-    else if (coffeeES == true && excluirES == true) {
-      toast.error("¿Descanso Trasversal entres semana?")
+    if (!startDate1 || !endDate1) {
+      toast.error("Debe especificar la hora de inicio y la hora final del esquema");
+      return;
     }
-    else {
-      await axios.post("http://localhost:3000/api/rotations/", {
+    if (coffeeES && excluirES) {
+      toast.error("¿Descanso Transversal entre semana?");
+      return;
+    }
+    if (savingRef.current) return;
+
+    savingRef.current = true;
+    try {
+      await rotationsApi.create({
         nombre: newEntresemana.current.value,
         hinicio: startDate1,
         hfin: endDate1,
-        grupoid: groupsRef.current.value,
+        grupoid: groupId,
         tipo: "Entre Semana",
-        order: parseInt(newOrder.current.value),
+        order: orderValue,
         excluir: excluirES,
         descanso: coffeeES,
-        stack: pg
+        stack: []
       });
 
-      obtenerListadoGroupsPorID();
-      obtenerListadoGroupsPorIDFs();
+      await Promise.all([
+        cargarEsquemas(groupId, TIPO_ES),
+        cargarEsquemas(groupId, TIPO_FS),
+      ]);
+
       newEntresemana.current.value = "";
       setOrder("");
       setNweValueOne("");
       setexcluirES(false);
-      getAllRotations(); 
       toast.success("Registro agregado correctamente");
+    } catch (error) {
+      console.error("Error al agregar el esquema:", error);
+      toast.error(mensajeError(error, "Error al agregar el esquema"));
+    } finally {
+      savingRef.current = false;
     }
-  }
+  };
 
   const agregarFS = async () => {
-    if (groupsRef.current.value == "none") {
-      toast.error("Antes de agregar un esquema seleccione un grupo de la lista");
-      groupsRef.current.focus();
+    const groupId = getGroupId();
+
+    if (groupId === SIN_GRUPO || groupId === "") {
+      toast.error("Para agregar o editar un registro, primero debe seleccionar un grupo de la lista");
+      groupsRef.current?.focus();
+      return;
     }
-    else if (newFinsemana.current.value == "") {
-      toast.error("Debe especificar un nombre para el registro");
-      newFinsemana.current.focus();
+    if (!newFinsemana.current?.value || newFinsemana.current.value === SIN_ESQUEMA) {
+      toast.error("Debe especificar un nombre válido para el esquema de fin de semana");
+      newFinsemana.current?.focus();
+      return;
     }
-    else if (newFinsemana.current.value == "------------------") {
-      toast.error("Debe especificar un nombre valido para el nombre del esquema");
-      newFinsemana.current.focus();
-    }
-    else if (groupsRef.current.value == "") {
-      toast.error("Para agregar o editar un registro, primero debe seleccionar un grupo de la lista ");
-      groupsRef.current.focus();
-    }
-    else if (startDate2 == "") {
-      startDate2.current.focus();
-      toast.error("Debe especificar una hora de incio");
-    }
-    else if (endDate2 == "") {
-      endDate2.current.focus();
-      toast.error("Debe especificar una hora final");
-    }
-    else if (newOrderFS.current.value == "") {
-      newOrderFS.current.focus();
+    const orderValue = parseInt(newOrderFS.current?.value, 10);
+    if (!newOrderFS.current?.value || Number.isNaN(orderValue) || orderValue <= 0) {
+      newOrderFS.current?.focus();
       toast.error("Debe especificar un número que defina el orden de la rotación para fines de semana");
+      return;
     }
-    else if (coffeeFS == true && excluirFS == true) {
-      toast.error("¿Descanso Trasversal en Fin de semana?")
+    if (!startDate2 || !endDate2) {
+      toast.error("Debe especificar la hora de inicio y la hora final del esquema de fin de semana");
+      return;
     }
-    else {
-      await axios.post("http://localhost:3000/api/rotations/", {
+    if (coffeeFS && excluirFS) {
+      toast.error("¿Descanso Transversal en Fin de semana?");
+      return;
+    }
+    if (savingRef.current) return;
+
+    savingRef.current = true;
+    try {
+      await rotationsApi.create({
         nombre: newFinsemana.current.value,
         hinicio: startDate2,
         hfin: endDate2,
-        grupoid: groupsRef.current.value,
+        grupoid: groupId,
         tipo: "Fin de Semana",
-        order: parseInt(newOrderFS.current.value),
+        order: orderValue,
         excluir: excluirFS,
         descanso: coffeeFS
       });
 
-      obtenerListadoGroupsPorID();
-      obtenerListadoGroupsPorIDFs();
+      await Promise.all([
+        cargarEsquemas(groupId, TIPO_ES),
+        cargarEsquemas(groupId, TIPO_FS),
+      ]);
+
       newFinsemana.current.value = "";
-      newOrder.current.value = "";
       setOrderFS("");
       setNweValueTwo("");
       setexcluirFS(false);
       toast.success("Registro agregado correctamente");
+    } catch (error) {
+      console.error("Error al agregar el esquema de fin de semana:", error);
+      toast.error(mensajeError(error, "Error al agregar el esquema de fin de semana"));
+    } finally {
+      savingRef.current = false;
     }
-  }
+  };
 
-  const enviar = async (usNombre, usApellido, id, grupo, grupoid, scName, scID, ts, tg, ac) => {
-    await axios.post("http://localhost:3000/api/rotationsmanager/", {
-      nombreusuario: usNombre + " " + usApellido,
-      userid: id,
-      groupname: grupo,
-      groupid: grupoid,
-      schemaname: scName,
-      schemaid: scID,
-      totalschema: ts,
-      totalgroup: tg,
-      actual: ac,
-      dayKey: new Date(),
-    });
-  }
+  const programClick = async () => {
+    const groupId = getGroupId();
 
-  const enviarFS = async (usNombre, usApellido, id, grupo, grupoid, scName, scID, ts, tg, ac) => {
-    await axios.post("http://localhost:3000/api/rotationsmanager-fs/", {
-      nombreusuario: usNombre + " " + usApellido,
-      userid: id,
-      groupname: grupo,
-      groupid: grupoid,
-      schemaname: scName,
-      schemaid: scID,
-      totalschema: ts,
-      totalgroup: tg,
-      actual: ac,
-      dayKey: new Date(),
-    });
-  }
-
-  const programClick = () => {
-    obtenerListadoGroupsPorID();
-    obtenerListadoGroupsPorIDFs();
-    getAllRotationsManager();
-
-    data?.map((item) => (item._id == groupsRef.current.value ? aux = item._id : null))
-
-    getPeopleOfGroup();
-    setTitleDaily("------------------");
-    setTitleFs("------------------");
+    setTitleDaily(SIN_ESQUEMA);
+    setTitleFs(SIN_ESQUEMA);
+    setActiveSchemaESId(null);
+    setActiveSchemaFSId(null);
 
     setNweValueOne("");
     setOrder("");
@@ -554,757 +700,838 @@ const RotationsContent = () => {
     setCoffeeFS(false);
 
     setIdRegES("");
+    setIdRegFS("");
     setData13([]);
-    setIdItem("");
-  }
+    setStacksPorEsquema({});
+    setIdItem(null);
 
-  const callItem1 = (Nombres, horaInicio, horaFinal, id, order, ex, descanso, e) => {
+    // Se limpia también el identificador universal para obligar a seleccionar un esquema nuevo
+    setTitleDailyUniversal(SIN_ESQUEMA_UNIVERSAL);
+    setIdRegUniversal("");
+
+    await Promise.all([
+      cargarEsquemas(groupId, TIPO_ES),
+      cargarEsquemas(groupId, TIPO_FS),
+      cargarManager(TIPO_ES),
+      cargarManager(TIPO_FS),
+      cargarPersonal(groupId),
+    ]);
+  };
+
+  const callItem1 = (Nombres, horaInicio, horaFinal, id, orderVal, ex, descanso) => {
     setTitleDaily(Nombres);
-    setStartDate1(new Date(horaInicio));
-    setEndDate1(new Date(horaFinal))
+    const fechaInicio = aFecha(horaInicio);
+    const fechaFinal = aFecha(horaFinal);
+    if (fechaInicio) setStartDate1(fechaInicio);
+    if (fechaFinal) setEndDate1(fechaFinal);
     setIdRegES(id);
     setNweValueOne(Nombres);
-    setOrder(order);
-    setexcluirES(ex)
-    setCoffeeES(descanso);
-    obtenerStacksByIdEsquema(id);
+    setOrder(orderVal ?? "");
+    setexcluirES(Boolean(ex));
+    setCoffeeES(Boolean(descanso));
+    cargarStacksDelEsquema(id);
     setTitleDailyUniversal(Nombres);
     setIdRegUniversal(id);
+    setActiveSchemaESId(id);
+    setActiveSchemaFSId(null);
+  };
 
-    if (e.target.classList == "item") {
-      let aux = document.getElementsByClassName("activo1");
-      for (let index = 0; index < aux.length; index++) {
-        aux[index].classList.remove("activo1");
-      }
-      e.target.classList.add("activo1");
-    }
-  }
-
-  const callItem2 = (Nombres, horaInicio, horaFinal, id, order, ex, descanso, e) => {
+  const callItem2 = (Nombres, horaInicio, horaFinal, id, orderVal, ex, descanso) => {
     setTitleFs(Nombres);
-    setStartDate2(new Date(horaInicio));
-    setEndDate2(new Date(horaFinal))
+    const fechaInicio = aFecha(horaInicio);
+    const fechaFinal = aFecha(horaFinal);
+    if (fechaInicio) setStartDate2(fechaInicio);
+    if (fechaFinal) setEndDate2(fechaFinal);
     setIdRegFS(id);
     setNweValueTwo(Nombres);
-    setOrderFS(order);
-    setexcluirFS(ex);
-    setCoffeeFS(descanso);
-    obtenerStacksByIdEsquema(id);
+    setOrderFS(orderVal ?? "");
+    setexcluirFS(Boolean(ex));
+    setCoffeeFS(Boolean(descanso));
+    cargarStacksDelEsquema(id);
     setTitleDailyUniversal(Nombres);
     setIdRegUniversal(id);
-
-    if (e.target.classList == "item") {
-      let aux = document.getElementsByClassName("activo2");
-      for (let index = 0; index < aux.length; index++) {
-        aux[index].classList.remove("activo2");
-      }
-      e.target.classList.add("activo2");
-    }
-  }
-
-  const Cambiar = (e) => { setNweValueOne(e.target.value) }
-  const Cambiar2 = (e) => { setNweValueTwo(e.target.value) }
-  const Cambiar3 = (e) => { setOrder(e.target.value) }
-  const Cambiar4 = (e) => { setOrderFS(e.target.value) }
-  const Cambiar5 = () => { setexcluirES(!excluirES) }
-  const Cambiar6 = () => { setexcluirFS(!excluirFS) }
-  const cambiarDescansoES = () => { setCoffeeES(!coffeeES); }
-  const cambiarDescansoFS = () => { setCoffeeFS(!coffeeFS); }
+    setActiveSchemaFSId(id);
+    setActiveSchemaESId(null);
+  };
 
   const updateES = async () => {
-    if (newValueOne == "") {
-      newEntresemana.current.focus();
+    if (!idRegES) {
+      toast.error("Para actualizar la información, primero debe seleccionar un esquema de la lista");
+      return;
+    }
+    if (newValueOne === "") {
+      newEntresemana.current?.focus();
       toast.error("Para actualizar la información, debe especificar un nombre para el Schema");
+      return;
     }
-    else if (newOrder.current.value == "") {
-      newOrder.current.focus();
+    const orderValue = parseInt(newOrder.current?.value, 10);
+    if (!newOrder.current?.value || Number.isNaN(orderValue) || orderValue <= 0) {
+      newOrder.current?.focus();
       toast.error("Debe especificar un número que defina el orden de la rotación");
+      return;
     }
-    else if (coffeeES == true && excluirES == true) {
-      toast.error("¿Descanso Trasversal entre semana?")
+    if (!startDate1 || !endDate1) {
+      toast.error("Debe especificar la hora de inicio y la hora final del esquema");
+      return;
     }
-    else {
-      await axios.put("http://localhost:3000/api/rotations/", {
+    if (coffeeES && excluirES) {
+      toast.error("¿Descanso Transversal entre semana?");
+      return;
+    }
+    if (savingRef.current) return;
+
+    const groupId = getGroupId();
+    savingRef.current = true;
+    try {
+      await rotationsApi.update({
         id_registro: idRegES,
         nombreActual: titleDaily,
         nuevaHoraInicio: startDate1,
         nuevaHoraFinal: endDate1,
         nuevoNombre: newValueOne,
-        order: parseInt(newOrder.current.value),
+        order: orderValue,
         excluir: excluirES,
         descanso: coffeeES
       });
 
-      await axios.put("http://localhost:3000/api/rotationsmanager/setname/", {
+      await rotationsManagerApi.setName({
         id_esquema: idRegES,
         nuevonombre: newValueOne
       });
-      await getAllRotationsManager();
 
-      obtenerListadoGroupsPorID();
+      await Promise.all([
+        cargarEsquemas(groupId, TIPO_ES),
+        cargarManager(TIPO_ES),
+      ]);
+
+      // El esquema seleccionado para editar es el que se muestra en la cabecera del día
+      setTitleDaily(newValueOne);
+      if (idRegES === idRegUniversal) setTitleDailyUniversal(newValueOne);
+
       setNweValueOne("");
       setOrder("");
       setexcluirES(false);
       toast.success("Datos entre semana actualizados correctamente");
+    } catch (error) {
+      console.error("Error al actualizar el esquema entre semana:", error);
+      toast.error(mensajeError(error, "Error al actualizar el esquema entre semana"));
+    } finally {
+      savingRef.current = false;
     }
-  }
+  };
 
   const updateFS = async () => {
-    if (newValueTwo == "") {
-      newFinsemana.current.focus();
+    if (!idRegFS) {
+      toast.error("Para actualizar la información, primero debe seleccionar un esquema de fin de semana de la lista");
+      return;
+    }
+    if (newValueTwo === "") {
+      newFinsemana.current?.focus();
       toast.error("Para actualizar la información, debe especificar un nombre para el Schema");
+      return;
     }
-    else if (newOrderFS.current.value == "") {
-      newOrderFS.current.focus();
+    const orderValue = parseInt(newOrderFS.current?.value, 10);
+    if (!newOrderFS.current?.value || Number.isNaN(orderValue) || orderValue <= 0) {
+      newOrderFS.current?.focus();
       toast.error("Debe especificar un número que defina el orden de la rotación para fines de semana");
+      return;
     }
-    else if (coffeeFS == true && excluirFS == true) {
-      toast.error("¿Descanso Trasversal en Fin de semana?")
+    if (!startDate2 || !endDate2) {
+      toast.error("Debe especificar la hora de inicio y la hora final del esquema de fin de semana");
+      return;
     }
-    else {
-      await axios.put("http://localhost:3000/api/rotations/", {
+    if (coffeeFS && excluirFS) {
+      toast.error("¿Descanso Transversal en Fin de semana?");
+      return;
+    }
+    if (savingRef.current) return;
+
+    const groupId = getGroupId();
+    savingRef.current = true;
+    try {
+      await rotationsApi.update({
         id_registro: idRegFS,
         nombreActual: titleFs,
         nuevaHoraInicio: startDate2,
         nuevaHoraFinal: endDate2,
         nuevoNombre: newValueTwo,
-        order: parseInt(newOrderFS.current.value),
+        order: orderValue,
         excluir: excluirFS,
         descanso: coffeeFS
       });
 
-      obtenerListadoGroupsPorIDFs();
+      await Promise.all([
+        cargarEsquemas(groupId, TIPO_FS),
+        cargarManager(TIPO_FS),
+      ]);
+
+      // El esquema seleccionado para editar es el que se muestra en la cabecera del día
+      setTitleFs(newValueTwo);
+      if (idRegFS === idRegUniversal) setTitleDailyUniversal(newValueTwo);
+
       setNweValueTwo("");
       setOrderFS("");
       setexcluirFS(false);
       toast.success("Datos de fin de semana actualizados correctamente");
+    } catch (error) {
+      console.error("Error al actualizar el esquema de fin de semana:", error);
+      toast.error(mensajeError(error, "Error al actualizar el esquema de fin de semana"));
+    } finally {
+      savingRef.current = false;
     }
-  }
+  };
 
   const deleteES = async () => {
-    if (titleDaily == "------------------") {
+    if (titleDaily === SIN_ESQUEMA || !idRegES) {
       toast.error("No se ha seleccionado un Esquema semanal para eliminar");
+      return;
     }
-    else {
-      Swal.fire({
-        title: "¿Realmente desea eliminar el esquema?",
-        showDenyButton: true,
-        showCancelButton: true,
-        confirmButtonText: "No",
-        denyButtonText: `Confirmar`,
-        footer: '<h6>Gestión Manager Citytv</h6>',
-      }).then((result) => {
-        if (result.isConfirmed) {
-        } else if (result.isDenied) {
-          EliminarRegistro();
-        }
-      });
-    }
-  }
 
-  const DefinirDescanso = () => { setCoffeeES(!coffeeES); }
-  const DefinirDescansoFs = () => { setCoffeeFS(!coffeeFS); }
-
-  const EliminarRegistro = async () => {
-    await axios.put("http://localhost:3000/api/rotations/delete/", {
-      idreg: idRegES,
+    const result = await Swal.fire({
+      title: "¿Realmente desea eliminar el esquema?",
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: "No",
+      denyButtonText: `Confirmar`,
+      footer: '<h6>Gestión Manager Citytv</h6>',
     });
 
-    cleanStack();
-    updatePostDel(idRegUniversal);
-    actualizarTotalSchema(groupsRef.current.value);
+    if (!result.isDenied) return;
 
-    setTitleDaily("------------------");
-    obtenerListadoGroupsPorID();
-    setNweValueOne("");
-    setOrder("");
-    setexcluirES(false);
-  }
+    const eliminado = await borrarEsquema(idRegES, TIPO_ES);
+    if (eliminado) Swal.fire("Esquema eliminado", "", "success");
+  };
 
   const deleteFS = async () => {
-    if (titleFs == "------------------") {
+    if (titleFs === SIN_ESQUEMA || !idRegFS) {
       toast.error("No se ha seleccionado un Esquema de fin de semana para eliminar");
+      return;
     }
-    else {
-      Swal.fire({
-        title: "¿Realmente desea eliminar el esquema de fin de semana?",
-        showDenyButton: true,
-        showCancelButton: true,
-        confirmButtonText: "No",
-        denyButtonText: `Confirmar`,
-        footer: '<h6>Gestión Manager Citytv</h6>',
-      }).then((result) => {
-        if (result.isConfirmed) {
-        } else if (result.isDenied) {
-          EliminarRegistro2();
-        }
-      });
-    }
-  }
 
-  const save = async () => {
-    toast.success("Aqui se deberia guardar");
-  }
-
-  const EliminarRegistro2 = async () => {
-    await axios.put("http://localhost:3000/api/rotations/delete/", {
-      idreg: idRegFS,
+    const result = await Swal.fire({
+      title: "¿Realmente desea eliminar el esquema de fin de semana?",
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: "No",
+      denyButtonText: `Confirmar`,
+      footer: '<h6>Gestión Manager Citytv</h6>',
     });
 
-    cleanStack();
-    updatePostDelFS(idRegUniversal);
-    actualizarTotalSchemaFS(groupsRef.current.value);
+    if (!result.isDenied) return;
 
-    setNweValueTwo("");
-    setOrderFS("");
-    obtenerListadoGroupsPorIDFs();
-    setexcluirFS(false);
-  }
+    const eliminado = await borrarEsquema(idRegFS, TIPO_FS);
+    if (eliminado) Swal.fire("Esquema eliminado", "", "success");
+  };
 
-  const corroborarNombre = (idNuevoSchema) => {
-    let nombreSchema;
-    data9?.map((rotations) => (
-      idNuevoSchema == rotations._id && (nombreSchema = rotations.Nombre)
-    ))
-    return nombreSchema;
-  }
+  /* ==========================================
+     ASIGNACIÓN DE ESQUEMAS AL PERSONAL
+     ========================================== */
 
-  const corroborarActual = (idNuevoSchema) => {
-    let Actual;
-    data9?.map((item) => (
-      idNuevoSchema == item._id && (Actual = item.Order)
-    ))
-    return Actual;
-  }
+  /**
+   * Impide asignar a una persona un esquema cuyo stack no sume exactamente
+   * la duración de su horario. Los esquemas de Descanso y los que no tienen
+   * un horario válido quedan exentos.
+   */
+  const validarStackDelEsquema = async (esquema) => {
+    if (!esquema) return true;
 
-  const actualizar = (idUser, e) => {
-    let idSchema, idGrupo, totalSchema, totalGrupo, actual;
-    let DiaClave, newName;
-    let globalIDUser = idUser;
-    let globalNameSchema = corroborarNombre(e.target.value);
-    let globalActual = corroborarActual(e.target.value);
+    // Los esquemas de Descanso no requieren un stack completo: solo se informa
+    if (esquema.Descanso || esquema.descanso) return true;
 
-    data8?.map((rm) => (
-      idUser == rm.userId &&
-      (idSchema = rm.schemaId) &&
-      (idGrupo = rm.groupName) &&
-      (totalSchema = rm.totalSchema) +
-      (totalGrupo = rm.totalGrupo) +
-      (actual = rm.actual) +
-      (DiaClave = new Date(rm.dayKey).setHours(0, 0, 0, 0))
-    ))
+    const ventana = minutosEntreFechas(
+      esquema.HoraInicio ?? esquema.horaInicio,
+      esquema.HoraFinal ?? esquema.horaFinal
+    );
 
-    let fechaHoy = new Date().setHours(0, 0, 0, 0);
-    let daykeyPlus = new Date(DiaClave).setDate(new Date(DiaClave).getDate() + 8);
-    let NombreDia = new Date(DiaClave).getUTCDay();
-    let diaDayKey = new Date(DiaClave).getDate();
-    let mesDayKey = new Date(DiaClave).getMonth();
-    let añoDayKey = new Date(DiaClave).getFullYear();
+    // Sin horario válido no hay contra qué comparar
+    if (!ventana || ventana <= 0) return true;
 
-    let fechaInicioSemana;
-    let fechaFinalSemana;
+    let stacks;
+    try {
+      stacks = await stacksApi.getBySchema(esquema._id);
+    } catch (error) {
+      console.error("No se pudo verificar el stack del esquema:", error);
+      toast.error(mensajeError(error, "No se pudo verificar el stack del esquema"));
+      return false;
+    }
 
-    NombreDia <= 5 && NombreDia >= 1
-      && NombreDia == 1 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() + 0), fechaFinalSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() + 4)) :
-      NombreDia == 2 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() - 1), fechaFinalSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() + 3)) :
-        NombreDia == 3 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() - 2), fechaFinalSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() + 2)) :
-          NombreDia == 4 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() - 3), fechaFinalSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() + 1)) :
-            NombreDia == 5 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() - 4), fechaFinalSemana = new Date(DiaClave)) : null
+    const total = (Array.isArray(stacks) ? stacks : []).reduce(
+      (acumulado, item) => acumulado + duracionItemStack(item, data10),
+      0
+    );
 
-    let totalschema = data4.length;
-    let totalG = data6.length;
+    if (total === ventana) return true;
 
-    if (totalschema != totalG) {
+    const diferencia = ventana - total;
+    const detalle =
+      diferencia > 0 ? `faltan ${diferencia} min` : `sobran ${Math.abs(diferencia)} min`;
+
+    toast.error(
+      `El stack del esquema "${esquema.Nombre}" no cuadra con su horario: ${total} min de stack vs ${ventana} min de turno (${detalle}).`
+    );
+    return false;
+  };
+
+  const actualizar = async (userId, event) => {
+    const schemaId = event.target.value;
+    if (!schemaId) return;
+
+    const manager = managerEsDe(userId);
+    if (!manager) {
+      toast.error("No se encontró el registro del planificador para este trabajador");
+      return;
+    }
+
+    const totalSchema = data4.length;
+    const totalGrupo = personasActivas.length;
+
+    if (totalSchema !== totalGrupo) {
       Swal.fire({
-        title: "<h6>El número de personas y de esquemas, no es el mismo. Corrija agregando Users Balancers o agregando o quitando esquemas para equilibrar el sistema y proceder a asignar un esquema al trabajador</h6>",
+        title: "<h6>El número de personas y de esquemas, no es el mismo. Corrija agregando Users Balancers o agregando o quitando esquemas para equilibrar el sistema.</h6>",
         showDenyButton: false,
-        showCancelButton: false,
         confirmButtonText: "OK",
-        footer: `<h4>Hay ${totalG} Personas activas y ${totalschema} Esquemas</h4>`,
-      })
+        footer: `<h4>Hay ${totalGrupo} Personas activas y ${totalSchema} Esquemas</h4>`,
+      });
+      // Refresca para que el select controlado vuelva a mostrar lo realmente guardado
+      await cargarManager(TIPO_ES);
+      return;
     }
-    else {
-      updateDayKeyGroup(idGrupo);
-      updateIndex(globalIDUser, globalNameSchema, globalActual, e.target.value, totalschema, totalG);
+
+    if (savingRef.current) return;
+    savingRef.current = true;
+    const esquemaDestino = data4.find((esquema) => esquema._id === schemaId) ?? null;
+    try {
+      if (!(await validarStackDelEsquema(esquemaDestino))) {
+        // Revierte el select controlado al valor realmente guardado
+        await cargarManager(TIPO_ES);
+        return;
+      }
+
+      await actualizarDiaClave(manager.groupName, TIPO_ES);
+      await rotationsManagerApi.updateIndex(userId, {
+        nameschema: corroborarNombre(schemaId, TIPO_ES),
+        actual: corroborarActual(schemaId, TIPO_ES),
+        idschema: schemaId,
+        totalsc: parseInt(totalSchema, 10),
+        totalgr: parseInt(totalGrupo, 10),
+      });
+      await cargarManager(TIPO_ES);
       toast.success("Información actualizada");
+    } catch (error) {
+      console.error("Error al actualizar el planificador:", error);
+      toast.error(mensajeError(error, "Error al actualizar el planificador"));
+      await cargarManager(TIPO_ES);
+    } finally {
+      savingRef.current = false;
     }
-  }
+  };
 
-  const actualizarFS = (idUser, e) => {
-    let idSchema, idGrupo, totalSchema, totalGrupo, actual;
-    let DiaClave, newName;
-    let globalIDUser = idUser;
-    let globalNameSchema = corroborarNombre(e.target.value);
-    let globalActual = corroborarActual(e.target.value);
+  const actualizarFS = async (userId, event) => {
+    const schemaId = event.target.value;
+    if (!schemaId) return;
 
-    data16?.map((rm) => (
-      idUser == rm.userId &&
-      (idSchema = rm.schemaId) &&
-      (idGrupo = rm.groupName) &&
-      (totalSchema = rm.totalSchema) +
-      (totalGrupo = rm.totalGrupo) +
-      (actual = rm.actual) +
-      (DiaClave = new Date(rm.dayKey).setHours(0, 0, 0, 0))
-    ))
+    const manager = managerFsDe(userId);
+    if (!manager) {
+      toast.error("No se encontró el registro del planificador para este trabajador");
+      return;
+    }
 
-    let fechaHoy = new Date().setHours(0, 0, 0, 0);
-    let daykeyPlus = new Date(DiaClave).setDate(new Date(DiaClave).getDate() + 8);
-    let NombreDia = new Date(DiaClave).getUTCDay();
-    let diaDayKey = new Date(DiaClave).getDate();
-    let mesDayKey = new Date(DiaClave).getMonth();
-    let añoDayKey = new Date(DiaClave).getFullYear();
+    const totalSchema = data5.length;
+    const totalGrupo = personasActivas.length;
 
-    let fechaInicioSemana;
-    let fechaFinalSemana;
-
-    NombreDia <= 5 && NombreDia >= 1
-      && NombreDia == 1 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() + 0), fechaFinalSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() + 4)) :
-      NombreDia == 2 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() - 1), fechaFinalSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() + 3)) :
-        NombreDia == 3 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() - 2), fechaFinalSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() + 2)) :
-          NombreDia == 4 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() - 3), fechaFinalSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() + 1)) :
-            NombreDia == 5 ? (fechaInicioSemana = new Date(DiaClave).setDate(new Date(DiaClave).getDate() - 4), fechaFinalSemana = new Date(DiaClave))
-              : null
-
-    let totalschema = data5.length;
-    let totalG = data6.length;
-
-    if (totalschema != totalG) {
+    if (totalSchema !== totalGrupo) {
       Swal.fire({
-        title: "<h6>El número de personas y de esquemas para fines de semana, no es el mismo. Corrija agregando Users Balancers o agregando o quitando esquemas para equilibrar el sistema y proceder a asignar un esquema al trabajador</h6>",
+        title: "<h6>El número de personas y de esquemas para fines de semana, no es el mismo. Corrija agregando Users Balancers o esquemas.</h6>",
         showDenyButton: false,
-        showCancelButton: false,
         confirmButtonText: "OK",
-        footer: `<h4>Hay ${totalG} Personas activas y ${totalschema} Esquemas</h4>`,
-      })
+        footer: `<h4>Hay ${totalGrupo} Personas activas y ${totalSchema} Esquemas</h4>`,
+      });
+      await cargarManager(TIPO_FS);
+      return;
     }
-    else {
-      updateDayKeyGroupFS(idGrupo);
-      updateIndexFS(globalIDUser, globalNameSchema, globalActual, e.target.value, totalschema, totalG);
-      toast.success("Información actualizada");
-    }
-  }
 
-  const setChangeFijo = async (iduser, e) => {
-    const nuevoValor = e.target.checked;
-    
-    setData8(prevData => 
-      prevData.map(rm => 
-        rm.userId === iduser ? { ...rm, fijo: nuevoValor } : rm
-      )
+    if (savingRef.current) return;
+    savingRef.current = true;
+    const esquemaDestino = data5.find((esquema) => esquema._id === schemaId) ?? null;
+    try {
+      if (!(await validarStackDelEsquema(esquemaDestino))) {
+        // Revierte el select controlado al valor realmente guardado
+        await cargarManager(TIPO_FS);
+        return;
+      }
+
+      await actualizarDiaClave(manager.groupName, TIPO_FS);
+      await rotationsManagerFsApi.updateIndex(userId, {
+        nameschema: corroborarNombre(schemaId, TIPO_FS),
+        actual: corroborarActual(schemaId, TIPO_FS),
+        idschema: schemaId,
+        totalsc: parseInt(totalSchema, 10),
+        totalgr: parseInt(totalGrupo, 10),
+      });
+      await cargarManager(TIPO_FS);
+      toast.success("Información actualizada");
+    } catch (error) {
+      console.error("Error al actualizar el planificador de fin de semana:", error);
+      toast.error(mensajeError(error, "Error al actualizar el planificador de fin de semana"));
+      await cargarManager(TIPO_FS);
+    } finally {
+      savingRef.current = false;
+    }
+  };
+
+  const setChangeFijo = async (iduser, event) => {
+    const nuevoValor = event.target.checked;
+
+    setData8(prevData =>
+      prevData.map(rm => rm.userId === iduser ? { ...rm, fijo: nuevoValor } : rm)
     );
 
     try {
-      await updateFijo(nuevoValor, iduser);
-      await getAllRotationsManager();
+      await rotationsManagerApi.updateFixed(iduser, { fijo: nuevoValor });
+      await cargarManager(TIPO_ES);
     } catch (error) {
-      console.error("Error al actualizar el estado fijo:", error);
-      await getAllRotationsManager();
+      console.error(error);
+      await cargarManager(TIPO_ES);
       toast.error("No se pudo actualizar el estado fijo");
     }
   };
 
-  const handleOnChangeLunes = () => {
-    setCheckLunes(!checkLunes);
-  };
+  /* ==========================================
+     FUNCIONES DE STACKS (AGREGAR)
+     ========================================== */
+  const addStackGenerico = async (tipo, idProg, extraData = {}) => {
+    if (!idRegUniversal) {
+      toast.error("Para agregar un elemento al stack primeramente debe haber seleccionado un grupo y posteriormente un esquema");
+      return;
+    }
+    if (savingRef.current) return;
 
-  const select2 = (actual, e) => {
-    setIdItem(actual);
-    if (e.target.classList == "main1") {
-      let aux = document.getElementsByClassName("activo");
-      for (let index = 0; index < aux.length; index++) {
-        aux[index].classList.remove("activo");
-      }
-      e.target.classList.add("activo");
+    // Solo Program y Secondary se validan contra la hora acumulada del stack
+    if (tipo === "Programa" || tipo === "Secondary") {
+      const horaValida = await validarHoraPrograma(tipo, idProg);
+      if (!horaValida) return;
     }
-  }
 
-  const select3 = (actual, e) => {
-    setIdItem(actual);
-    if (e.target.classList == "main2") {
-      let aux = document.getElementsByClassName("activo");
-      for (let index = 0; index < aux.length; index++) {
-        aux[index].classList.remove("activo");
-      }
-      e.target.classList.add("activo");
+    // Calculamos el siguiente orden real buscando el máximo Order actual en data13, o 1 si está vacío
+    let siguienteOrden = 1;
+    if (data13 && data13.length > 0) {
+      const maxOrder = Math.max(...data13.map(item => item.Order || 0));
+      siguienteOrden = maxOrder + 1;
     }
-  }
 
-  const select4 = (actual, e) => {
-    setIdItem(actual);
-    if (e.target.classList == "main3") {
-      let aux = document.getElementsByClassName("activo");
-      for (let index = 0; index < aux.length; index++) {
-        aux[index].classList.remove("activo");
-      }
-      e.target.classList.add("activo");
-    }
-  }
-
-  const programa = () => {
-    if (idRegUniversal == "" || idRegUniversal == undefined) {
-      toast.error("Para agregar un programa al stack primeramente debe haber seleccionado un grupo y posteriormente un esquema");
-    }
-    else {
-      addStack();
-      toast.success("Program agregado al stack ");
-    }
-  }
-
-  const SecondaryEvent = () => {
-    if (idRegUniversal == "" || idRegUniversal == undefined) {
-      toast.error("Para agregar un programa al stack primeramente debe haber seleccionado un grupo y posteriormente un esquema");
-    }
-    else {
-      addStack2();
-      toast.success("Secondary Event agregado al stack ");
-    }
-  }
-
-  const custom = () => {
-    if (idRegUniversal == "" || idRegUniversal == undefined) {
-      toast.error("Para agregar un programa al stack primeramente debe haber seleccionado un grupo y posteriormente un esquema");
-    }
-    else if (durationRef.current.value == "") {
-      toast.error("La duracion en minutos del Custom que quieres agregar no puede estar vacio");
-      durationRef.current.focus();
-    }
-    else if (customRef.current.value == "") {
-      toast.error("El evento Custom que quieres agregar no puede estar vacio");
-      customRef.current.focus();
-    }
-    else {
-      addStack3();
-      toast.success("Custom agregado al stack ");
-    }
-  }
-
-  const label = () => {
-    if (idRegUniversal == "" || idRegUniversal == undefined) {
-      toast.error("Para agregar un programa al stack primeramente debe haber seleccionado un grupo y posteriormente un esquema");
-    }
-    else {
-      addStack4();
-      toast.success("Label agregado al stack ");
-    }
-  }
-
-  const addSt = async (tipo, orden, idPGM, valor, duracion) => {
+    savingRef.current = true;
     try {
-      await axios.post("http://localhost:3000/api/stacks/", {
+      await stacksApi.create({
         idschema: idRegUniversal,
         type: tipo,
-        order: orden,
-        idprograma: idPGM,
-        duration: duracion
+        order: siguienteOrden,
+        idprograma: idProg,
+        ...extraData
       });
-      await obtenerStacksByIdEsquema(idRegUniversal);
+      await cargarStacksDelEsquema(idRegUniversal);
+      toast.success("Elemento agregado al stack");
     } catch (error) {
-      console.error(error);
+      console.error("Error al agregar el elemento al stack:", error);
+      toast.error(mensajeError(error, "Error al agregar el elemento al stack"));
+    } finally {
+      savingRef.current = false;
     }
-  }
+  };
 
-  const llenar = () => {
-    data15?.map((stackSaved) => (
-      stackSaved._id == itemLoadRef.current.value &&
-      stackSaved.Stack.map((stack) => (
-        addSt(stack.type, stack.order, stack.itemName, stack.Value, stack.Duration)
-      ))
-    ))
-  }
+  const programa = () => addStackGenerico("Programa", progRef.current?.value);
+  const SecondaryEvent = () => addStackGenerico("Secondary", secondaryRef.current?.value);
 
-  const loadStack = async () => {
-    try {
-      const response = await axios.delete("http://localhost:3000/api/stacks/deleteall/" + idRegUniversal);
-      setData14(response.data);
-      llenar();
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  const custom = () => {
+    const minutos = Number(durationRef.current?.value);
 
-  const load = () => {
-    if (groupsRef.current.value == "none" || idRegUniversal == "") {
-      toast.error("Para cargar unstack primero debe seleccionar un grupo y luego un esquema");
+    if (!durationRef.current?.value) {
+      toast.error("La duración en minutos del Custom no puede estar vacía");
+      durationRef.current?.focus();
+      return;
     }
-    else {
-      Swal.fire({
-        title: "¿Realmente desea cargar el stack seleccionado?. El actual stack se perderá si no se ha guardado previamente",
-        showDenyButton: true,
-        showCancelButton: false,
-        confirmButtonText: "No",
-        denyButtonText: `Si, Borra actual y cargar`,
-        footer: '<h6>Gestión Manager Citytv</h6>',
-      }).then((result) => {
-        if (result.isConfirmed) {
-        } else if (result.isDenied) {
-          loadStack();
-          Swal.fire("Stack cargado con exito", "", "success");
-        }
-      });
+    if (!Number.isFinite(minutos) || minutos <= 0) {
+      toast.error("La duración en minutos del Custom debe ser mayor a cero");
+      durationRef.current?.focus();
+      return;
     }
-  }
+    if (!customRef.current?.value) {
+      toast.error("El evento Custom no puede estar vacío");
+      customRef.current?.focus();
+      return;
+    }
+    addStackGenerico("Custom", customRef.current.value, { duration: durationRef.current.value });
+  };
 
-  const saveStack = async () => {
-    if (nameStackRef.current.value == "") {
-      toast.error("No se puede guardar un stack sin proporcionar un nombre que lo defina");
-      nameStackRef.current.focus();
-    }
-    else {
-      try {
-        await axios.post("http://localhost:3000/api/stacks-saved/", {
-          namestack: nameStackRef.current.value,
-          stack: data13?.map((item) => ({
-            "itemID": item._id,
-            "itemName": item.ID_programa,
-            "order": item.Order,
-            "type": item.Type,
-            "Value": item.Value,
-            "Duration": item.Duration,
-          }))
-        });
-        await obtenerStackSaved();
-        nameStackRef.current.value = "";
-        toast.success("Stack guardado con éxito");
-      } catch (error) {
-        console.error(error);
-      }
-    }
-  }
-
-  const null30 = () => {
-    if (idRegES == "" || idRegES == undefined) {
-      toast.error("Para agregar un Null al stack primeramente debe haber seleccionado un grupo y posteriormente un esquema");
-    }
-    else {
-      addStack5();
-      toast.success("Null agregado al stack ");
-    }
-  }
+  const null30 = () => addStackGenerico("Null", "Null-30");
 
   const timeOut = () => {
-    if (idRegES == "" || idRegES == undefined) {
-      toast.error("Para agregar un TimeOut al stack primeramente debe haber seleccionado un grupo y posteriormente un esquema");
+    const minutos = Number(timeOutRef.current?.value);
+
+    if (!timeOutRef.current?.value || !Number.isFinite(minutos) || minutos <= 0) {
+      toast.error("Debe especificar un tiempo en minutos mayor a cero");
+      timeOutRef.current?.focus();
+      return;
     }
-    else if (timeOutRef.current.value == "" || timeOutRef.current.value == 0) {
-      toast.error("Debe especificar un tiempo en minutos");
-      timeOutRef.current.focus();
+    addStackGenerico("TimeOut", "TimeOut", { valor: timeOutRef.current.value });
+    timeOutRef.current.value = "0";
+  };
+
+  /* ==========================================
+     STACKS: CARGAR, GUARDAR Y REORDENAR (UP/DOWN)
+     ========================================== */
+  const loadStack = async () => {
+    const schemaId = idRegUniversal;
+
+    if (!schemaId) {
+      toast.error("Para cargar un stack primero debe seleccionar un grupo y un esquema de la lista.");
+      return false;
     }
-    else {
-      addStack6();
-      toast.success("Tiempo fuera agregado al stack ");
+
+    const target = data15.find(s => s._id === savedStackId);
+
+    if (!target) {
+      toast.error("Debe seleccionar un stack guardado de la lista desplegable para poder cargarlo.");
+      return false;
     }
-  }
+
+    try {
+      await stacksApi.removeAllBySchema(schemaId);
+      for (let st of target.Stack ?? []) {
+        await stacksApi.create({
+          idschema: schemaId,
+          type: st.type,
+          order: st.order,
+          idprograma: st.itemName,
+          duration: st.Duration,
+          valor: st.Value
+        });
+      }
+      await cargarStacksDelEsquema(schemaId);
+      return true;
+    } catch (error) {
+      console.error("Error al cargar el stack:", error);
+      toast.error(mensajeError(error, "No se pudo cargar el stack"));
+      // La carga pudo quedar a medias: se muestra el estado real del servidor
+      await cargarStacksDelEsquema(schemaId);
+      return false;
+    }
+  };
+
+  const load = async () => {
+    // Validación estricta: Si no hay un esquema seleccionado, se bloquea de inmediato
+    if (!idRegUniversal) {
+      toast.error("Para cargar un stack primero debe seleccionar un grupo y un esquema de la lista.");
+      return;
+    }
+    if (!savedStackId) {
+      toast.error("Debe seleccionar un stack guardado de la lista desplegable para poder cargarlo.");
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: "¿Realmente desea cargar el stack seleccionado? El actual stack se perderá si no se ha guardado previamente.",
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: "No",
+      denyButtonText: `Si, Borrar actual y cargar`,
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+
+    if (!result.isDenied) return;
+
+    const cargado = await loadStack();
+    if (cargado) Swal.fire("Stack cargado con éxito", "", "success");
+  };
+
+  const saveStack = async () => {
+    // 1. Validar que el campo de nombre no esté vacío
+    if (!nameStackRef.current?.value || nameStackRef.current.value.trim() === "") {
+      toast.error("No se puede guardar un stack sin proporcionar un nombre que lo defina");
+      nameStackRef.current?.focus();
+      return;
+    }
+
+    // 2. Validar que realmente existan elementos en el stack actual (data13) para guardar
+    if (!data13 || data13.length === 0) {
+      toast.error("El stack actual está vacío. No se puede guardar un stack sin elementos.");
+      return;
+    }
+    if (savingRef.current) return;
+
+    savingRef.current = true;
+    try {
+      await stacksSavedApi.create({
+        namestack: nameStackRef.current.value,
+        stack: data13.map((item) => ({
+          "itemID": item._id,
+          "itemName": item.ID_programa,
+          "order": item.Order,
+          "type": item.Type,
+          "Value": item.Value,
+          "Duration": item.Duration,
+        }))
+      });
+      await cargarStacksGuardados();
+      nameStackRef.current.value = "";
+      toast.success("Stack guardado con éxito");
+    } catch (error) {
+      console.error("Error al guardar el stack:", error);
+      toast.error(mensajeError(error, "Error al guardar el stack"));
+    } finally {
+      savingRef.current = false;
+    }
+  };
 
   const delItem = async () => {
+    if (!idItem) return false;
+
     try {
-      const response = await axios.delete("http://localhost:3000/api/stacks/" + idItem);
-      setData14(response.data);
-      await obtenerStacksByIdEsquema(idRegUniversal);
+      await stacksApi.remove(idItem);
+      await cargarStacksDelEsquema(idRegUniversal);
+      setIdItem(null);
+      return true;
     } catch (error) {
-      console.error(error);
+      console.error("Error al eliminar el elemento del stack:", error);
+      toast.error(mensajeError(error, "Error al eliminar el elemento del stack"));
+      return false;
     }
-  }
+  };
 
   const del = async () => {
-    if (itemGlobal == null) {
+    if (!idItem) {
       toast.error("Para eliminar un elemento del Stack primero debe seleccionarlo");
+      return;
     }
-    else {
-      Swal.fire({
-        title: "¿Realmente desea eliminar el item del Stack?",
-        showDenyButton: true,
-        showCancelButton: false,
-        confirmButtonText: "No",
-        denyButtonText: `Si, Borrar`,
-        footer: '<h6>Gestión Manager Citytv</h6>',
-      }).then((result) => {
-        if (result.isConfirmed) {
-        } else if (result.isDenied) {
-          delItem();
-          Swal.fire("Item Eliminado", "", "success");
-        }
-      });
-    }
-  }
+
+    const result = await Swal.fire({
+      title: "¿Realmente desea eliminar el item del Stack?",
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: "No",
+      denyButtonText: `Si, Borrar`,
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+
+    if (!result.isDenied) return;
+
+    const eliminado = await delItem();
+    if (eliminado) Swal.fire("Item Eliminado", "", "success");
+  };
 
   const cleanStack = async () => {
     try {
-      const response = await axios.delete("http://localhost:3000/api/stacks/deleteall/" + idRegUniversal);
-      setData14(response.data);
-      await obtenerStacksByIdEsquema(idRegUniversal);
+      await stacksApi.removeAllBySchema(idRegUniversal);
+      await cargarStacksDelEsquema(idRegUniversal);
+      setIdItem(null);
+      return true;
     } catch (error) {
-      console.error(error);
+      console.error("Error al limpiar el stack:", error);
+      toast.error(mensajeError(error, "Error al limpiar el stack"));
+      return false;
     }
-  }
+  };
 
-  const clean = () => {
-    if (groupsRef.current.value == "none" || idRegUniversal == "") {
-      toast.error("Para limpiar unstack primero debe seleccionar un grupo y luego un esquema");
+  const clean = async () => {
+    if (getGroupId() === SIN_GRUPO || !idRegUniversal) {
+      toast.error("Para limpiar un stack primero debe seleccionar un grupo y luego un esquema");
+      return;
     }
-    else {
-      Swal.fire({
-        title: "¿Realmente desea limpiar la lista del el stack seleccionado?.",
-        showDenyButton: true,
-        showCancelButton: false,
-        confirmButtonText: "No",
-        denyButtonText: `Si, Limpiar`,
-        footer: '<h6>Gestión Manager Citytv</h6>',
-      }).then((result) => {
-        if (result.isConfirmed) {
-        } else if (result.isDenied) {
-          cleanStack();
-          Swal.fire("Elementos del Stack eliminados", "", "success");
-        }
-      });
-    }
-  }
 
-  const searchOrder = () => {
-    data13?.map((stack) => (
-      stack._id == idItem && (orderactual = stack.Order)
-    ))
-    return orderactual;
-  }
+    const result = await Swal.fire({
+      title: "¿Realmente desea limpiar la lista del stack seleccionado?.",
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: "No",
+      denyButtonText: `Si, Limpiar`,
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
 
+    if (!result.isDenied) return;
+
+    const limpiado = await cleanStack();
+    if (limpiado) Swal.fire("Elementos del Stack eliminados", "", "success");
+  };
+
+  /* Funciones UP y DOWN con intercambio directo (Swap) */
   const up = async () => {
-    let count = data13.length;
-    let actual = searchOrder();
-    if (parseInt(actual) > 0 && parseInt(actual) <= count) {
-      actual = actual - 1;
+    if (!idItem) {
+      toast.error("Primero debe seleccionar un elemento del Stack");
+      return;
     }
+
+    const stackOrdenado = [...data13].sort((a, b) => (a.Order || 0) - (b.Order || 0));
+    const indexActual = stackOrdenado.findIndex(item => item._id === idItem);
+
+    if (indexActual <= 0) return;
+
+    const elementoActual = stackOrdenado[indexActual];
+    const elementoAnterior = stackOrdenado[indexActual - 1];
+
+    let nuevoOrdenActual = elementoAnterior.Order !== undefined && elementoAnterior.Order !== null ? elementoAnterior.Order : indexActual;
+    let nuevoOrdenAnterior = elementoActual.Order !== undefined && elementoActual.Order !== null ? elementoActual.Order : indexActual + 1;
+
+    if (nuevoOrdenActual === nuevoOrdenAnterior) {
+      nuevoOrdenActual = indexActual;
+      nuevoOrdenAnterior = indexActual + 1;
+    }
+
+    if (savingRef.current) return;
+    savingRef.current = true;
     try {
-      await axios.put("http://localhost:3000/api/stacks/" + idItem, {
-        nuevo: actual
-      });
-      await obtenerStacksByIdEsquema(idRegUniversal);
+      await stacksApi.update(elementoActual._id, { nuevo: nuevoOrdenActual });
+      await stacksApi.update(elementoAnterior._id, { nuevo: nuevoOrdenAnterior });
+      await cargarStacksDelEsquema(idRegUniversal);
     } catch (error) {
       console.error(error);
+      toast.error("No se pudo subir el elemento");
+    } finally {
+      savingRef.current = false;
     }
-  }
+  };
 
   const down = async () => {
-    let count = data13.length;
-    let actual = searchOrder();
-    if (parseInt(actual) >= 0 && parseInt(actual) <= count) {
-      actual = actual + 1;
+    if (!idItem) {
+      toast.error("Primero debe seleccionar un elemento del Stack");
+      return;
     }
+
+    const stackOrdenado = [...data13].sort((a, b) => (a.Order || 0) - (b.Order || 0));
+    const indexActual = stackOrdenado.findIndex(item => item._id === idItem);
+
+    if (indexActual === -1 || indexActual >= stackOrdenado.length - 1) return;
+
+    const elementoActual = stackOrdenado[indexActual];
+    const elementoSiguiente = stackOrdenado[indexActual + 1];
+
+    let nuevoOrdenActual = elementoSiguiente.Order !== undefined && elementoSiguiente.Order !== null ? elementoSiguiente.Order : indexActual + 2;
+    let nuevoOrdenSiguiente = elementoActual.Order !== undefined && elementoActual.Order !== null ? elementoActual.Order : indexActual + 1;
+
+    if (nuevoOrdenActual === nuevoOrdenSiguiente) {
+      nuevoOrdenActual = indexActual + 2;
+      nuevoOrdenSiguiente = indexActual + 1;
+    }
+
+    if (savingRef.current) return;
+    savingRef.current = true;
     try {
-      await axios.put("http://localhost:3000/api/stacks/" + idItem, {
-        nuevo: actual
-      });
-      await obtenerStacksByIdEsquema(idRegUniversal);
+      await stacksApi.update(elementoActual._id, { nuevo: nuevoOrdenActual });
+      await stacksApi.update(elementoSiguiente._id, { nuevo: nuevoOrdenSiguiente });
+      await cargarStacksDelEsquema(idRegUniversal);
     } catch (error) {
       console.error(error);
+      toast.error("No se pudo bajar el elemento");
+    } finally {
+      savingRef.current = false;
     }
-  }
+  };
 
   const delStackSaved = async () => {
     try {
-      const response = await axios.delete("http://localhost:3000/api/stacks-saved/" + itemLoadRef.current.value);
-      setData14(response.data);
-      await obtenerStackSaved();
+      await stacksSavedApi.remove(savedStackId);
+      await cargarStacksGuardados();
+      return true;
     } catch (error) {
-      console.error(error);
+      console.error("Error al eliminar el stack guardado:", error);
+      toast.error(mensajeError(error, "Error al eliminar el stack guardado"));
+      return false;
     }
-  }
+  };
 
-  const delSaved = () => {
-    if (itemLoadRef.current.value == "") {
+  const delSaved = async () => {
+    if (!savedStackId) {
       toast.error("Para eliminar un stack guardado primero debe seleccionarlo de la lista desplegable");
-      itemLoadRef.current.focus();
+      return;
     }
-    else {
-      Swal.fire({
-        title: "¿Realmente desea eliminar el stack guardado?.",
-        showDenyButton: true,
-        showCancelButton: false,
-        confirmButtonText: "No",
-        denyButtonText: `Si, Borrar`,
-        footer: '<h6>Gestión Manager Citytv</h6>',
-      }).then((result) => {
-        if (result.isConfirmed) {
-        } else if (result.isDenied) {
-          delStackSaved();
-          Swal.fire("Stack Borrado", "", "success");
-        }
-      });
-    }
-  }
 
-  useEffect(() => { obtenerListadoGroups(); }, []);
-  useEffect(() => { getAllPayroll(); }, []);
-  useEffect(() => { getAllRotationsManager(); }, [titleDaily]);
-  useEffect(() => { getAllRotationsManagerFS(); }, [titleFs]);
-  useEffect(() => { getAllRotations(); }, []);
-  useEffect(() => { obtenerListadoPrograms(); }, []);
-  useEffect(() => { obtenerListadoProgramsPrimary(); }, []);
-  useEffect(() => { obtenerListadoProgramsSecondary(); }, []);
-  useEffect(() => { obtenerStackSaved(); }, []);
+    const result = await Swal.fire({
+      title: "¿Realmente desea eliminar el stack guardado?.",
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: "No",
+      denyButtonText: `Si, Borrar`,
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+
+    if (!result.isDenied) return;
+
+    const eliminado = await delStackSaved();
+    if (eliminado) Swal.fire("Stack Borrado", "", "success");
+  };
+
+  /* Efectos de carga inicial */
+  useEffect(() => { cargarGrupos(); }, [cargarGrupos]);
+  useEffect(() => { cargarProgramas("all"); }, [cargarProgramas]);
+  useEffect(() => { cargarProgramas("primary"); }, [cargarProgramas]);
+  useEffect(() => { cargarProgramas("secondary"); }, [cargarProgramas]);
+  useEffect(() => { cargarStacksGuardados(); }, [cargarStacksGuardados]);
+  useEffect(() => { cargarManager(TIPO_ES); }, [cargarManager]);
+  useEffect(() => { cargarManager(TIPO_FS); }, [cargarManager]);
+
+  // Mantiene seleccionado un stack guardado válido mientras la lista cambia
+  useEffect(() => {
+    setSavedStackId((actual) => {
+      if (data15.length === 0) return "";
+      if (actual && data15.some((stack) => stack._id === actual)) return actual;
+      return data15[0]._id;
+    });
+  }, [data15]);
 
   return (
     <div className="contentRotations">
       <Toaster />
+
+      {/* ASIGNACIONES DE PERSONAL */}
       <div className="asignations">
         <div>
-          {
-            data6?.map((peoleOfGroup) => (
-              peoleOfGroup.activo == true ?
-                <div className="asiganation_li" key={peoleOfGroup._id}>
-                  <span className={peoleOfGroup.cargo == "USERBALANCER" ? "usersRotations2" : "usersRotations"}>
-                    {peoleOfGroup.nombres + " " + peoleOfGroup.apellidos}
-                  </span>
-              
-                  <div className="asiganations_option" key={peoleOfGroup._id}>
-                    <select className="asignation_select" onChange={(e) => actualizar(peoleOfGroup._id, e)}>
-                      <option key={peoleOfGroup._id} >
-                        {
-                          data8?.map((rm) => (
-                            peoleOfGroup._id == rm.userId && rm.SchemaName
-                          ))
-                        }
-                      </option>
-                      {
-                        data4?.map((schemaname) => (
-                          <option key={schemaname._id} value={schemaname._id}>
-                            {schemaname.Nombre}
-                          </option>
-                        ))
-                      }
-                    </select>
+          {personasActivas.map((persona) => {
+            const managerES = managerEsDe(persona._id);
 
-                    <select className="asignation_select" onChange={(e) => actualizarFS(peoleOfGroup._id, e)}>
-                      <option key={peoleOfGroup._id} >
-                        {
-                          data16?.map((rmFS) => (
-                            peoleOfGroup._id == rmFS.userId && rmFS.SchemaName
-                          ))
-                        }
-                      </option>
-                      {
-                        data5?.map((schemaname) => (
-                          <option key={schemaname._id} value={schemaname._id}>
-                            {schemaname.Nombre}
-                          </option>
-                        ))
-                      }
-                    </select>
+            return (
+              <div className="asiganation_li" key={persona._id}>
+                <span className={persona.cargo === "USERBALANCER" ? "usersRotations2" : "usersRotations"}>
+                  {persona.nombres + " " + persona.apellidos}
+                </span>
 
-                    <span className="fijoSpan">Fijo</span>
-                    {
-                      data8?.map((rm) => (
-                        peoleOfGroup._id == rm.userId &&
-                        <input type="checkbox" ref={fijoRef}
-                          checked={Boolean(rm.fijo)}
-                          className="checkFijo" 
-                          onChange={(e) => setChangeFijo(peoleOfGroup._id, e)}
-                          key={rm.userId} />
-                      ))
-                    }
-                  </div>
+                <div className="asiganations_option">
+                  <select
+                    className="asignation_select"
+                    value={esquemaAsignado(persona._id, TIPO_ES)}
+                    onChange={(e) => actualizar(persona._id, e)}
+                  >
+                    <option value="">{nombreSchemaAsignado(persona._id, TIPO_ES)}</option>
+                    {data4?.map((schemaname) => (
+                      <option key={schemaname._id} value={schemaname._id}>
+                        {schemaname.Nombre}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="asignation_select"
+                    value={esquemaAsignado(persona._id, TIPO_FS)}
+                    onChange={(e) => actualizarFS(persona._id, e)}
+                  >
+                    <option value="">{nombreSchemaAsignado(persona._id, TIPO_FS)}</option>
+                    {data5?.map((schemaname) => (
+                      <option key={schemaname._id} value={schemaname._id}>
+                        {schemaname.Nombre}
+                      </option>
+                    ))}
+                  </select>
+
+                  <span className="fijoSpan">Fijo</span>
+                  {managerES && (
+                    <input
+                      type="checkbox"
+                      checked={Boolean(managerES.fijo)}
+                      className="checkFijo"
+                      onChange={(e) => setChangeFijo(persona._id, e)}
+                    />
+                  )}
                 </div>
-                : null
-            ))
-          }
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -1312,25 +1539,28 @@ const RotationsContent = () => {
         Grupos
         <select className="inputDir" onChange={() => programClick()} ref={groupsRef}>
           <option value={"none"}>{"-----------------------------------"}</option>
-          {
-            data?.map((program) => (
-              <option key={program._id} value={program._id}>{program.nombre}</option>
-            ))
-          }
+          {data?.map((program) => (
+            <option key={program._id} value={program._id}>{program.nombre}</option>
+          ))}
         </select>
       </div>
-      
+
+      {/* SECCIÓN ENTRE SEMANA */}
       <div className="sectionDaily">
         <img src={dia} alt="" className="imgDaily"/>
         <h2 className="seleccionadoDaily">{titleDaily}</h2>
         <div className="mainCajas">
           <div className="subTitulo">Esquema</div>
           <div className="caja1">
-              {
-                data4?.map((nombres) => (
-                  <p className="item" key={nombres._id} onClick={(e) => callItem1(nombres.Nombre, nombres.HoraInicio, nombres.HoraFinal, nombres._id, nombres.Order, nombres.Excluir, nombres.Descanso, e)}>{nombres.Nombre}<span className="id">P : {nombres.Order}</span></p>
-                ))
-              }
+              {data4?.map((nombres) => (
+                <p
+                  className={`item ${activeSchemaESId === nombres._id ? "activo1" : ""}`}
+                  key={nombres._id}
+                  onClick={() => callItem1(nombres.Nombre, nombres.HoraInicio, nombres.HoraFinal, nombres._id, nombres.Order, nombres.Excluir, nombres.Descanso)}
+                >
+                  {nombres.Nombre}<span className="id">P : {nombres.Order}</span>
+                </p>
+              ))}
           </div>
         </div>
 
@@ -1360,61 +1590,81 @@ const RotationsContent = () => {
               />
             </div>
           </div>
+
+          {esEsquemaDescanso(esquemaEs) ? (
+            <div className="stackAcumulado stackAcumulado--no-aplica">No aplica</div>
+          ) : (
+            <div className={`stackAcumulado stackAcumulado--${resumenEs.estado}`}>
+              <span className="stackAcumulado-total">{textoTotalAcumulado(resumenEs)}</span>
+              <span className="stackAcumulado-estado">{textoEstadoAcumulado(resumenEs)}</span>
+            </div>
+          )}
         </div>
-        
+
         <div className="mainCajas">
           <div className="subTitulo">Acciones</div>
           <div className="caja4">
             <div className="containerSingleButtom">
-              <img src={Plus} alt="pencil" className="img-butons" onClick={agregar}/>
+              <img src={Plus} alt="plus" className="img-butons" onClick={agregar}/>
             </div>
             <div className="containerSingleButtom">
-              <img src={Edit} alt="plus" className="img-butons" onClick={updateES}/>
+              <img src={Edit} alt="edit" className="img-butons" onClick={updateES}/>
             </div>
             <div className="containerDeleteButtom">
               <img src={Delete} alt="trash" className="img-butons" onClick={deleteES}/>
             </div>
-            <div className={coffeeES == true ? "containerBreak2" : "containerBreak"}>
-              <img src={Coffee} alt="Break" className="img-butons" onClick={DefinirDescanso}/>
+            <div className={coffeeES ? "containerBreak2" : "containerBreak"}>
+              <img src={Coffee} alt="Break" className="img-butons" onClick={() => setCoffeeES(!coffeeES)}/>
             </div>
-            <input type="checkbox" className="checkHidden" checked={coffeeES} onChange={cambiarDescansoES} ref={descandoESref}/>
+            <input type="checkbox" className="checkHidden" checked={coffeeES} onChange={() => setCoffeeES(!coffeeES)}/>
           </div>
-          <input type="text" name="nuevoEntre" className="inputDir3" ref={newEntresemana} value={newValueOne} placeholder={titleDaily} onChange={Cambiar}/>
-          <input type="text" name="nuevoEntre" className="inputDir4" ref={newOrder} value={order} placeholder={titleDaily} onChange={Cambiar3}/>
+          <input type="text" name="nuevoEntre" className="inputDir3" ref={newEntresemana} value={newValueOne} placeholder={titleDaily} onChange={(e) => setNweValueOne(e.target.value)}/>
+          <input type="text" name="nuevoEntre" className="inputDir4" ref={newOrder} value={order} placeholder={titleDaily} onChange={(e) => setOrder(e.target.value)}/>
           <span className="excluir">Turno transversal</span>
-          <input className="check" ref={excluirESref} type="checkbox" checked={excluirES} onChange={Cambiar5}/>
+          <input className="check" type="checkbox" checked={excluirES} onChange={() => setexcluirES(!excluirES)}/>
         </div>
       </div>
 
+      {/* MÓDULO DE STACKS (CON SUS CLASES ORIGINALES MAIN1, MAIN2, MAIN3) */}
       <div className="pgms1">
         <div className="pgms1_cabezal">
           Stack Programs {" " + titleDailyUniversal}
         </div>
         <div className="contenedorLista">
-          <ul className="pgms">
-            {
-               data13?.map((pgms) => (
-                itemGlobal = pgms._id,
-                 <li key={pgms._id} className="active" >
-                  <img src={Arrow} className="arrow" />
-                  {
-                    pgms.Type == "Programa" || pgms.Type == "Secondary" || pgms.Type == "Label" ? 
-                    data10?.map((prog) => (
-                      <p onClick={(e) => select2(pgms._id, e)} className="main1" key={prog._id}>{prog._id == pgms.ID_programa && prog.nombre}</p> 
-                    )) 
-                    : pgms.Type == "Custom" ? <p onClick={(e) => select3(pgms._id, e)} className="main2">{pgms.ID_programa != undefined ? pgms.ID_programa + " (" + pgms.Duration + " Minutos)" : ""}</p>
-                    : <p onClick={(e) => select4(pgms._id, e)} className="main3">{pgms.ID_programa + " " + (pgms.Value != undefined ? pgms.Value + " Minutos" : "")}</p>
-                  }
-                </li>
-              ))
-             }
-             {
-              pg.map((item) => (item.id + "-" + item.pgm))
-             }
-          </ul>
+          <div className="pgms">
+            <table className="stack-tabla">
+              <thead>
+                <tr>
+                  <th>Inicio</th>
+                  <th>Evento</th>
+                  <th>Final</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stackEnOrden.map((pgms) => {
+                  const tiempos = tiemposStack.mapa.get(pgms._id);
+                  const duracion = tiempos?.duracion ?? 0;
+
+                  return (
+                    <tr
+                      key={pgms._id}
+                      className={idItem === pgms._id ? "stack-fila--activa" : ""}
+                      onClick={() => setIdItem(pgms._id)}
+                    >
+                      <td className="stack-hora">{formatearHora(tiempos?.inicio)}</td>
+                      <td className={`stack-evento ${claseEventoStack(pgms)}`}>
+                        {textoEventoStack(pgms, duracion)}
+                      </td>
+                      <td className="stack-hora">{formatearHora(tiempos?.fin)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
           <div className="levels">
-            <p><img src={Up} className="levels-image" onClick={up}></img></p>
-            <p><img src={Down} className="levels-image" onClick={down}></img></p>
+            <p><img src={Up} className="levels-image" onClick={up} alt="up"></img></p>
+            <p><img src={Down} className="levels-image" onClick={down} alt="down"></img></p>
           </div>
 
           <div className="pgms-actions">
@@ -1426,79 +1676,77 @@ const RotationsContent = () => {
             </div>
           </div>
         </div>
+
         <div className="funciones">
           <div className="Title">Program</div>
           <select className="Title-program" ref={progRef}>
-            {
-              data12?.map((program) => (
-                <option key={program._id} value={program._id}>{program.nombre}</option>
-              )) 
-            }
+            {data12?.map((program) => (
+              <option key={program._id} value={program._id}>{program.nombre}</option>
+            ))}
           </select>
           <div className="pgm-bottom" onClick={programa}>Agregar</div>
 
+          <hr className="separadorHR"></hr>
+
           <div className="Title">Secondary Event</div>
           <select className="Title-program" ref={secondaryRef}>
-            {
-              data11?.map((program) => (
-                <option key={program._id} value={program._id}>{program.nombre}</option>
-              )) 
-            }
+            {data11?.map((program) => (
+              <option key={program._id} value={program._id}>{program.nombre}</option>
+            ))}
           </select>
           <div className="pgm-bottom" onClick={SecondaryEvent}>Agregar</div>
+          <hr className="separadorHR"></hr>
 
           <div className="Title">Custom</div>
           <input type="number" className="timeOutInput" ref={durationRef} /> Minutos
           <input type="text" className="custom" ref={customRef} placeholder="Especifique..."/>
           <div className="pgm-bottom" onClick={custom}>Agregar</div>
+          <hr className="separadorHR"></hr>
 
-          <div className="Title">Label</div>
-          <select className="Title-program" ref={labelRef}>
-            {
-              data10?.map((program) => (
-                <option key={program._id} value={program._id}>{program.nombre}</option>
-              )) 
-            }
-          </select>
-          <div className="pgm-bottom" onClick={label}>Agregar</div>
-
-          <div className="Title">Load Stack</div>
-          <select className="Title-program" ref={itemLoadRef}>
-            {
-              data15?.map((saved) => (
-                <option key={saved._id} value={saved._id}>{saved.NameStack}</option>
-              )) 
-            }
-          </select>
-          <div className="pgm-bottom" onClick={load}>Load..</div>
-          <div className="pgm-bottom-del" onClick={delSaved}>Delete</div>
-
-          <div className="Title">Save Stack</div>
-          <input type="text" className="custom" ref={nameStackRef}/>
-          <div className="pgm-bottom" onClick={saveStack}>Save</div>
+          <div className="Title">Null</div>
+          <div className="pgm-bottom-2" onClick={null30}>Null 30 Minutos</div>
+          <hr className="separadorHR"></hr>
 
           <div className="Title space">Time Out</div>
           <input type="number" className="timeOutInput" ref={timeOutRef} /> Minutos
           <div className="pgm-bottom-3" onClick={timeOut}>
             <label className="timeOutLb1">Time Out</label>
           </div>
+          <hr className="separadorHR"></hr>
 
-          <div className="Title">Null</div>
-          <div className="pgm-bottom-2" onClick={null30}>Null 30 Minutos</div>
+          <div className="Title">Load Stack</div>
+          <select className="Title-program" value={savedStackId} onChange={(e) => setSavedStackId(e.target.value)}>
+            {data15?.map((saved) => (
+              <option key={saved._id} value={saved._id}>{saved.NameStack}</option>
+            ))}
+          </select>
+          <div className="pgm-bottom" onClick={load}>Load..</div>
+          <div className="pgm-bottom-del" onClick={delSaved}>Delete</div>
+          <hr className="separadorHR"></hr>
+
+          <div className="Title">Save Stack</div>
+          <input type="text" className="custom" ref={nameStackRef}/>
+          <div className="pgm-bottom" onClick={saveStack}>Save</div>
+          <hr className="separadorHR"></hr>
         </div>
       </div>
 
+      {/* SECCIÓN FIN DE SEMANA */}
       <div className="sectionSunday">
         <img src={Sunday} alt="" className="imgSunday"/>
         <h2 className="seleccionadoSunday">{titleFs}</h2>
         <div className="mainCajas">
           <div className="subTitulo">Esquema</div>
           <div className="caja1">
-             {
-                data5?.map((nombres) => (
-                  <p className="item" key={nombres._id} onClick={(e) => callItem2(nombres.Nombre, nombres.HoraInicio, nombres.HoraFinal, nombres._id, nombres.Order, nombres.Excluir, nombres.Descanso, e)}>{nombres.Nombre}<span className="id">P : {nombres.Order}</span></p>
-                ))
-              }
+             {data5?.map((nombres) => (
+                <p
+                  className={`item ${activeSchemaFSId === nombres._id ? "activo2" : ""}`}
+                  key={nombres._id}
+                  onClick={() => callItem2(nombres.Nombre, nombres.HoraInicio, nombres.HoraFinal, nombres._id, nombres.Order, nombres.Excluir, nombres.Descanso)}
+                >
+                  {nombres.Nombre}<span className="id">P : {nombres.Order}</span>
+                </p>
+              ))}
           </div>
         </div>
 
@@ -1528,33 +1776,42 @@ const RotationsContent = () => {
               />
             </div>
           </div>
+
+          {esEsquemaDescanso(esquemaFs) ? (
+            <div className="stackAcumulado stackAcumulado--no-aplica">No aplica</div>
+          ) : (
+            <div className={`stackAcumulado stackAcumulado--${resumenFs.estado}`}>
+              <span className="stackAcumulado-total">{textoTotalAcumulado(resumenFs)}</span>
+              <span className="stackAcumulado-estado">{textoEstadoAcumulado(resumenFs)}</span>
+            </div>
+          )}
         </div>
 
         <div className="mainCajas">
           <div className="subTitulo">Acciones</div>
           <div className="caja4">
             <div className="containerSingleButtom">
-              <img src={Plus} alt="pencil" className="img-butons" onClick={agregarFS}/>
+              <img src={Plus} alt="plus" className="img-butons" onClick={agregarFS}/>
             </div>
             <div className="containerSingleButtom">
-              <img src={Edit} alt="plus" className="img-butons" onClick={updateFS}/>
+              <img src={Edit} alt="edit" className="img-butons" onClick={updateFS}/>
             </div>
             <div className="containerDeleteButtom">
               <img src={Delete} alt="trash" className="img-butons" onClick={deleteFS}/>
             </div>
-            <div className={coffeeFS == true ? "containerBreak2" : "containerBreak"}>
-              <img src={Coffee} alt="Breaks" className="img-butons" onClick={DefinirDescansoFs}/>
-             <input type="checkbox" className="checkHidden" checked={coffeeFS} onChange={cambiarDescansoFS} ref={descandoFSref}/>
+            <div className={coffeeFS ? "containerBreak2" : "containerBreak"}>
+              <img src={Coffee} alt="Breaks" className="img-butons" onClick={() => setCoffeeFS(!coffeeFS)}/>
+             <input type="checkbox" className="checkHidden" checked={coffeeFS} onChange={() => setCoffeeFS(!coffeeFS)}/>
             </div>
           </div>
-          <input type="text" name="nuevoFinde" className="inputDir3" value={newValueTwo} ref={newFinsemana} placeholder={titleFs} onChange={Cambiar2} />
-          <input type="text" name="nuevoFinde" className="inputDir4" ref={newOrderFS} value={orderFS} placeholder={titleDaily} onChange={Cambiar4}/>
+          <input type="text" name="nuevoFinde" className="inputDir3" value={newValueTwo} ref={newFinsemana} placeholder={titleFs} onChange={(e) => setNweValueTwo(e.target.value)} />
+          <input type="text" name="nuevoFinde" className="inputDir4" ref={newOrderFS} value={orderFS} placeholder={titleDaily} onChange={(e) => setOrderFS(e.target.value)}/>
           <span className="excluir">Turno transversal</span>
-          <input className="check" ref={excluirFSref} type="checkbox" checked={excluirFS} onChange={Cambiar6}/>
+          <input className="check" type="checkbox" checked={excluirFS} onChange={() => setexcluirFS(!excluirFS)}/>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default RotationsContent
+export default RotationsContent;

@@ -338,3 +338,32 @@
   background: #fee2e2;
   color: #dc2626;
 }
+
+/* Resaltado temporal de una novedad recibida en tiempo real */
+.novelty-card.card-new {
+  animation: cardArrival 1.8s ease-out;
+}
+
+@keyframes cardArrival {
+  0% {
+    border-color: #EB464B;
+    box-shadow: 0 0 0 3px rgba(235, 70, 75, 0.35);
+    transform: translateY(-4px);
+  }
+  60% {
+    border-color: #EB464B;
+    box-shadow: 0 0 0 2px rgba(235, 70, 75, 0.15);
+    transform: translateY(0);
+  }
+  100% {
+    border-color: #eaeaea;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .novelty-card.card-new {
+    animation: none;
+  }
+}

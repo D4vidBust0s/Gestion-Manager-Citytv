@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import PropTypes from 'prop-types';
 import menu from '../../../assets/menu.svg';
 import defaultAvatar from '../../../assets/Ana-Brenda.jpg';
 import "./Top.css";
 
-function Top() {
+function Top({ sidebarCollapsed = false, onToggleSidebar }) {
   const [clockState, setClockState] = useState();
   const [dateState, setDateState] = useState();
 
@@ -111,9 +112,22 @@ function Top() {
         <div className="content-avatar" onClick={() => setShowModal(true)} title="Editar perfil" style={{ cursor: 'pointer' }}>
           <img src={userData.avatar} alt="Avatar" className="avatar" />
         </div>
-        <span className="content-menu">
-          <img src={menu} alt="menu" className="menu" />
-        </span>
+        <button
+          type="button"
+          className="content-menu"
+          onClick={onToggleSidebar}
+          title={sidebarCollapsed ? 'Expandir menú' : 'Colapsar menú'}
+          aria-label={sidebarCollapsed ? 'Expandir menú lateral' : 'Colapsar menú lateral'}
+          aria-expanded={!sidebarCollapsed}
+          aria-controls="app-sidebar"
+        >
+          <img
+            src={menu}
+            alt=""
+            aria-hidden="true"
+            className={`menu${sidebarCollapsed ? ' menu--collapsed' : ''}`}
+          />
+        </button>
         <span className="fecha">
           {dateState}
           <br />
@@ -201,5 +215,10 @@ function Top() {
     </>
   );
 }
+
+Top.propTypes = {
+  sidebarCollapsed: PropTypes.bool,
+  onToggleSidebar: PropTypes.func,
+};
 
 export default Top;

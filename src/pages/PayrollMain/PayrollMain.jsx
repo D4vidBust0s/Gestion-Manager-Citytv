@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { isBalancerUser } from '../../api/payroll';
 import './PayrollMain.css';
 
 export default function PayrollMain() {
@@ -41,14 +42,19 @@ export default function PayrollMain() {
     fetchData();
   }, []);
 
-  const totalPersonal = payrollData.length || 1;
-  const totalActivos = payrollData.filter(p => p.activo === true).length;
-  const totalInactivos = payrollData.filter(p => p.activo === false).length;
+  // Los UserBalancer son usuarios virtuales de balanceo: no son personal real.
+  const realPersonnel = payrollData.filter((p) => !isBalancerUser(p));
+  const balancerUsers = payrollData.filter(isBalancerUser);
+  const totalBalancers = balancerUsers.length;
+
+  const totalPersonal = realPersonnel.length || 1;
+  const totalActivos = realPersonnel.filter(p => p.activo === true).length;
+  const totalInactivos = realPersonnel.filter(p => p.activo === false).length;
 
   const getPercentage = (count) => Math.round((count / totalPersonal) * 100);
 
   // Filtrar solo personal activo y buscar la información de su grupo asociado
-  const activePersonnel = payrollData.filter(p => p.activo === true);
+  const activePersonnel = realPersonnel.filter(p => p.activo === true);
 
   const getGroupInfo = (groupId) => {
     return groupsData.find(g => g._id === groupId) || { nombre: "Sin Grupo", logo: "/src/assets/Default.svg" };
@@ -65,7 +71,7 @@ export default function PayrollMain() {
             <p>Monitoreo en tiempo real de asistencia, novedades y turnos activos.</p>
           </div>
           <div className="hero-badge">
-            <span>Total Colaboradores: <strong>{payrollData.length}</strong></span>
+            <span>Total Colaboradores: <strong>{realPersonnel.length}</strong></span>
           </div>
         </div>
 
@@ -91,6 +97,20 @@ export default function PayrollMain() {
               <div className="progress-fill fill-inactive" style={{ width: `${getPercentage(totalInactivos)}%` }}></div>
             </div>
             <span className="card-subtext">{getPercentage(totalInactivos)}% del total general</span>
+          </div>
+
+          <div className="payroll-card card-balancer">
+            <div className="card-top">
+              <h3>UserBalancers</h3>
+              <span className="card-number">{totalBalancers}</span>
+            </div>
+            <div className="card-progress-bar">
+              <div
+                className="progress-fill fill-balancer"
+                style={{ width: `${Math.min(100, getPercentage(totalBalancers))}%` }}
+              ></div>
+            </div>
+            <span className="card-subtext">Usuarios virtuales de balanceo</span>
           </div>
 
           <div className="payroll-card card-vacation">

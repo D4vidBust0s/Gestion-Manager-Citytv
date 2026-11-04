@@ -35,6 +35,7 @@ import Pm from '../../pages/PayrollMain/pmMain';
 import GroupNoveltiesPage from '../../pages/GroupNovelties/GroupNoveltiesPage';
 import Tasks from '../../pages/Tasks/Task';
 import Compensatory from '../../pages/Compensatory/Compensatory';
+import Rutas from '../../pages/Routes/Routes';
 
 /* Dependencias */
 import axios from "axios";
@@ -45,6 +46,7 @@ import axios from "axios";
 import { FechaBarraProvider } from '../../context/FechaBarraProvider';
 import { PronosticoTurnosProvider } from '../../context/PronosticoTurnosProvider';
 import { AuxSustitutionsProvider } from '../../context/AuxSustitutionsProvider';
+import { ChatProvider } from '../../context/ChatContext';
 
 /* Variables */
 
@@ -79,6 +81,19 @@ const [modal1, setModal1] = useState(false);
 const [data, setData] = useState([]);
 const [data1, setData1] = useState([]);
 const [data2, setData2] = useState([]);
+
+/* Estado de la sidebar: expandida (15%) o colapsada como riel de iconos */
+const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+  try {
+    return localStorage.getItem('sidebarCollapsed') === 'true';
+  } catch {
+    /* Almacenamiento no disponible: se usa el valor por defecto */
+    return false;
+  }
+});
+
+// Alterna entre la sidebar completa y el riel de iconos
+const handleToggleSidebar = () => setSidebarCollapsed((prev) => !prev);
 
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -369,6 +384,15 @@ useEffect(()=>{
   getAllRotationsManager();
 },[]);
 
+/* Guarda la preferencia de la sidebar para conservarla entre sesiones */
+useEffect(()=>{
+  try {
+    localStorage.setItem('sidebarCollapsed', String(sidebarCollapsed));
+  } catch {
+    /* Sin persistencia: el estado sigue funcionando en memoria */
+  }
+},[sidebarCollapsed]);
+
 
 
 // ***************************************************************************************************************
@@ -377,12 +401,17 @@ useEffect(()=>{
     <AuxSustitutionsProvider>
     <PronosticoTurnosProvider>
     <FechaBarraProvider>
+    <ChatProvider>
     <BrowserRouter>
-      <div className="Container">
-        <Sidebar onLogout={onLogout}/>
+      <div className={`Container${sidebarCollapsed ? ' Container--sidebar-collapsed' : ''}`}>
+        <Sidebar
+          onLogout={onLogout}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={handleToggleSidebar}
+        />
         <div className="content">
          <Modal1 estado={modal1} cambiarEstado={setModal1}/>
-         <Top />
+         <Top sidebarCollapsed={sidebarCollapsed} onToggleSidebar={handleToggleSidebar} />
         <Footer/>
           <Routes>
             <Route path="/" element={<Dashboard />} />
@@ -405,6 +434,7 @@ useEffect(()=>{
             <Route path="/programmer" element={<Programmer />} />
             <Route path="/cv" element={<Cv />} />
             <Route path="/payroll-main" element={<Pm />} />
+            <Route path="/routes" element={<Rutas />} />
             <Route path="/compensatory" element={<Compensatory />} />
             <Route path="/group-novelties/:id/*" element={<GroupNoveltiesPage />} />
             <Route path="*" element={<NotFound />} />
@@ -412,6 +442,7 @@ useEffect(()=>{
         </div>
       </div>
     </BrowserRouter>
+    </ChatProvider>
     </FechaBarraProvider>
     </PronosticoTurnosProvider>
     </AuxSustitutionsProvider>

@@ -27,10 +27,11 @@
   .Sidebar{
     background: var(--WhiteColor);
     box-shadow: 1px 0px 4px var(--Base2);
-    width: 15%;
+    width: var(--sidebar-width, 15%);
     height: 100%;
     gap: 3rem;
-    overflow: auto;
+    overflow: hidden auto;
+    transition: width .3s ease;
 
     .Sidebar__contentLogo{
         padding: 1rem 1.5rem 0;
@@ -189,6 +190,62 @@
     &.list__show--open{
       max-height: 500px;
       opacity: 1;
+    }
+   }
+
+   /* --- Sidebar colapsada: riel de iconos --- */
+   &--collapsed{
+
+    .Sidebar__contentLogo{
+      display: none;
+    }
+
+    .menuAux{
+      flex-direction: column;
+      height: auto;
+      margin-top: 1.25rem;
+      gap: .75rem;
+    }
+
+    .nav{
+      width: 100%;
+    }
+
+    .list{
+      padding-top: 1.5rem;
+    }
+
+    .list__item:hover{
+      transform: none;
+    }
+
+    .list__buttom{
+      position: relative;
+      width: 100%;
+      justify-content: center;
+      gap: 0;
+      padding: .4rem 0;
+    }
+
+    /* El texto queda invisible y el enlace cubre toda la fila: el icono
+       sigue navegando y los rótulos siguen disponibles para lectores de pantalla */
+    .list__buttom > .nav__link{
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      padding: 0;
+      font-size: 0;
+    }
+
+    .list__arrow,
+    .list__show{
+      display: none;
+    }
+
+    /* Indicador de sección activa sobre el icono */
+    .list__buttom:has(.nav__link--active) .list__img{
+      background: var(--SecondaryT);
+      border-radius: 6px;
     }
    }
 

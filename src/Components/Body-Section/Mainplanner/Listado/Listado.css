@@ -554,20 +554,38 @@
 .ventana{
  background-color: #545454;
  position: fixed;
- width: 40%;
- height:50vh;
- z-index: 600; 
- left:38%;
- top: 30%;
+ width: min(92vw, 520px);
+ height: auto;
+ min-height: 50vh;
+ max-height: 90vh;
+ overflow-y: auto;
+ z-index: 600;
+ left: 50%;
+ top: 50%;
+ transform: translate(-50%, -50%);
  border: 2px solid #EB464B;
  display: flex;
- align-items: center;flex-direction: column;
- justify-content: center;
+ align-items: center;
+ flex-direction: column;
+ justify-content: flex-start;
+ padding: 1.5rem;
+ box-sizing: border-box;
 }
 
 .ventana_titulo{
   color: #DADADA;
   margin-bottom: 1%;
+  text-align: center;
+}
+
+.ventana_botones{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  margin-top: 1.5%;
+  width: 100%;
 }
 
 .ventana_boton{
@@ -579,7 +597,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 2%;
   border: 1px solid #DADADA;
 }
 
@@ -598,7 +615,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 2%;
   border: 1px solid #DADADA;
 }
 
@@ -607,10 +623,43 @@
   cursor: pointer;
 }
 
+.ventana_boton_peligro{
+  background: #EB464B;
+  color: #FFFFFF;
+  min-width: 150px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #DADADA;
+  box-sizing: border-box;
+}
+
+.ventana_boton_peligro:hover{
+  transform: scale(1.1);
+  cursor: pointer;
+}
+
+.ventana_boton--disabled{
+  opacity: .55;
+  pointer-events: none;
+  transform: none;
+}
+
 .ventana_fecha{
   margin-bottom: 4.5%;
   color: #EB464B;
   font-weight: bold;
+  text-align: center;
+}
+
+.ventana_fecha--destino{
+  margin-top: 1%;
+  margin-bottom: 0;
+  color: #DADADA;
+  font-size: .95rem;
 }
 
 

@@ -3,27 +3,31 @@ import './MenuAuxPlanner.css';
 
 /* DEPENDENCIAS */
 import { Link } from 'react-router-dom';
-import axios from 'axios';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+/* SERVICIOS Y TIEMPO REAL */
+import { groupsApi } from '../../../../api/groups';
+import { noveltiesApi } from '../../../../api/novelties';
+import { useNoveltyRealtime } from '../../../../Custom_Hooks/useNoveltyRealtime';
 
 //-------------------------------------------------------------------------------------------------------------
 
 export default function MenuAuxPlanner() {
   const [data, setData] = useState([]);
   const [noveltiesCountByGroup, setNoveltiesCountByGroup] = useState({});
+  const debounceRef = useRef(null);
 
   const fetchMenuData = useCallback(async () => {
     try {
       // 1. Obtener listado de grupos
-      const groupsRes = await axios.get("http://localhost:3000/api/groups");
-      setData(groupsRes.data);
+      const groups = await groupsApi.getAll();
+      setData(Array.isArray(groups) ? groups : []);
 
       // 2. Obtener todas las novedades para los contadores individuales de los cuadros
-      const noveltiesRes = await axios.get("http://localhost:3000/api/novelties");
-      const allNovelties = noveltiesRes.data;
+      const allNovelties = await noveltiesApi.getAll();
 
       const counts = {};
-      allNovelties.forEach(novelty => {
+      (Array.isArray(allNovelties) ? allNovelties : []).forEach(novelty => {
         if (novelty.estado === "Pendiente") {
           const gId = novelty.grupoID;
           counts[gId] = (counts[gId] || 0) + 1;
@@ -36,20 +40,39 @@ export default function MenuAuxPlanner() {
     }
   }, []);
 
+  // Agrupa las ráfagas de eventos (socket + evento local) en una sola consulta
+  const refrescar = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
+      fetchMenuData();
+    }, 300);
+  }, [fetchMenuData]);
+
   useEffect(() => {
     fetchMenuData();
 
     // Escuchar el evento global para actualizar los contadores de los logos en tiempo real
     const handleNoveltyChange = () => {
-      fetchMenuData();
+      refrescar();
     };
 
     window.addEventListener('noveltyStatusChanged', handleNoveltyChange);
 
     return () => {
       window.removeEventListener('noveltyStatusChanged', handleNoveltyChange);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [fetchMenuData]);
+  }, [fetchMenuData, refrescar]);
+
+  // Cambios hechos desde otras sesiones (socket compartido del chat)
+  useNoveltyRealtime({
+    onCreated: refrescar,
+    onResolved: refrescar,
+    onDeleted: refrescar,
+    onResync: refrescar,
+  });
 
   return (
     <>
@@ -64,7 +87,7 @@ export default function MenuAuxPlanner() {
                 {pendingCount > 0 && (
                   <div className="notification">{pendingCount}</div>
                 )}
-                
+
                 <Link to={`/group-novelties/${group._id}`}>
                   <img src={group.logo} alt={group.nombre || "grupo"} className="basecuadro-img"/>
                 </Link>

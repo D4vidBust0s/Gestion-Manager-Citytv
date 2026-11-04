@@ -1,9 +1,23 @@
-/* eslint-disable no-unused-vars */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
 import Swal from 'sweetalert2';
 import './GroupNoveltiesContent.css';
+
+/* SERVICIOS */
+import { groupsApi } from '../../api/groups';
+import { payrollApi } from '../../api/payroll';
+import { noveltiesApi } from '../../api/novelties';
+
+/* UTILIDADES */
+import { getCurrentUserName } from '../../utils/currentUser';
+import { useNoveltyRealtime } from '../../Custom_Hooks/useNoveltyRealtime';
+
+/** Clave estable de una novedad (Mongo usa _id; algunos endpoints devuelven id). */
+const getNoveltyId = (item) => String(item?._id || item?.id || '');
+
+/** Fecha y hora local con el mismo formato histórico de la pantalla. */
+const formatFechaHora = (date = new Date()) =>
+  `${date.toLocaleDateString()} - ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
 export default function GroupNoveltiesContent() {
   const { id: grupoId } = useParams();
@@ -23,39 +37,137 @@ export default function GroupNoveltiesContent() {
   // Estados independientes para soluciones por tarjeta
   const [solucionesInput, setSolucionesInput] = useState({});
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+  // Tarjetas recién recibidas por socket (resaltado temporal)
+  const [recentIds, setRecentIds] = useState(() => new Set());
+  const recentTimers = useRef(new Map());
 
-        // 1. Obtener el nombre del grupo actual desde la API de grupos
-        const groupsRes = await axios.get("http://localhost:3000/api/groups");
-        const grupoActual = groupsRes.data.find(g => g._id === grupoId);
-        if (grupoActual) {
-          setNombreGrupo(grupoActual.nombre || grupoActual.name || "Grupo Operativo");
-        } else {
-          setNombreGrupo("Grupo Operativo");
+  const markRecent = useCallback((noveltyId) => {
+    const key = String(noveltyId || '');
+    if (!key) return;
+
+    setRecentIds(prev => {
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+
+    const previousTimer = recentTimers.current.get(key);
+    if (previousTimer) clearTimeout(previousTimer);
+
+    const timer = setTimeout(() => {
+      setRecentIds(prev => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+      recentTimers.current.delete(key);
+    }, 4000);
+
+    recentTimers.current.set(key, timer);
+  }, []);
+
+  // Limpiar los temporizadores de resaltado al desmontar
+  useEffect(() => {
+    const timers = recentTimers.current;
+    return () => {
+      timers.forEach(clearTimeout);
+      timers.clear();
+    };
+  }, []);
+
+  // Recarga la lista del grupo (usada al reconectar y al volver a la pestaña)
+  const loadNovelties = useCallback(async () => {
+    if (!grupoId) return;
+    try {
+      const data = await noveltiesApi.getByGroup(grupoId);
+      setNovelties(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error al recargar las novedades del grupo:", error);
+    }
+  }, [grupoId]);
+
+  // Carga inicial: grupo, personal y novedades
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // 1. Nombre del grupo actual
+        const groups = await groupsApi.getAll();
+        const grupoActual = (Array.isArray(groups) ? groups : [])
+          .find(g => String(g._id || g.id) === String(grupoId));
+
+        if (!cancelled) {
+          setNombreGrupo(grupoActual?.nombre || grupoActual?.name || "Grupo Operativo");
         }
 
-        // 2. Cargar el personal del grupo
-        const payrollRes = await axios.get("http://localhost:3000/api/payroll");
-        const filteredStaff = payrollRes.data.filter(p => p.grupoID === grupoId || p.grupo === grupoId);
-        setGroupPersonnel(filteredStaff);
+        // 2. Personal del grupo
+        const payroll = await payrollApi.getAll();
+        const filteredStaff = (Array.isArray(payroll) ? payroll : [])
+          .filter(p => String(p.grupoID) === String(grupoId) || String(p.grupo) === String(grupoId));
 
-        // 3. Cargar las novedades reales desde el backend para este grupo
-        const noveltiesRes = await axios.get(`http://localhost:3000/api/novelties?grupoID=${grupoId}`);
-        setNovelties(noveltiesRes.data);
+        if (!cancelled) setGroupPersonnel(filteredStaff);
 
-        setLoading(false);
+        // 3. Novedades del grupo
+        const data = await noveltiesApi.getByGroup(grupoId);
+        if (!cancelled) setNovelties(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error al cargar datos desde la API:", error);
-        setNombreGrupo("Grupo Operativo");
-        setLoading(false);
+        if (!cancelled) setNombreGrupo("Grupo Operativo");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [grupoId]);
+
+  // Resincronizar al recuperar el foco de la pestaña (por si se perdió un evento)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') loadNovelties();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [loadNovelties]);
+
+  // Tiempo real: cambios hechos desde cualquier sesión
+  useNoveltyRealtime({
+    onCreated: (novedad) => {
+      const noveltyId = getNoveltyId(novedad);
+      if (!noveltyId) return;
+      if (String(novedad.grupoID) !== String(grupoId)) return;
+
+      setNovelties(prev => {
+        const exists = prev.some(item => getNoveltyId(item) === noveltyId);
+        return exists ? prev : [novedad, ...prev];
+      });
+      markRecent(noveltyId);
+    },
+    onResolved: (updated) => {
+      const noveltyId = getNoveltyId(updated);
+      if (!noveltyId) return;
+      if (String(updated.grupoID) !== String(grupoId)) return;
+
+      setNovelties(prev =>
+        prev.map(item => (getNoveltyId(item) === noveltyId ? updated : item))
+      );
+    },
+    onDeleted: (payload) => {
+      const noveltyId = String(payload?.id || payload?._id || '');
+      if (!noveltyId) return;
+      if (payload?.grupoID && String(payload.grupoID) !== String(grupoId)) return;
+
+      setNovelties(prev => prev.filter(item => getNoveltyId(item) !== noveltyId));
+    },
+    onResync: loadNovelties,
+  });
 
   // Manejar creación de nueva novedad (Guardar en MongoDB)
   const handleCreateNovelty = async (e) => {
@@ -76,9 +188,6 @@ export default function GroupNoveltiesContent() {
 
     const motivoFinal = tipoNovedad === "Otro" ? `Otro: ${otroMotivo.trim()}` : tipoNovedad;
 
-    const now = new Date();
-    const fechaHora = `${now.toLocaleDateString()} - ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-
     const nuevaNovedadData = {
       grupoID: grupoId,
       esGeneralGrupo: tipoAfectacion === "grupo",
@@ -86,13 +195,20 @@ export default function GroupNoveltiesContent() {
       cargo: cargoAfectado,
       tipo: motivoFinal,
       descripcion: descripcionNovedad,
-      administradorReporto: "Ana Brenda Contreras",
-      fechaHoraReporte: fechaHora
+      // Autor real: el usuario que inició sesión y registra la novedad
+      administradorReporto: getCurrentUserName(),
+      fechaHoraReporte: formatFechaHora()
     };
 
     try {
-      const response = await axios.post("http://localhost:3000/api/novelties", nuevaNovedadData);
-      setNovelties([response.data, ...novelties]);
+      const created = await noveltiesApi.create(nuevaNovedadData);
+      const createdId = getNoveltyId(created);
+
+      setNovelties(prev => {
+        if (!createdId) return prev;
+        const exists = prev.some(item => getNoveltyId(item) === createdId);
+        return exists ? prev : [created, ...prev];
+      });
 
       // Limpiar formulario
       setTipoAfectacion("colaborador");
@@ -116,7 +232,7 @@ export default function GroupNoveltiesContent() {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'No se pudo registrar la novedad.',
+        text: error.message || 'No se pudo registrar la novedad.',
         confirmButtonColor: '#00094B'
       });
     }
@@ -131,30 +247,25 @@ export default function GroupNoveltiesContent() {
     const textoSolucion = solucionesInput[noveltyId];
     if (!textoSolucion || !textoSolucion.trim()) return;
 
-    const now = new Date();
-    const fechaHoraSolucion = `${now.toLocaleDateString()} - ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-
     const datosSolucion = {
       texto: textoSolucion,
-      administradorSolucion: "Ana Brenda Contreras",
-      fechaHoraSolucion: fechaHoraSolucion
+      // Autor real de la solución: el usuario que inició sesión
+      administradorSolucion: getCurrentUserName(),
+      fechaHoraSolucion: formatFechaHora()
     };
 
     try {
-      const response = await axios.put(`http://localhost:3000/api/novelties/${noveltyId}/resolve`, {
-        solucion: datosSolucion
-      });
+      const response = await noveltiesApi.resolve(noveltyId, { solucion: datosSolucion });
+      const updatedNovelty = response?.updatedNovelty;
 
       setNovelties(prev => prev.map(item => {
-        const currentId = item._id || item.id;
-        if (currentId === noveltyId) {
-          return response.data.updatedNovelty || {
-            ...item,
-            estado: "Solucionado",
-            solucion: datosSolucion
-          };
-        }
-        return item;
+        if (getNoveltyId(item) !== String(noveltyId)) return item;
+
+        return updatedNovelty || {
+          ...item,
+          estado: "Solucionado",
+          solucion: datosSolucion
+        };
       }));
 
       setSolucionesInput(prev => ({ ...prev, [noveltyId]: "" }));
@@ -174,7 +285,7 @@ export default function GroupNoveltiesContent() {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'No se pudo guardar la solución.',
+        text: error.message || 'No se pudo guardar la solución.',
         confirmButtonColor: '#00094B'
       });
     }
@@ -195,9 +306,9 @@ export default function GroupNoveltiesContent() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.delete(`http://localhost:3000/api/novelties/${noveltyId}`);
-          
-          setNovelties(prev => prev.filter(item => (item._id || item.id) !== noveltyId));
+          await noveltiesApi.remove(noveltyId);
+
+          setNovelties(prev => prev.filter(item => getNoveltyId(item) !== String(noveltyId)));
 
           // 🔔 Notificar al footer para actualizar el botón flotante inmediatamente
           window.dispatchEvent(new Event('noveltyStatusChanged'));
@@ -213,7 +324,7 @@ export default function GroupNoveltiesContent() {
           console.error("Error al eliminar la novedad:", error);
           Swal.fire({
             title: 'Error',
-            text: 'No se pudo eliminar la novedad. Inténtalo de nuevo.',
+            text: error.message || 'No se pudo eliminar la novedad. Inténtalo de nuevo.',
             icon: 'error',
             confirmButtonColor: '#00094B'
           });
@@ -323,22 +434,34 @@ export default function GroupNoveltiesContent() {
             <p className="loading-text">Cargando novedades...</p>
           ) : novelties.length > 0 ? (
             novelties.map((item) => {
-              const cardKey = item._id || item.id;
+              const cardKey = getNoveltyId(item);
+              const tipo = item.tipo || 'Otro';
+              const estado = item.estado || 'Pendiente';
+              const isRecent = recentIds.has(cardKey);
+              const tipoClass = tipo.startsWith('Otro') ? 'otro' : tipo.toLowerCase().replace(/\s+/g, '-');
+
               return (
-                <div key={cardKey} className={`novelty-card ${item.estado === 'Solucionado' ? 'card-resolved-border' : ''}`}>
-                  
+                <div
+                  key={cardKey}
+                  className={[
+                    'novelty-card',
+                    estado === 'Solucionado' ? 'card-resolved-border' : '',
+                    isRecent ? 'card-new' : ''
+                  ].filter(Boolean).join(' ')}
+                >
+
                   <div className="novelty-card-top">
-                    <span className={`novelty-badge badge-${item.tipo.startsWith('Otro') ? 'otro' : item.tipo.toLowerCase()}`}>
-                      {item.tipo}
+                    <span className={`novelty-badge badge-${tipoClass}`}>
+                      {tipo}
                     </span>
                     <div className="card-tags-right">
                       {item.esGeneralGrupo && <span className="general-badge">General Grupo</span>}
-                      <span className={`status-tag status-${item.estado.toLowerCase()}`}>
-                        {item.estado}
+                      <span className={`status-tag status-${estado.toLowerCase()}`}>
+                        {estado}
                       </span>
                       {/* Botón de Eliminar con SweetAlert2 */}
-                      <button 
-                        className="btn-delete-card" 
+                      <button
+                        className="btn-delete-card"
                         title="Eliminar Novedad"
                         onClick={() => handleDeleteNovelty(cardKey)}
                       >
@@ -354,10 +477,12 @@ export default function GroupNoveltiesContent() {
 
                   <div className="novelty-description-box">
                     <p><strong>Incidencia:</strong> {item.descripcion}</p>
-                    <span className="report-meta">Reportado por: <strong>{item.administradorReporto}</strong> • {item.fechaHoraReporte}</span>
+                    <span className="report-meta">
+                      Reportado por: <strong>{item.administradorReporto || 'No registrado'}</strong> • {item.fechaHoraReporte}
+                    </span>
                   </div>
 
-                  {item.estado === "Pendiente" ? (
+                  {estado === "Pendiente" ? (
                     <div className="solution-input-box">
                       <label>Escribir Solución / Toma de Decisión:</label>
                       <textarea
@@ -381,7 +506,7 @@ export default function GroupNoveltiesContent() {
                       </div>
                       <p className="solution-text">{item.solucion?.texto}</p>
                       <div className="solution-meta">
-                        <span>Resuelto por: <strong>{item.solucion?.administradorSolucion}</strong></span>
+                        <span>Resuelto por: <strong>{item.solucion?.administradorSolucion || 'No registrado'}</strong></span>
                         <span>🕒 {item.solucion?.fechaHoraSolucion}</span>
                       </div>
                     </div>

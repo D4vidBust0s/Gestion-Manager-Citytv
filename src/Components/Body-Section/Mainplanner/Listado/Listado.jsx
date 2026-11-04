@@ -24,6 +24,38 @@ import { PronosticoContext } from '../../../../context/PronosticoTurnosProvider'
 import { AuxSustitutions } from '../../../../context/AuxSustitutionsProvider';
 import Swal from "sweetalert2";
 import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import { shiftsApi } from '../../../../api/shifts';
+
+/* Helpers para normalizar fechas y trabajar siempre con medianoche local */
+const inicioDelDia = (fecha) => {
+  const d = new Date(fecha);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const esFechaValida = (fecha) => {
+  if (fecha === null || fecha === undefined || fecha === "") return false;
+  return !Number.isNaN(new Date(fecha).getTime());
+};
+
+const isoInicioDelDia = (fecha) => inicioDelDia(fecha).toISOString();
+
+const sumarDias = (fecha, dias) => {
+  const d = inicioDelDia(fecha);
+  d.setDate(d.getDate() + dias);
+  return d;
+};
+
+const formatearFecha = (fecha) => {
+  if (!esFechaValida(fecha)) return "—";
+  return inicioDelDia(fecha).toLocaleDateString("es-CO", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
 
 
 export default function Listado() {
@@ -47,8 +79,11 @@ export default function Listado() {
   const [data13, setData13] = useState([]);
   const [data14, setData14] = useState([]);
   const [data15, setData15] = useState([]);
-  const [data16, setData16] = useState([]);
-  const [data17, setData17] = useState([]);
+  //Estados para replicar / limpiar la programación del día
+  const [turnosOrigen, setTurnosOrigen] = useState([]);
+  const [cargandoOrigen, setCargandoOrigen] = useState(false);
+  const [replicando, setReplicando] = useState(false);
+  const [limpiando, setLimpiando] = useState(false);
   
   
 
@@ -83,7 +118,7 @@ export default function Listado() {
 
   //Estado para mostrar la ventana de copiar programacion de un dia a otro
   const [ventana, setVentana] = useState(false);
-  const [starIn, setStarIn] = useState(new Date());
+  const [starIn, setStarIn] = useState(() => sumarDias(new Date(), -1));
 
 
   //Variables 
@@ -109,7 +144,11 @@ export default function Listado() {
   // eslint-disable-next-line no-unused-vars
   let idGroupGlobal = "";
 
-  const fechaFinalRef = useRef();
+  //Identificador de la última petición de turnos origen (evita respuestas viejas)
+  const origenRequestRef = useRef(0);
+  //Candados síncronos para impedir dobles envíos antes de que React re-renderice
+  const replicandoRef = useRef(false);
+  const limpiandoRef = useRef(false);
   
   
   
@@ -222,33 +261,15 @@ const getProgrammers = async () => {
     .then((response) => setData15(response.data));
 };
 
-//Funcion que obtiene la data de la api - shifts
-const obtenerListadoTurnosDayKey = async () => {
-  
-  return await axios
-    .get("http://localhost:3000/api/shifts/daykey",
-    {
-       params:{    
-       daykey: new Date(new Date(starIn).setHours(0,0,0,0)).toISOString()
-    }}
-    )
-    .then((response) => setData16(response.data));
+//Funcion que obtiene los turnos de un día específico (medianoche local)
+const fetchTurnosDia = async (fecha) => {
+  const data = await shiftsApi.getDayKey({
+    params: {
+      daykey: isoInicioDelDia(fecha),
+    },
+  });
 
-};
-
-
-//Funcion que obtiene la data de la api - shifts
-const obtenerListadoTurnosDayKey2 = async () => {
-  
-  return await axios
-    .get("http://localhost:3000/api/shifts/daykey",
-    {
-       params:{    
-       daykey: new Date(new Date(fechaBarra).setHours(0,0,0,0)).toISOString()
-    }}
-    )
-    .then((response) => setData17(response.data));
-
+  return Array.isArray(data) ? data : [];
 };
 
 
@@ -1338,7 +1359,7 @@ const getMinutes = (fecha) =>{
 
 
   
-    return  <li style={
+    return  <div style={
         {
           float: "left",
           height: "1.45rem",
@@ -1385,105 +1406,69 @@ const getMinutes = (fecha) =>{
 
              {nombreEvento}
       </a>
-      </li>
+      </div>
 
  }
 
  const noExist = () =>{
   auxi++
   return  data1.length == auxi &&   
-            <>
+            <div key={`no-exist-${auxi}`}>
               <div className="contentListado2">
-              <ul className="ulEvent">--</ul>
+                <ul className="ulEvent"><li>--</li></ul>
               </div>
 
               <div className="contentListado2">
-              <ul className="ulEvent">--</ul>
+                <ul className="ulEvent"><li>--</li></ul>
               </div>
 
               <div className="contentListado2">
-              <ul className="ulEvent">--</ul>
+                <ul className="ulEvent"><li>--</li></ul>
               </div>
-            </>
-      
-           
-       
+            </div>
  }
 
 
-  const exist = (payrollId) =>{
+ const exist = (payrollId) =>{
     aux = 0
 
-    return <div className="contentListado">
-
-{                    //Este bloque es para identificar con un color verde si el item se ha guardado o no
-                     data7?.map((shift)=>(
-                      shift.ID_user == payrollId && (new Date(shift.Fecha_clave).toLocaleDateString() == new Date(fechaBarra).toLocaleDateString())
-                      
-                        
-                      
-                      ?   <> {/*<div className="estadoTurnoOk" key={shift._id}></div>*/}
-
-                            <ul className="ulEvent">
-                              {
-                                saved == false
-                                 ?
-                                    <li className={saved == false ? "liEventTipe0" : "liEventTipe000"} onClick={() => setModal2(!modal2)}>
-                                      
-                                        {magic(shift.Event_name,shift.ID_event,shift.Type,shift.Inicio_main,shift.Out)}
-                              
-                                    </li>
-
-                                 : null
-                              }
-                              
-                            </ul>
-                          </>
-
-                      
-                      :  null 
-                      ))
-                       
-                        
-                      
-                    }
+    return <div className="contentListado" key={`content-${payrollId}`}>
+      {
+         data7?.map((shift)=>(
+          shift.ID_user == payrollId && (new Date(shift.Fecha_clave).toLocaleDateString() == new Date(fechaBarra).toLocaleDateString())
+          ?   
+              <ul className="ulEvent" key={`ul-shift-${shift._id}`}>
+                {
+                  saved == false
+                   ?
+                      <li className="liEventTipe0" key={`li-shift-${shift._id}`} onClick={() => setModal2(!modal2)}>
+                          {magic(shift.Event_name,shift.ID_event,shift.Type,shift.Inicio_main,shift.Out)}
+                      </li>
+                   : null
+                }
+              </ul>
+          :  null 
+          ))
+      }
 
       {
         saved == true ?
-
-        <ul className="ulEvent">
-          <li className={saved == false ? "liEventTipe0" : "liEventTipe000"} onClick={() => setModal2(!modal2)}>
-                  <a href="#" className="event"> 
+        <ul className="ulEvent" key={`ul-saved-${payrollId}`}>
+          <li className="liEventTipe0" onClick={() => setModal2(!modal2)} key={`li-saved-${payrollId}`}>
+                  <a href="#" className="event" key={`a-saved-${payrollId}`}> 
                     {
-                      
                       data2?.map((rotationsManager)=>(
                         payrollId == rotationsManager.userId && saved == true 
-                        
-                        ? Pronostico(payrollId)
-
-                        
-                        : 
-                        //payrollId == rotationsManager.userId && saved == false && rotationsManager.SchemaName
-                        null
-                        
+                        ? <span key={`span-rot-${rotationsManager._id}`}>{Pronostico(payrollId)}</span>
+                        : null
                       ))
-                        
                     }
-
                   </a>
            </li>
-
-           
-      </ul>
+        </ul>
         :null
       }
-     
-      
-
-
-      
     </div>
-    
   };
 
   const mes = (MES) =>{
@@ -1789,89 +1774,324 @@ const asignar = () =>{
 }
 
 
-const cleanTurnos = async() =>{
-  
-    axios.delete("http://localhost:3000/api/shifts/all/"+new Date(new Date(fechaBarra).setHours(0,0,0,0)).toISOString()
- )
-}
+/* ********************************************************************************************************************* */
+/* REPLICAR / LIMPIAR LA PROGRAMACIÓN DE UN DÍA */
+/* ********************************************************************************************************************* */
 
-const copiarTurnos = async() =>{
-  
- data16?.map((shifts)=>(
-    axios.post("http://localhost:3000/api/shifts/", {
-    idUser: shifts.ID_user,
-    nombres: shifts.Nombres,
-    index: shifts.Index,
-    idPrograma: shifts.Event_name,
-    eventId: shifts.ID_event,
-    color: shifts.Color,
-    observacion: shifts.Observacion,
-    fechaClave: new Date(new Date(fechaBarra).setHours(0,0,0,0)).toISOString(),
-    idSchema:  shifts.Id_Schema,
-    inicioMain: shifts.Inicio_main,
-    out: shifts.Out,
-    tipo: shifts.Type,
-    })
+//Carga (y valida) los turnos del día origen seleccionado
+const cargarTurnosOrigen = async (fecha) => {
+  if (replicandoRef.current || limpiandoRef.current) return;
 
+  if (!esFechaValida(fecha)) {
+    setTurnosOrigen([]);
+    return;
+  }
 
- ))
-}
+  const fechaNormalizada = inicioDelDia(fecha);
+  const requestId = ++origenRequestRef.current;
 
-const copiar = ()=>{
- let aux = 0;
+  setCargandoOrigen(true);
+  setTurnosOrigen([]);
 
-  obtenerListadoTurnosDayKey();
+  try {
+    const turnos = await fetchTurnosDia(fechaNormalizada);
 
-  //Validacion de fechaclave
-    data17?.map((shifts)=>(
-    shifts.Fecha_clave == new Date(new Date(fechaBarra).setHours(0,0,0,0)).toISOString() && (aux = 1 )
-  )) 
+    if (requestId !== origenRequestRef.current) return;
 
+    setTurnosOrigen(turnos);
+  } catch (error) {
+    if (requestId !== origenRequestRef.current) return;
 
-  //if(aux == 1) {toast.error("YA HAY DATA"); aux = 0;} else{toast.success("Esta vacio")}
-
-  if(aux == 1)
-  {
-    aux = 0;
+    setTurnosOrigen([]);
 
     Swal.fire({
-      title: "Ya existen turnos registrados para esta fecha, ¿Desea sobreescribir la información con los turnos del día " + new Date(fechaBarra).toLocaleDateString() + "?",
-      showDenyButton: true,
-      showCancelButton: true,
-      confirmButtonText: "No",
-      denyButtonText: `Sí`,
+      icon: "error",
+      title: "No se pudieron cargar los turnos",
+      text: error.message || "No fue posible consultar la programación del día seleccionado.",
       footer: '<h6>Gestión Manager Citytv</h6>',
-  }).then((result) => {
-    
-    if (result.isConfirmed) 
-    {
-      //No hacemos nada
-    } 
-    
-    else if (result.isDenied) 
-    {
-      cleanTurnos();
-      copiarTurnos();
-      setAuxiliar(!auxiliar);
-      Swal.fire("Turnos replicados con éxito", "", "success");
+    });
+  } finally {
+    if (requestId === origenRequestRef.current) {
+      setCargandoOrigen(false);
     }
+  }
+};
+
+//Selección de una nueva fecha origen en el calendario
+const handleFechaOrigenChange = (date) => {
+  if (!date || replicandoRef.current || limpiandoRef.current) return;
+
+  const fecha = inicioDelDia(date);
+
+  if (esFechaValida(fechaBarra) && fecha.getTime() >= inicioDelDia(fechaBarra).getTime()) {
+    Swal.fire({
+      icon: "warning",
+      title: "Fecha no permitida",
+      text: "El día a replicar debe ser anterior al día destino.",
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+    return;
+  }
+
+  setStarIn(fecha);
+  cargarTurnosOrigen(fecha);
+};
+
+//Abre la ventana proponiendo como origen el día anterior al destino
+const abrirVentana = () => {
+  if (replicandoRef.current || limpiandoRef.current) return;
+
+  if (!esFechaValida(fechaBarra)) {
+    Swal.fire({
+      icon: "error",
+      title: "Fecha inválida",
+      text: "No fue posible determinar el día destino de la programación.",
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+    return;
+  }
+
+  const origenPorDefecto = sumarDias(fechaBarra, -1);
+
+  setStarIn(origenPorDefecto);
+  setTurnosOrigen([]);
+  setVentana(true);
+  cargarTurnosOrigen(origenPorDefecto);
+};
+
+const cerrarVentana = () => {
+  if (replicandoRef.current || limpiandoRef.current) return;
+
+  setVentana(false);
+  setTurnosOrigen([]);
+};
+
+//Arma el cuerpo que espera POST /shifts a partir de un turno origen
+const construirPayload = (shift, fechaDestino) => ({
+  idUser: shift.ID_user,
+  nombres: shift.Nombres,
+  index: shift.Index,
+  idPrograma: shift.Event_name,
+  eventId: shift.ID_event,
+  color: shift.Color,
+  observacion: shift.Observacion,
+  fechaClave: isoInicioDelDia(fechaDestino),
+  idSchema: shift.Id_Schema,
+  inicioMain: shift.Inicio_main,
+  out: shift.Out,
+  tipo: shift.Type,
+});
+
+const mostrarCargando = (titulo) => {
+  Swal.fire({
+    title: titulo,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
+    didOpen: () => Swal.showLoading(),
   });
+};
+
+//Replica los turnos del día origen en el día destino
+const replicarTurnos = async () => {
+  if (replicandoRef.current || limpiandoRef.current) return;
+
+  if (!esFechaValida(fechaBarra) || !esFechaValida(starIn)) {
+    Swal.fire({
+      icon: "error",
+      title: "Fechas inválidas",
+      text: "No fue posible determinar el día origen o el día destino.",
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+    return;
   }
 
-  else{
-    cleanTurnos();
-    copiarTurnos();
+  const destino = inicioDelDia(fechaBarra);
+  const origen = inicioDelDia(starIn);
+
+  if (origen.getTime() >= destino.getTime()) {
+    Swal.fire({
+      icon: "warning",
+      title: "Fecha no permitida",
+      text: "El día a replicar debe ser anterior al día destino.",
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+    return;
+  }
+
+  replicandoRef.current = true;
+  setReplicando(true);
+
+  try {
+    const [turnosOrigenActuales, turnosDestino] = await Promise.all([
+      fetchTurnosDia(origen),
+      fetchTurnosDia(destino),
+    ]);
+
+    setTurnosOrigen(turnosOrigenActuales);
+
+    if (turnosOrigenActuales.length === 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Sin turnos para replicar",
+        text: `El día ${formatearFecha(origen)} no tiene turnos registrados.`,
+        footer: '<h6>Gestión Manager Citytv</h6>',
+      });
+      return;
+    }
+
+    const turnosValidos = turnosOrigenActuales.filter((shift) => shift?.ID_user);
+
+    if (turnosValidos.length === 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Registros inválidos",
+        text: "Los turnos del día seleccionado no tienen la información mínima para replicarse.",
+        footer: '<h6>Gestión Manager Citytv</h6>',
+      });
+      return;
+    }
+
+    const reemplaza = turnosDestino.length > 0;
+
+    const confirmacion = await Swal.fire({
+      icon: reemplaza ? "warning" : "question",
+      title: reemplaza ? "¿Sobrescribir la programación?" : "¿Replicar la programación?",
+      html: reemplaza
+        ? `Se eliminarán los <b>${turnosDestino.length}</b> turnos del <b>${formatearFecha(destino)}</b> y se crearán <b>${turnosValidos.length}</b> turnos tomados del <b>${formatearFecha(origen)}</b>.`
+        : `Se crearán <b>${turnosValidos.length}</b> turnos en el <b>${formatearFecha(destino)}</b> tomados del <b>${formatearFecha(origen)}</b>.`,
+      showCancelButton: true,
+      confirmButtonText: reemplaza ? "Sí, sobrescribir" : "Sí, replicar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: reemplaza ? "#EB464B" : "#26610d",
+      reverseButtons: true,
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    mostrarCargando("Replicando turnos...");
+
+    if (reemplaza) {
+      await shiftsApi.removeByDate(isoInicioDelDia(destino));
+    }
+
+    const resultados = await Promise.allSettled(
+      turnosValidos.map((shift) => shiftsApi.create(construirPayload(shift, destino)))
+    );
+
+    const creados = resultados.filter((resultado) => resultado.status === "fulfilled").length;
+    const fallidos = resultados.length - creados;
+
     setAuxiliar(!auxiliar);
-    Swal.fire("Turnos replicados con éxito", "", "success");
+    setSaved(false);
+
+    if (fallidos > 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Replicación incompleta",
+        html: `Se crearon <b>${creados}</b> de <b>${resultados.length}</b> turnos. ${fallidos} no pudieron guardarse; puede intentar la replicación de nuevo.`,
+        footer: '<h6>Gestión Manager Citytv</h6>',
+      });
+      return;
+    }
+
+    setVentana(false);
+    setTurnosOrigen([]);
+
+    Swal.fire({
+      icon: "success",
+      title: "Turnos replicados",
+      text: `Se replicaron ${creados} turnos del ${formatearFecha(origen)} en el ${formatearFecha(destino)}.`,
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "No se pudo replicar la programación",
+      text: error.message || "Ocurrió un error al replicar los turnos.",
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+  } finally {
+    replicandoRef.current = false;
+    setReplicando(false);
+  }
+};
+
+//Elimina todos los turnos del día actual (destino)
+const limpiarDiaActual = async () => {
+  if (limpiandoRef.current || replicandoRef.current) return;
+
+  if (!esFechaValida(fechaBarra)) {
+    Swal.fire({
+      icon: "error",
+      title: "Fecha inválida",
+      text: "No fue posible determinar el día actual de la programación.",
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+    return;
   }
 
- setVentana(!ventana);
-}
+  const destino = inicioDelDia(fechaBarra);
 
+  limpiandoRef.current = true;
+  setLimpiando(true);
 
-const cancelar = () =>{
-  setVentana(!ventana);
-}
+  try {
+    const turnosDestino = await fetchTurnosDia(destino);
+
+    if (turnosDestino.length === 0) {
+      Swal.fire({
+        icon: "info",
+        title: "Sin turnos registrados",
+        text: `El día ${formatearFecha(destino)} no tiene turnos para eliminar.`,
+        footer: '<h6>Gestión Manager Citytv</h6>',
+      });
+      return;
+    }
+
+    const confirmacion = await Swal.fire({
+      icon: "warning",
+      title: "¿Limpiar los turnos del día actual?",
+      html: `Se eliminarán <b>${turnosDestino.length}</b> turnos del <b>${formatearFecha(destino)}</b>.<br/><br/><b>Esta acción no se puede deshacer.</b>`,
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#EB464B",
+      reverseButtons: true,
+      focusCancel: true,
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    mostrarCargando("Eliminando turnos...");
+
+    await shiftsApi.removeByDate(isoInicioDelDia(destino));
+
+    setAuxiliar(!auxiliar);
+    setSaved(false);
+    setVentana(false);
+    setTurnosOrigen([]);
+
+    Swal.fire({
+      icon: "success",
+      title: "Turnos eliminados",
+      text: `Se eliminaron ${turnosDestino.length} turnos del ${formatearFecha(destino)}.`,
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "No se pudieron eliminar los turnos",
+      text: error.message || "Ocurrió un error al limpiar la programación.",
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+  } finally {
+    limpiandoRef.current = false;
+    setLimpiando(false);
+  }
+};
 
 
 //************************************************************************************************************* */
@@ -1923,12 +2143,7 @@ const cancelar = () =>{
     getProgrammers();
   }, [fechaBarra]);
 
-   useEffect(() => {
-      obtenerListadoTurnosDayKey();
-      obtenerListadoTurnosDayKey2();
-  }, [starIn,fechaBarra]);
 
-   
   
 
   return (
@@ -1936,28 +2151,50 @@ const cancelar = () =>{
      
      { ventana == true &&
       <div className="ventana">
-          <h2 className='ventana_titulo'>Selecione el dia que desea replicar </h2>
-          <h2 className='ventana_titulo'>Hay {data16.length} Registros </h2>
-          <p className='ventana_fecha'>{fechaBarra}</p>
-        
-        {
-           <DatePicker
+          <h2 className='ventana_titulo'>Replicar programación</h2>
+          <p className='ventana_fecha'>
+            Día a replicar: {formatearFecha(starIn)}
+          </p>
+          <h2 className='ventana_titulo'>
+            {cargandoOrigen ? "Cargando turnos..." : `${turnosOrigen.length} turnos registrados`}
+          </h2>
+
+          <DatePicker
             selected={starIn}
-            onChange={(date) => setStarIn(date)}
+            onChange={handleFechaOrigenChange}
             inline
             showWeekNumbers
             showMonthDropdown
-            startDate={starIn}
-            ref={fechaFinalRef}
+            showYearDropdown
+            scrollableYearDropdown
+            maxDate={esFechaValida(fechaBarra) ? sumarDias(fechaBarra, -1) : undefined}
+            disabled={replicando || limpiando}
           />
-        }
 
-        <div className="ventana_boton" onClick={() => data16.length == 0 ? toast.error("El dia seleccionado no tiene registros") : copiar()}>
-          Replicar
-        </div>
-         <div className="ventana_boton_cancel" onClick={() => cancelar()}>
-          Cancelar
-        </div>
+          <p className='ventana_fecha ventana_fecha--destino'>
+            Día destino: {formatearFecha(fechaBarra)}
+          </p>
+
+          <div className="ventana_botones">
+            <div
+              className={`ventana_boton ${cargandoOrigen || replicando || limpiando ? "ventana_boton--disabled" : ""}`}
+              onClick={replicarTurnos}
+            >
+              {replicando ? "Replicando..." : "Replicar"}
+            </div>
+            <div
+              className={`ventana_boton_peligro ${replicando || limpiando ? "ventana_boton--disabled" : ""}`}
+              onClick={limpiarDiaActual}
+            >
+              {limpiando ? "Limpiando..." : "Limpiar día actual"}
+            </div>
+            <div
+              className={`ventana_boton_cancel ${replicando || limpiando ? "ventana_boton--disabled" : ""}`}
+              onClick={cerrarVentana}
+            >
+              Cancelar
+            </div>
+          </div>
      </div>
      
      }
@@ -2014,7 +2251,7 @@ const cancelar = () =>{
 
      <div className="sectionSave">
       <div className="disket">
-        <img src={calendario} alt="disket" className='savedNull' onClick={() => setVentana(!ventana)}/>
+        <img src={calendario} alt="disket" className='savedNull' onClick={() => (ventana ? cerrarVentana() : abrirVentana())}/>
       </div>
         <div className={saved ? "circleSaved" : "circle"} onClick={save}>
         {saved ? "Rotations" : "Prog"} 
@@ -2072,7 +2309,7 @@ const cancelar = () =>{
 
 
 
-         {/* LISTADO PERSONAS DEL GRUPO */}
+        {/* LISTADO PERSONAS DEL GRUPO */}
         <div className="sectionListPayroll">
           <ul className='ListUL'>
 
@@ -2080,10 +2317,10 @@ const cancelar = () =>{
                data11.map((payroll,index)=>(
 
                 payroll.cargo != "USERBALANCER" ?
-                <div className="sb" key={index}>
+                <li className="sb" key={payroll._id || index}>
                   <div className="subGrupo">{payroll.subGrupo}</div>
-                   <li className={payroll.activo==false?'ListLI2':'ListLI'} key={payroll._id} onClick={(e)=> operationP(payroll._id,payroll.nombres,payroll.apellidos,payroll.grupoID,e)}>{payroll.nombres} {payroll.apellidos}</li>
-                </div>
+                   <div className={payroll.activo==false?'ListLI2':'ListLI'} onClick={(e)=> operationP(payroll._id,payroll.nombres,payroll.apellidos,payroll.grupoID,e)}>{payroll.nombres} {payroll.apellidos}</div>
+                </li>
                 :null
                ))
             } 
@@ -2102,14 +2339,15 @@ const cancelar = () =>{
                data12.map((payroll,index)=>(
 
                 payroll.cargo  ?
-                <div className="sb" key={index}>
+                <li className="sb" key={payroll._id || index}>
                   <div className="subGrupo">{payroll.subGrupo}</div>
-                   <li className={payroll.cargo=="USERBALANCER" ?'balancer':'ListLI22'} key={payroll._id} onClick={(e)=> operationP2(payroll._id,payroll.nombres,payroll.apellidos,payroll.grupoID,e)}>{payroll.nombres} {payroll.apellidos}</li>
-                </div>
+                   <div className={payroll.cargo=="USERBALANCER" ?'balancer':'ListLI22'} onClick={(e)=> operationP2(payroll._id,payroll.nombres,payroll.apellidos,payroll.grupoID,e)}>{payroll.nombres} {payroll.apellidos}</div>
+                </li>
                 :null
                ))
             } 
           </ul>
+
           <div className='sectionListPayroll_titulo2' >Sustituciones temporales <br></br> <h2 className='fech'>{fechaBarra} </h2></div>
           <div className="cuadroReport">
             <div className="col1">
@@ -2125,30 +2363,24 @@ const cancelar = () =>{
 
           <ul className='ulTabla'>
             {
-              data13?.map((substitution)=>(
-                substitution.ID_grupo_der == idGp && substitution.Fecha_dia == new Date(fechaBarra).toISOString()  &&
+              data13
+                ?.filter((substitution) => substitution.ID_grupo_der == idGp && substitution.Fecha_dia == new Date(fechaBarra).toISOString())
+                .map((substitution) => (
+                  <li className="liTabla" key={substitution._id}>
+                    <div className="litablaLeft">
+                      {substitution.NombreRight}
+                    </div>
 
-                <li className="liTabla" key={substitution._id}>
-                  <div className="litablaLeft">
-                    {substitution.NombreRight}
-                  </div>
+                    <div className="litablaRight">
+                      {substitution.NombreLeft}
+                    </div>
 
-                  <div className="litablaRight">
-                  {substitution.NombreLeft}
-                  </div>
-
-                  <span className='btnDelItem'>
-                    <img  src={trash} alt="del" onClick={() => delitem(substitution._id,substitution.NombreLeft, substitution.NombreRight)}/>
-                  </span>
-                </li>
-              ))
+                    <span className='btnDelItem'>
+                      <img src={trash} alt="del" onClick={() => delitem(substitution._id, substitution.NombreLeft, substitution.NombreRight)}/>
+                    </span>
+                  </li>
+                ))
             }
-
-
-
-
-                
-
           </ul>
         </div>
       </div>

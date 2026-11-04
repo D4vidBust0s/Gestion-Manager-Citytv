@@ -105,11 +105,39 @@ img{
   overflow: hidden;
   border-radius: 0.5rem;
   box-shadow: 2px 2px 8px var(--Base);
+
+  /* Anchos compartidos: una sola fuente de verdad para sidebar, contenido y barras */
+  --sidebar-width: 15%;
+  --panel-left: 14%; /* barras superiores: 1% de solape con la sidebar */
+  --float-left: calc(var(--sidebar-width) - 3%);
+}
+
+/* Sidebar colapsada como riel de iconos */
+.Container--sidebar-collapsed{
+  --sidebar-width: 4.75rem;
+  --panel-left: 4.75rem;
+  --float-left: calc(var(--sidebar-width) + 0.75rem);
 }
 
 .content{
   width: 85%;
   height: 100%;
   overflow: auto;
+}
+
+/* Solo el contenido raíz sigue el ancho de la sidebar (los .content internos no) */
+.Container > .content{
+  width: calc(100% - var(--sidebar-width, 15%));
+  transition: width .3s ease;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .Container > .content,
+  .Sidebar,
+  .container,
+  .container-menu,
+  .floatBtn{
+    transition: none !important;
+  }
 }
 

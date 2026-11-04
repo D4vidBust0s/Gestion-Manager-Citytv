@@ -1,5 +1,9 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
+import Swal from 'sweetalert2'
+import { useChat } from '../../context/ChatContext'
+import styled from 'styled-components'
 
 /* Estilos */
 import './Sidebar.scss'
@@ -22,13 +26,26 @@ import tools from '../../assets/tools.svg'
 import mobil from '../../assets/mobil.svg'
 import tools2 from '../../assets/tools2.svg'
 
-function Sidebar({ onLogout }) {
+function Sidebar({ onLogout, collapsed = false, onToggleCollapsed }) {
   const location = useLocation();
   const [activeMenu, setActiveMenu] = useState(null);
+  
+  // Extraemos totalNoLeidos, limpiarContadorGlobal y cerrarSesionSocket del contexto corporativo de chat
+  const { totalNoLeidos, limpiarContadorGlobal, cerrarSesionSocket } = useChat(); 
 
   // Manejo de acordeón con auto-colapso exclusivo
   const toggleMenu = (menuName) => {
     setActiveMenu((prev) => (prev === menuName ? null : menuName));
+  };
+
+  // Con la sidebar colapsada, el clic en un icono restaura el panel y abre esa sección
+  const handleGroupClick = (menuName) => {
+    if (collapsed) {
+      if (onToggleCollapsed) onToggleCollapsed();
+      setActiveMenu(menuName);
+      return;
+    }
+    toggleMenu(menuName);
   };
 
   // Determinar si una ruta está activa
@@ -60,17 +77,47 @@ function Sidebar({ onLogout }) {
     }
   }, [location.pathname]);
 
+  // Manejador centralizado para el cierre de sesión limpio (con confirmación previa)
+  const handleLogoutClick = async () => {
+    const result = await Swal.fire({
+      icon: 'question',
+      title: '¿Cerrar sesión?',
+      text: 'Tu sesión actual se cerrará y volverás a la pantalla de inicio de sesión.',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cerrar sesión',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#EB464B',
+      cancelButtonColor: '#00094B',
+      reverseButtons: true,
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+
+    // Cancelar, Esc o clic fuera: la sesión se mantiene intacta
+    if (!result.isConfirmed) return;
+
+    try {
+      cerrarSesionSocket(); // Avisamos al servidor que el usuario cerró sesión
+    } catch (error) {
+      console.error('No se pudo notificar el cierre de sesión al socket:', error);
+    }
+
+    if (onLogout) {
+      onLogout(); // La sesión se cierra pase lo que pase con el socket
+    }
+  };
+
   return (
-    <div className="Sidebar">
+    <div className={`Sidebar${collapsed ? ' Sidebar--collapsed' : ''}`} id="app-sidebar">
       <div className="Sidebar__contentLogo flex">
         <img src={logo} alt="Logo" />
       </div>
 
       {/* MENU AUXILIAR*/}
       <div className="menuAux">
-        <span className={`menuAux__item ${isPathActive('/chat') ? 'menuAux__item--active' : ''}`}>
-          <Link to="/chat">
+        <span className={`menuAux__item ${isPathActive('/chat') ? 'menuAux__item--active' : ''}`} style={{ position: 'relative' }}>
+          <Link to="/chat" onClick={() => limpiarContadorGlobal()}>
             <img src={chat} alt="chat" />
+            {totalNoLeidos > 0 && <SidebarBadge>{totalNoLeidos}</SidebarBadge>}
           </Link>
         </span>
 
@@ -88,7 +135,7 @@ function Sidebar({ onLogout }) {
 
        <span 
           className="menuAux__item" 
-          onClick={onLogout} 
+          onClick={handleLogoutClick}
           style={{ cursor: 'pointer' }}
           title="Cerrar Sesión"
         >
@@ -136,7 +183,7 @@ function Sidebar({ onLogout }) {
           <li className="list__item list__item--click">
             <div
               className={`list__buttom list__buttom--click ${activeMenu === 'journal' ? 'arrow' : ''}`}
-              onClick={() => toggleMenu('journal')}
+              onClick={() => handleGroupClick('journal')}
             >
               <img src={sun} alt="journal" className="list__img" />
               <span className={`nav__link ${['/programmer'].includes(location.pathname) ? 'nav__link--active' : ''}`}>
@@ -174,7 +221,7 @@ function Sidebar({ onLogout }) {
           <li className="list__item list__item--click">
             <div
               className={`list__buttom list__buttom--click ${activeMenu === 'employee' ? 'arrow' : ''}`}
-              onClick={() => toggleMenu('employee')}
+              onClick={() => handleGroupClick('employee')}
             >
               <img src={employee} alt="employe" className="list__img" />
               <span
@@ -262,7 +309,7 @@ function Sidebar({ onLogout }) {
           <li className="list__item list__item--click">
             <div
               className={`list__buttom list__buttom--click ${activeMenu === 'payroll' ? 'arrow' : ''}`}
-              onClick={() => toggleMenu('payroll')}
+              onClick={() => handleGroupClick('payroll')}
             >
               <img src={payroll} alt="payroll" className="list__img" />
               <span
@@ -309,7 +356,7 @@ function Sidebar({ onLogout }) {
           <li className="list__item list__item--click">
             <div
               className={`list__buttom list__buttom--click ${activeMenu === 'inquiries' ? 'arrow' : ''}`}
-              onClick={() => toggleMenu('inquiries')}
+              onClick={() => handleGroupClick('inquiries')}
             >
               <img src={inquiries} alt="inquiries" className="list__img" />
               <span className={`nav__link ${['/balancer'].includes(location.pathname) ? 'nav__link--active' : ''}`}>
@@ -340,7 +387,7 @@ function Sidebar({ onLogout }) {
           <li className="list__item list__item--click">
             <div
               className={`list__buttom list__buttom--click ${activeMenu === 'reports' ? 'arrow' : ''}`}
-              onClick={() => toggleMenu('reports')}
+              onClick={() => handleGroupClick('reports')}
             >
               <img src={reports} alt="reports" className="list__img" />
               <span className="nav__link">
@@ -374,7 +421,7 @@ function Sidebar({ onLogout }) {
           <li className="list__item list__item--click">
             <div
               className={`list__buttom list__buttom--click ${activeMenu === 'tools' ? 'arrow' : ''}`}
-              onClick={() => toggleMenu('tools')}
+              onClick={() => handleGroupClick('tools')}
             >
               <img src={tools2} alt="tools" className="list__img" />
               <span className={`nav__link ${['/tasks', '/chat'].includes(location.pathname) ? 'nav__link--active' : ''}`}>
@@ -393,18 +440,24 @@ function Sidebar({ onLogout }) {
                 </Link>
               </li>
 
-              <li className="list__inside">
-                <a href="#" className="nav__link nav__link--inside" onClick={(e) => e.preventDefault()}>
+             <li className="list__inside">
+                <Link
+                  to="/routes"
+                  className={`nav__link nav__link--inside ${isPathActive('/routes') ? 'nav__link--active' : ''}`}
+                >
                   Routes
-                </a>
+                </Link>
               </li>
 
-              <li className="list__inside">
+
+              <li className="list__inside" style={{ position: 'relative' }}>
                 <Link
                   to="/chat"
                   className={`nav__link nav__link--inside ${isPathActive('/chat') ? 'nav__link--active' : ''}`}
+                  onClick={() => limpiarContadorGlobal()}
                 >
                   Chat
+                  {totalNoLeidos > 0 && <ToolBadge>{totalNoLeidos}</ToolBadge>}
                 </Link>
               </li>
             </ul>
@@ -414,7 +467,7 @@ function Sidebar({ onLogout }) {
           <li className="list__item list__item--click">
             <div
               className={`list__buttom list__buttom--click ${activeMenu === 'system' ? 'arrow' : ''}`}
-              onClick={() => toggleMenu('system')}
+              onClick={() => handleGroupClick('system')}
             >
               <img src={tools} alt="tools" className="list__img" />
               <span
@@ -470,7 +523,7 @@ function Sidebar({ onLogout }) {
           <li className="list__item list__item--click">
             <div
               className={`list__buttom list__buttom--click ${activeMenu === 'mobil' ? 'arrow' : ''}`}
-              onClick={() => toggleMenu('mobil')}
+              onClick={() => handleGroupClick('mobil')}
             >
               <img src={mobil} alt="mobil" className="list__img" />
               <span className="nav__link">
@@ -498,5 +551,40 @@ function Sidebar({ onLogout }) {
     </div>
   );
 }
+
+// Estilizados
+const SidebarBadge = styled.span`
+  position: absolute;
+  top: -12px;
+  right: -8px;
+  background-color: #EB464B;
+  color: white;
+  font-size: 0.95rem;
+  padding: 1px 5px;
+  border-radius: 50%;
+  font-weight: bold;
+  min-width: 22px;
+  height: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+`;
+
+const ToolBadge = styled.span`
+  background-color: #4CAF50;
+  color: white;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: bold;
+  margin-left: 8px;
+`;
+
+Sidebar.propTypes = {
+  onLogout: PropTypes.func,
+  collapsed: PropTypes.bool,
+  onToggleCollapsed: PropTypes.func,
+};
 
 export default Sidebar;

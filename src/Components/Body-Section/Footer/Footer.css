@@ -27,7 +27,8 @@
     background: var(--Base);
     position: absolute;
     bottom: 2.5%;
-    width: 86%;
+    left: var(--panel-left, 14%);
+    width: auto;
     right: 0;
     height: 110px;
     border-radius: 5px 0 0 5px;
@@ -37,5 +38,5 @@
     justify-content: center;
     z-index: 300;
     
-    transition: .9s ease;
+    transition: .9s ease, left .3s ease;
 }

@@ -23,23 +23,7 @@
     --smallestFonSize: .75rem;
   }
 
-.container-menu{
-    background: var(--Base);
-    position: absolute;
-    bottom: 2.5%;
-    width: 86%;
-    right: 0;
-    height: 110px;
-    border-radius: 5px 0 0 5px;
-    box-shadow: 4px 2px 15px var(--Base);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-   
-    z-index: 1000;
-
-}
-
+/* .container-menu vive únicamente en Footer.css (fuente única del panel) */
 
 .main-content-aux1{
   position: absolute;

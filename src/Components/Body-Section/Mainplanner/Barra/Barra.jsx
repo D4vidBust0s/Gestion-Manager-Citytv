@@ -26,6 +26,7 @@ import toast from 'react-hot-toast';
 import { FechaBarraContext } from '../../../../context/FechaBarraProvider';
 import { AuxSustitutions} from '../../../../context/AuxSustitutionsProvider';
 import { PronosticoContext } from '../../../../context/PronosticoTurnosProvider';
+import { isBalancerName } from '../../../../api/payroll';
 
 
 
@@ -503,7 +504,7 @@ const noExist = () =>{
   let respuesta = " / ---------------";
   
   //Para los remplazos tengo en cuenta todos 
-  if(permissions == 1 || breaks == 1 || incapacitado == 1 || licensia == 1 || vacaciones == 1 || compensatorio == 1 || pNombre == "UserBalancer")
+  if(permissions == 1 || breaks == 1 || incapacitado == 1 || licensia == 1 || vacaciones == 1 || compensatorio == 1 || isBalancerName(pNombre))
   {
     data8?.map((sustituciones)=>(
       sustituciones.ID_grupo_der == grupoid && new Date(fechaBarra).toISOString() == sustituciones.Fecha_dia && sustituciones.ID_user_main == pid ? respuesta = " / " +sustituciones.NombreLeft : null)
@@ -523,8 +524,6 @@ const noExist = () =>{
 
   const exist = (pid,pg,gn,pn,cargo,pa,subgrupo,grupoid) =>{
     
- 
-
     testPermissions(pid)
     testIncapacitys(pid)
     testRecess(pid)
@@ -532,46 +531,34 @@ const noExist = () =>{
     testBreaks(pid)
     testCompensatory(pid);
 
-
     return <ul className="ulMain" key={pid}>
       <li className={permissions == 1 ? "liMain-var1" :  incapacitado == 1 ? "liMain-var2" : licensia == 1 ? "liMain-var3" : vacaciones == 1 ? "liMain-var4" : breaks == 1 ? "liMain-var5" : compensatorio == 1 ? "liMain-var7" : cargo == "USERBALANCER" ? "liMain-var6": "liMain"} key={pid}  onClick={() => verificar(pid,pn,pa,subgrupo,cargo,pg,grupoid) }>
         {
           data7?.map((rm)=>(
             rm.userId == pid && rm.fijo == true 
             ?
-
             <span key={rm._id}> 
               <img src={target} alt="fijo" className='target'/>
             </span> 
-            
             : null
           ))
         }
         
         {
-          
-            
-              data12?.map((rules)=>(
-                comprobarAlert(rules.DiasAlert,rules.DiasPeriodo,pid) == 1
-                 
-                ?
-                  <div className='bye'>
-                    { pn +" "+pa + traerRemplazo(pid,grupoid,pn)}
-                  </div> 
-
-                :
-                   <div>
-                    { pn +" "+pa + traerRemplazo(pid,grupoid,pn)}
-                  </div> 
-              ))
-                    
-            
-          
-              
+          data12?.map((rules)=>(
+            comprobarAlert(rules.DiasAlert,rules.DiasPeriodo,pid) == 1
+            ?
+              <div className='bye' key={rules._id}>
+                { pn +" "+pa + traerRemplazo(pid,grupoid,pn)}
+              </div> 
+            :
+               <div key={rules._id}>
+                { pn +" "+pa + traerRemplazo(pid,grupoid,pn)}
+              </div> 
+          ))
         }
       </li>
     </ul>
-
   }
 
   const mostrar = ()=>{
