@@ -1,6 +1,6 @@
 
 
-export const useActive = ({e,classTarget,classActive}) => {
+export const setActiveClass = ({e,classTarget,classActive}) => {
 
     if (e.target.classList == classTarget) {
       let aux = document.getElementsByClassName(classActive);

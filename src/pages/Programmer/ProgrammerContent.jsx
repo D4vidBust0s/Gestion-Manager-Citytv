@@ -4,14 +4,8 @@ import './ProgrammerContent.css'
 /* DEPENDENCIAS */
 import DatePicker from 'react-datepicker';
 import {useState,useEffect,useRef} from 'react';
-import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { Toaster, toast } from "react-hot-toast";
-import Swal from "sweetalert2";
-
-/* COMPONENTES MODALES*/
-import ModalBase1 from "../../Components/Modals/ModalBases/ModalBase1";
-import ModalPayrollManager from '../../Components/Modals/ModalManagerPayroll'
 
 /* IMAGENES */
 import Plus from '../../assets/Plus.svg'
@@ -32,7 +26,6 @@ export default function ProgrammerContent() {
   const [startDate, setStartDate] = useState(new Date());
   const [startHour,setStartHour] = useState(new Date());
   const [endHour,setEndHour] = useState(new Date());
-  const [starIn, setStarIn] = useState(new Date());
   const [color, setColor] = useState("#000000");
 
   //REFERENCIAS
@@ -179,6 +172,9 @@ export default function ProgrammerContent() {
 
    useEffect(() => {
     getProgrammers();
+    // Se mantiene la dependencia solo en startDate a proposito: agregar
+    // getProgrammers dispararia el efecto en cada render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate]);
 
 
@@ -221,7 +217,7 @@ export default function ProgrammerContent() {
         <p className='event-description-label'>Nombre del evento</p>
         <input type="text" placeholder='Nombre del evento' className='event-input' ref={nombreRef}/>
 
-        <p className='event-description-label'>Observaciones Globales "Opcional"</p>
+        <p className='event-description-label'>Observaciones Globales &quot;Opcional&quot;</p>
         <textarea name="desc"  cols="30" rows="10" className='event-input-desc' ref={observacionRef}></textarea>
 
         <p className='event-description-label'>Caducidad del evento</p>

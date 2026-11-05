@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import './RoutesContent.css';
@@ -88,6 +88,8 @@ export default function RoutesContent() {
   // Cargar turnos desde la BD al cambiar la fecha o las horas límite (y asegurando catálogos listos)
   useEffect(() => {
     obtenerSugeridosPorRuta();
+    // Dependencias intencionales: se recalcula al cambiar fecha/horas/catalogos.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fechaSeleccionada, horaCorteManana, horaCorteNoche, programasData, programmersData, stacksData]);
 
   // Autogenerar plantilla por defecto al cambiar aprobados, fecha o usuario

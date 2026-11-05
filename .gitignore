@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Temporales de esbuild (ver scripts/build.mjs)
+.tmp-esbuild
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

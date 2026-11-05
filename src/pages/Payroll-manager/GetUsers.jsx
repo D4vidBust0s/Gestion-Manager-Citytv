@@ -1,7 +1,6 @@
-import { useEffect } from "react";
-import { useActive } from "../../Custom_Hooks/useActive";
+import { setActiveClass } from "../../Custom_Hooks/useActive";
 import { useFetch } from "../../Custom_Hooks/useFetch";
-import toast from "react-hot-toast";
+import PropTypes from "prop-types";
 import axios from 'axios';
 
 
@@ -20,7 +19,7 @@ export const GetUsers = ({set}) => {
   const showUsersGroup = async (id, e) => {
 
      //Aqui lo que hago es cambiar los estilos para el item seleccionado;
-     useActive({e,classTarget:"contentForma",classActive:"activo"});
+     setActiveClass({e,classTarget:"contentForma",classActive:"activo"});
 
       //Funcion que obtiene la data de la api - listado todos los usurios del sistema
     return await axios
@@ -60,3 +59,7 @@ export const GetUsers = ({set}) => {
 
 
 
+
+GetUsers.propTypes = {
+  set: PropTypes.func,
+};

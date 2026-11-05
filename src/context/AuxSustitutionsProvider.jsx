@@ -2,8 +2,8 @@
 //traer o cargar el listado de sustituciones para que actualice en la barra el sustituto de un trabajador
 
 
-import React, { createContext, useEffect } from 'react';
-import { useState } from 'react';
+import PropTypes from 'prop-types';
+import { createContext, useState } from 'react';
 
 export const AuxSustitutions = createContext(null)
 
@@ -22,4 +22,8 @@ export const AuxSustitutionsProvider = ({children}) => {
     </AuxSustitutions.Provider>
     
   )
+}
+
+AuxSustitutionsProvider.propTypes = {
+  children: PropTypes.node,
 }

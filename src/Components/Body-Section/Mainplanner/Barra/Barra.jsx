@@ -784,6 +784,20 @@ const noExist = () =>{
     descripcionRef.current.value = "";
   },[fechaBarra])
 
+  //Cerrar el panel de anotaciones con la tecla Escape
+  useEffect(() => {
+    const alPresionarTecla = (evento) => {
+      if (evento.key !== "Escape") return;
+
+      const panel = document.getElementById("miAux");
+      if (panel) panel.classList.remove("mostrarAux2");
+    };
+
+    window.addEventListener("keydown", alPresionarTecla);
+
+    return () => window.removeEventListener("keydown", alPresionarTecla);
+  }, []);
+
 
 
   
@@ -809,7 +823,7 @@ const noExist = () =>{
 
         
       <div className="barra">
-        <img src={tropa} alt="tropa" className="imgTropa" onClick={()=> mostrar()}/>
+        <img src={tropa} alt="Anotaciones" title="Anotaciones" className="imgTropa" onClick={()=> mostrar()}/>
         <div className="content-listado">
         <div className="calendar">
         
@@ -863,76 +877,105 @@ const noExist = () =>{
 
 
       {/* SECCION AUXILIAR PARA MANEJO DE NOTAS EN LOS USUARIOS */}
-      <div  id='miAux' style={{position: "fixed",  zIndex: "1000",padding: "1rem",width: "64.2%"}}>
+      <div id='miAux'>
 
         <div className="cabezal2">
-          <img src={note} alt="logo" className='changeGroups_logo' />
-          <h2 className='titular'>ANOTACIONES <span className='subt'>{new Date(fechaBarra).toDateString()}</span></h2>
+          <img src={note} alt="" className='changeGroups_logo' />
+          <div className='aux-titulos'>
+            <h2 className='titular'>
+              ANOTACIONES <span className='subt'>{new Date(fechaBarra).toDateString()}</span>
+            </h2>
+            <h3 className='cabezal2-sub'>
+              {nombreUserLista && nombreUserLista !== "------"
+                ? nombreUserLista
+                : "Seleccione un trabajador"}
+            </h3>
+          </div>
+          <button
+            type="button"
+            className='aux-cerrar'
+            onClick={() => mostrar()}
+            aria-label="Cerrar anotaciones"
+          >
+            ×
+          </button>
         </div>
-        <h3 className='cabezal2-sub'>{nombreUserLista}</h3>
 
         <div className="cuerpo">
-              <div className="subTituloNew">
-              <h3 className='textAuxi'>Grupos</h3>
-              <select className="inputDirNew" onChange={()=> programClick()} ref={groupsRef}>
-              <option  value={"none"}>{"-----------------------------------"}</option>
-                {
-                  data?.map((program)=>(
-                    <option key={program._id} value={program._id}>{program.nombre}</option>
-                  )) 
-                }
-              </select>
-            </div>
+          <div className="subTituloNew">
+            <h3 className='textAuxi'>Grupo</h3>
+            <select className="inputDirNew" onChange={()=> programClick()} ref={groupsRef}>
+              <option value={"none"}>{"-----------------------------------"}</option>
+              {
+                data?.map((program)=>(
+                  <option key={program._id} value={program._id}>{program.nombre}</option>
+                ))
+              }
+            </select>
+          </div>
 
+          <div className="sectionmedia">
+            <div className="listadoUsers">
+              <h3 className='textAuxi'>Trabajadores</h3>
 
-            <div className="sectionmedia">
-              <div className="listadoUsers">
-                {
-                  data9?.map((peoleOfGroup)=>(
+              {
+                data9?.length > 0
+                  ?
+                  data9.map((peoleOfGroup)=>(
                     <div className="asiganation_li2" key={peoleOfGroup._id}>
-                      <span className={peoleOfGroup.cargo=="USERBALANCER" ? "usersRotations3":"usersRotations"}  onClick={(e) => clicItem(peoleOfGroup._id,peoleOfGroup.nombres,peoleOfGroup.apellidos,e)}>
+                      <span
+                        className={peoleOfGroup.cargo=="USERBALANCER" ? "usersRotations3":"usersRotations"}
+                        onClick={(e) => clicItem(peoleOfGroup._id,peoleOfGroup.nombres,peoleOfGroup.apellidos,e)}
+                      >
                         {"- " + peoleOfGroup.nombres + " " + peoleOfGroup.apellidos}
                       </span>
-                  </div>
+                    </div>
                   ))
-                }
-              </div>
+                  :
+                  <p className='aux-vacio'>Seleccione un grupo para listar los trabajadores</p>
+              }
+            </div>
 
-              <div className="agregar">
+            <div className="agregar">
               <h3 className='textAuxi'>Descripción</h3>
-                <textarea name="" id="" cols="30" rows="10" className='agregado' ref={descripcionRef}></textarea>
+              <textarea
+                name="descripcionAnotacion"
+                cols="30"
+                rows="10"
+                className='agregado'
+                ref={descripcionRef}
+                placeholder="Escriba la anotación..."
+              ></textarea>
+            </div>
+
+            <div className="controles">
+              <h3 className='textAuxi'>Acciones</h3>
+              <div>
+                <img src={adds} alt="Agregar anotación" title="Agregar anotación" className='add' onClick={add}/>
+                <img src={edit} alt="Editar anotación" title="Editar anotación" className='edit' onClick={editar}/>
+                <img src={del} alt="Eliminar anotación" title="Eliminar anotación" className='del' onClick={eliminar}/>
               </div>
-
-              <div className="controles">
-               <h3 className='textAuxi'>Acciones</h3>
-               <div >
-                  <img src={adds} alt="add"  className='add' onClick={add}/>
-                  <img src={edit} alt="add"  className='edit' onClick={editar}/>
-                  <img src={del} alt="add"  className='del' onClick={eliminar}/>
-               </div>
             </div>
+          </div>
 
-            </div>
-            
-            <div className="resultados">
-              <h3 className='textAuxi'>Resultados...</h3>
-              <ul>
-
-                {
-                  data10?.map((notation, index)=>(
+          <div className="resultados">
+            <h3 className='textAuxi'>Anotaciones del día</h3>
+            <ul>
+              {
+                data10?.length > 0
+                  ?
+                  data10.map((notation, index)=>(
                     <li className='li-resultados' key={notation._id} onClick={(e)=>mandar(notation._id,notation.ID_user,notation.Contenido,e)}>
                       <span className='li-resultados-numero'>{index +1}</span>
                       {notation.Contenido}
                     </li>
                   ))
-                }
-                
-
-              </ul>
-            </div>
+                  :
+                  <li className='aux-vacio'>Sin anotaciones registradas para esta fecha</li>
+              }
+            </ul>
+          </div>
         </div>
-
-        
       </div>
     </>
   );

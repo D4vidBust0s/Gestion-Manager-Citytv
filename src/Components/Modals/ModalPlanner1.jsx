@@ -30,9 +30,9 @@ import bandera from '../../assets/Flag-Colombia.gif';
 
 
 /* Import dependencies */
-import { useEffect, useRef, useState, useContext } from 'react';
+import { useEffect, useMemo, useRef, useState, useContext } from 'react';
+import { createPortal } from 'react-dom';
 import DatePicker from 'react-datepicker';
-import axios from 'axios';
 import {Toaster, toast} from 'react-hot-toast';
 
 
@@ -40,6 +40,19 @@ import {Toaster, toast} from 'react-hot-toast';
 //Import Contextos
 import { FechaBarraContext } from '../../context/FechaBarraProvider';
 import { PronosticoContext } from '../../context/PronosticoTurnosProvider'
+import { usePlannerData } from '../../Custom_Hooks/usePlannerData';
+import {
+  clasificarDia,
+  estadoDelDia,
+  compensatorioEnFecha,
+  rangoCubreFecha,
+  cadenaDeTurnos,
+  formatearHora,
+  horaInicioSchema,
+  construirCadena,
+  duracionDeTurno,
+  aFecha,
+} from '../../utils/plannerStack';
 
 /* VARIABLES */
 let fullPermisions = 0;
@@ -87,9 +100,6 @@ let DURACIONGLOBAL  = 0;
 let validador = 0;
 let validador2 = 0;
 let validador3 = 0;
-let validador4 = 0;
-let validador5 = 0;
-let validador6 = 0;
 let inicioMain;
 let validaUser = 0;
 let validador8 = 0;
@@ -106,8 +116,6 @@ let mensaje = "-------";
 
 
 let ax;
-let inicial;
-let final
 
 
 
@@ -122,25 +130,6 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
 
   //Estados
   const [, setDate] = useState()
-  const [data, setData] = useState([]);
-  const [data1, setData1] = useState([]);
-  const [data2, setData2] = useState([]);
-  const [data3, setData3] = useState([]);
-  const [data4, setData4] = useState([]);
-  const [data5, setData5] = useState([]);
-  const [data6, setData6] = useState([]);
-  const [data7, setData7] = useState([]);
-  const [data8, setData8] = useState([]);
-  const [data9, setData9] = useState([]);
-  const [data10, setData10] = useState([]);
-  const [data11, setData11] = useState([]);
-  const [data12, setData12] = useState([]);
-  const [data13, setData13] = useState([]);
-  const [data14, setData14] = useState([]);
-  const [data15, setData15] = useState([]);
-  const [data16, setData16] = useState([]);
-  const [data17, setData17] = useState([]);
-  const [data18, setData18] = useState([]);
   const [showNotas, setShowNotas] = useState(false);
   
 
@@ -153,7 +142,6 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [EVENTO, SETEVENTO] = useState("---------------------------------");
 
   /* Estados para el datepicker */
-  const [calendar, setCalendar] = useState(new Date());
   /* Estados para los controles del formulario de acciones */
   const [pgm, setPgm] = useState("---------------------------------");
   const [event, setEvent] = useState("---------------------------------");
@@ -161,18 +149,57 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [obs, setObs] = useState("");
 
   const [pr,setPr]= useState(0);
-  const [showAlert,setShowAlert]= useState(false);
   const [showRight,setShowRight]= useState(false);
 
-  const [messageTitle,setMessageTitle]= useState("Titulo");
-  const [messageContenido,setMessageContenido]= useState("Contenido");
-  const [messageBtn1,setMessageBtn1]= useState("-----");
-  const [messageBtn2,setMessageBtn2]= useState("-----");
-  const [messageBtn1Show,setMessageBtn1Show]= useState(false);
-  const [messageBtn2Show,setMessageBtn2Show]= useState(false);
-  const [validaColor,setValidaColor]= useState(false);
+  //Datos del planificador: única conversación con la API (Custom_Hooks/usePlannerData).
+  //Los alias conservan los nombres históricos del componente (data, data1, ...).
+  const {
+    programs: data,
+    turnosUsuario: data1,
+    rules: data2,
+    permissions: data3,
+    breaks: data4,
+    incapacitys: data5,
+    recess: data6,
+    licenses: data7,
+    payroll: data8,
+    rotations: data9,
+    rotationsManager: data10,
+    stacks: data11,
+    shiftsFull: data12,
+    substitutions: data13,
+    programmers: data14,
+    notations: data15,
+    savedStacks: data16,
+    shiftsDay: data17,
+    compensatorios: data18,
+    recargarTurnos,
+    recargarShiftsFull,
+    recargarShiftsDay,
+    recargarCompensatorios: obtenerCompensatorios,
+    recargarRotations,
+    recargarStacks,
+    recargarStacksGuardados,
+    recargarProgrammers,
+    recargarNotations,
+    guardarTurno,
+    guardarStackGuardado,
+    limpiarTurnos,
+    reemplazarTurnosDeFecha,
+    crearCompensatorio,
+    cargarStackCorto,
+    renombrarStackGuardado,
+    eliminarStackGuardado,
+    vaciarStacks,
+    vaciarRotations,
+    vaciarTurnos,
+  } = usePlannerData({ iduser, fechaPlaner, auxiliar, showRight });
 
-  const [fechaFull,setFechaFull]= useState([]);
+  const regla = data2?.[0];
+
+  const [alerta, setAlerta] = useState(null);
+  const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
+  const [validaColor,setValidaColor]= useState(false);
   
 
 
@@ -188,187 +215,18 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const startRef = useRef();
   const endRef = useRef();
   const observationRef = useRef();
-  const pruebaRef = useRef();
   const stackRef = useRef();
   const saveStackRef = useRef();
 
  
   
   //FUNCIONES
-  //Funcion que obtiene la data de la api - listado de programs
-  const obtenerListadoPrograms = async () => {
-    return await axios
-      .get("http://localhost:3000/api/programs")
-      .then((response) => setData(response.data));
-  };
-
-   //Funcion que obtiene la data de la api - listado de turnos segun id y fecha especifica
-   const obtenerListadoTurnos = async () => {
-    return await axios
-      .get("http://localhost:3000/api/shifts",
-      {
-        params:{
-          id: IDUSER,
-          fecha: fechaPlaner,
-        }
-      })
-      .then((response) => setData1(response.data));
-  };
-
-
-   //Funcion que trae los datos o reglas de Rules
-   const getRules = async () => {
-    return await axios
-      .get("http://localhost:3000/api/rules")
-      .then((response) => setData2(response.data));
-      
-  };
-
-
-  const traerPermisosTrabajador = async ()=>{
-    return await axios
-    .get("http://localhost:3000/api/permissions/")
-    .then((response) => setData3(response.data));
-    
-  }
-
-  const traerBreaksTrabajador = async ()=>{
-    return await axios
-    .get("http://localhost:3000/api/breaks/")
-    .then((response) => setData4(response.data));
-    
-  }
-
-  const traerCompensatoriesTrabajador = async () => {
-    try {
-      const response = await axios.get("http://localhost:3000/api/compensatories/");
-      setData18(response.data);
-    } catch (error) {
-      console.error("Error al traer compensatorios:", error);
-    }
-  };
-
-  const traerIncapacitysTrabajador = async ()=>{
-    return await axios
-    .get("http://localhost:3000/api/incapacitys/")
-    .then((response) => setData5(response.data));
-    
-  }
-
-  const traerRecessTrabajador = async ()=>{
-    return await axios
-    .get("http://localhost:3000/api/recess/")
-    .then((response) => setData6(response.data));
-    
-  }
-
-  const traerLicensesTrabajador = async ()=>{
-    return await axios
-    .get("http://localhost:3000/api/licenses/")
-    .then((response) => setData7(response.data));
-    
-  }
-  
-
-  const traerPayroll = async ()=>{
-    return await axios
-    .get("http://localhost:3000/api/payroll")
-    .then((response) => setData8(response.data));
-    
-  }
-
-  const traerRotations = async ()=>{
-    return await axios
-    .get("http://localhost:3000/api/rotations")
-    .then((response) => setData9(response.data));
-    
-  }
-
-
-   //Traer todos los registros de rotationsManager
-const getAllRotationsManager= async () => {
-    
-  return await axios
-    .get("http://localhost:3000/api/rotationsmanager/")
-    .then((response) => setData10(response.data));
-}
-
-  //Traer todos los registros Stacks
-  const getAllStacks= async () => {
-    
-    return await axios
-      .get("http://localhost:3000/api/stacks/")
-      .then((response) => setData11(response.data));
-  }
-
-  //Funcion que obtiene todos los shifts
-  const obtenerListadoTurnosFull = async () => {
-    return await axios
-      .get("http://localhost:3000/api/shifts/full/")
-      .then((response) => setData12(response.data));
-  };
-
-
-  //Funcion que obtiene la data de la api - listado Substitutions
-const getSubstitutions = async () => {
-  return await axios
-    .get("http://localhost:3000/api/substitutions/")
-    .then((response) => setData13(response.data));
-};
-
- //Funcion que obtiene la data de la api - Programmers
- const getProgrammers = async () => {
-  return await axios
-    .get("http://localhost:3000/api/programmer/",
-    {
-      params:{
-        fecha: fechaPlaner,
-      }
-    })
-    .then((response) => setData14(response.data));
-};
-
-
-
-
- //Funcion que obtiene la data de la api - listado de anotaciones segun id y fecha especifica
- const getNotatiosIdFecha = async () => {
-  return await axios
-    .get("http://localhost:3000/api/notations/",
-    {
-      params:{
-        id: iduser,
-        fecha: new Date(fechaBarra).toISOString(),
-      }
-    })
-    .then((response) => setData15(response.data));
-};
-
- //Funcion que obtiene la data de la api - de la pila de stacks Guardados
- const obtenerListadoStacksSaved= async () => {
-  return await axios
-    .get("http://localhost:3000/api/savedstacks/")
-    .then((response) => setData16(response.data));
-};
-
- //Funcion que obtiene la data de la api - listado de turnos segun rango de fechas para hacer mas ligero el sistema
- const obtenerListadoTurnosDay = async () => {
-  return await axios
-    .get("http://localhost:3000/api/shifts/day",
-    {
-      params:{
-        in: inicial,
-        out: final
-      }
-    })
-    .then((response) => setData17(response.data));
-};
-
+  //Las lecturas y escrituras de la API viven en usePlannerData
+  //(Custom_Hooks/usePlannerData.js); aquí solo se arman los payloads.
 
   const crear = async (IDUSER,NOMBRES,INDEX,IDPROGRAMA,EVENT_ID,COLOR,OBSERVACION,FECHA_CLAVE,ID_SCHEMA,INICIO_MAIN,OUT,TIPO)=>{
 
-    
-    await axios.post("http://localhost:3000/api/shifts/", {
+    await guardarTurno({
       idUser: IDUSER,
       nombres: NOMBRES,
       index: INDEX,
@@ -381,25 +239,19 @@ const getSubstitutions = async () => {
       inicioMain: INICIO_MAIN,
       out: OUT,
       tipo: TIPO,
-
     });
-
-    obtenerListadoTurnos()
-    obtenerListadoTurnosFull()
 
     INDEXGLOBAL = INDEX;
 
-      //limpiamos los campos
-      //customRef.current.value="";
-      observationRef.current.value="";
+    //limpiamos el campo de observación después de guardar
+    observationRef.current.value="";
 
   }
 
 
   const crearSaveStack = async (NOMBRESTACK,IDUSER,NOMBRES,INDEX,IDPROGRAMA,EVENT_ID,COLOR,OBSERVACION,FECHA_CLAVE,ID_SCHEMA,INICIO_MAIN,OUT,TIPO)=>{
 
-    
-    await axios.post("http://localhost:3000/api/savedstacks/", {
+    await guardarStackGuardado({
       nombreStack: NOMBRESTACK,
       idUser: IDUSER,
       nombres: NOMBRES,
@@ -413,121 +265,62 @@ const getSubstitutions = async () => {
       inicioMain: INICIO_MAIN,
       out: OUT,
       tipo: TIPO,
-
-    }).then(()=>obtenerListadoStacksSaved());
+    });
 
   }
 
   const cleanRegistro = async ()=>{
-    //new Date(Fecha_Barra).toISOString()
 
-    return await axios
-    .put("http://localhost:3000/api/shifts/",
-      {   
-        
-        ids: iduser,
-        fch: new Date(fechaBarra).toISOString()
-
-      })
-      .then(() => obtenerListadoTurnos())
-      .then(() => obtenerListadoTurnosFull());
-
-      
-      
+    //La fecha que se está programando es la del modal (no la de la barra)
+    return await limpiarTurnos(iduser, new Date(fechaPlaner).toISOString());
 
   };
 
-  const confirmacionAlert = () =>{
+  const limpiarTodo = async () => {
 
-    //Limpiamos los registros en la base de datos
-    cleanRegistro();
-    
-    setData11([]);  
-    setData9([]);
-    auxOut = "--:--:--";
-    validador = 1;
-    setShowAlert(!showAlert);
+    //Limpiamos los registros en la base de datos y refrescamos las vistas
+    await cleanRegistro();
     setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-    
+
     toast.success("Limpieza de lista ejecutado correctamente");
   }
 
-  
-  const borrarStack = ()=>{
-  
-    setMessageTitle("¿Realmente desea eliminar el stack actual?");
-    setMessageContenido("Una vez eliminado, no podrá recuperarse.");
-    setMessageBtn1Show(true);
-    setMessageBtn2Show(true);
-    setMessageBtn1("No borrar");
-    setMessageBtn2("SI BORRAR");
-    setShowAlert(!showAlert);
-  }
-
   const validarTimes = ()=>{
-    let respuesta = 0;
-    let inicio = new Date(startHour).getTime();
-    let salida = new Date(EndHour).getTime();
+    const inicio = new Date(startHour).getTime();
+    const salida = new Date(EndHour).getTime();
 
     if(inicio > salida)
-    {     respuesta = 1;
-          setMessageTitle("No puede agregar el evento Custom " + "-" + customRef.current.value);
-          setMessageContenido("La hora de inicio del evento es mayor que la hora de salida");
-          setMessageBtn1Show(true);
-          setMessageBtn2Show(false);
-          setMessageBtn1("Ok lo corregiré");
-          setShowAlert(!showAlert);
-    }
-
-    else if(inicio == salida)
     {
-          respuesta = 1;
-          setMessageTitle("No puede agregar el evento Custom " + "-" + customRef.current.value + "-");
-          setMessageContenido("La hora de inicio del evento y la hora de salida son iguales");
-          setMessageBtn1Show(true);
-          setMessageBtn2Show(false);
-          setMessageBtn1("Ok lo corregiré");
-          setShowAlert(!showAlert);
+      toast.error("La hora de inicio del evento es mayor que la hora de salida");
+      return 1;
     }
 
-    else{
-      respuesta = 0;
+    if(inicio === salida)
+    {
+      toast.error("La hora de inicio del evento y la hora de salida son iguales");
+      return 1;
     }
 
-    return respuesta;
+    return 0;
   }
 
   const validarTimesTimeOut = ()=>{
-    let respuesta = 0;
-    let inicio = new Date(startHour).toLocaleTimeString();
-    let salida = new Date(EndHour).toLocaleTimeString();
+    const inicio = new Date(startHour).getTime();
+    const salida = new Date(EndHour).getTime();
 
     if(inicio > salida)
-    {     respuesta = 1;
-          setMessageTitle("No se puede agregar el evento TimeOut ");
-          setMessageContenido("La hora de inicio del evento es mayor que la hora de salida");
-          setMessageBtn1Show(true);
-          setMessageBtn2Show(false);
-          setMessageBtn1("Ok lo corregiré");
-          setShowAlert(!showAlert);
-    }
-
-    else if(inicio == salida)
     {
-          respuesta = 1;
-          setMessageTitle("No se puede agregar el evento TimeOut ");
-          setMessageContenido("La hora de inicio del evento y la hora de salida son iguales");
-          setMessageBtn1Show(true);
-          setMessageBtn2Show(false);
-          setMessageBtn1("Ok lo corregiré");
-          setShowAlert(!showAlert);
+      toast.error("La hora de inicio del TimeOut es mayor que la hora de salida");
+      return 1;
     }
 
-    else{
-      respuesta = 0;
+    if(inicio === salida)
+    {
+      toast.error("La hora de inicio del TimeOut y la hora de salida son iguales");
+      return 1;
     }
 
-    return respuesta;
+    return 0;
   }
 
 
@@ -581,16 +374,6 @@ const getSubstitutions = async () => {
       }
 
     return  nombre;
-
-  }
-
-  const desabilitar = ()=>{
-    
-    
-       /* valido que el trabajador tenga rotaciones */
-        data10.map((rotationsM)=>(
-          rotationsM.totalGrupo == 0 && rotationsM.userId == iduser &&  (validador5 = 1)
-        ))
 
   }
 
@@ -683,6 +466,30 @@ const validacion = ()=>{
 
   const add = ()=>{
 
+    if(estadoDia === "compensatorio")
+    {
+      toast.error("El trabajador tiene asignado un compensatorio para esta fecha, no se le puede asignar una programación");
+      return;
+    }
+
+    if(estadoDia === "descanso")
+    {
+      toast.error("El trabajador ya tiene asignado un descanso, para asignar un turno primero elimine el descanso asignado");
+      return;
+    }
+
+    if(estadoDia === "sugeridoGuardado")
+    {
+      toast.error("Ya existe el turno sugerido guardado para esta fecha. Use la escoba si desea crear un stack manual.");
+      return;
+    }
+
+    if(estadoDia === "mixto")
+    {
+      toast.error("Hay turnos sugeridos y manuales mezclados en esta fecha. Limpie el día antes de continuar.");
+      return;
+    }
+
     //obtenerListadoTurnos(); pendiente por optimizar esto ya que a medida que crezca el sistema se volvera mas lenta la consulta
     index = data1.length;
 
@@ -714,12 +521,7 @@ const validacion = ()=>{
 
           if(validacion() == 1)
           {
-            setMessageTitle("No puede agregar el programa "+ getNameProgram(pgmRef.current.value,"Programa") +" al stack");
-            setMessageContenido("La hora de inicio del programa debe coincidir con la final del evento anterior");
-            setMessageBtn1Show(true);
-            setMessageBtn2Show(false);
-            setMessageBtn1("Ok lo corregiré");
-            setShowAlert(!showAlert);
+            toast.error("La hora de inicio del programa debe coincidir con la final del evento anterior");
           }
 
           else{
@@ -763,12 +565,7 @@ const validacion = ()=>{
 
           if(validacion() == 1)
           {
-            setMessageTitle("No puede agregar el evento secundario "+ getNameProgram(secRef.current.value,"Secondary") +" al stack");
-            setMessageContenido("La hora de inicio del evento secundario debe coincidir con la final del evento anterior");
-            setMessageBtn1Show(true);
-            setMessageBtn2Show(false);
-            setMessageBtn1("Ok lo corregiré");
-            setShowAlert(!showAlert);
+            toast.error("La hora de inicio del evento secundario debe coincidir con la final del evento anterior");
             
           }
 
@@ -806,12 +603,7 @@ const validacion = ()=>{
           {
             if(validacion() == 1)
             {
-              setMessageTitle("No puede agregar el evento custom " + customRef.current.value +" al stack");
-              setMessageContenido("La hora de inicio del evento debe coincidir con la final del evento anterior");
-              setMessageBtn1Show(true);
-              setMessageBtn2Show(false);
-              setMessageBtn1("Ok lo corregiré");
-              setShowAlert(!showAlert);
+              toast.error("La hora de inicio del evento debe coincidir con la final del evento anterior");
             }
   
             else{
@@ -853,12 +645,7 @@ const validacion = ()=>{
 
           if(validacion() == 1)
           {
-            setMessageTitle("No puede agregar el evento Programmer "+ getNameProgram(pgmRef.current.value,"Programmer") +" al stack");
-            setMessageContenido("La hora de inicio del evento programmer debe coincidir con la final del evento anterior");
-            setMessageBtn1Show(true);
-            setMessageBtn2Show(false);
-            setMessageBtn1("Ok lo corregiré");
-            setShowAlert(!showAlert);
+            toast.error("La hora de inicio del evento programmer debe coincidir con la final del evento anterior");
           }
 
           else{
@@ -909,12 +696,7 @@ const validacion = ()=>{
           {
             if(validacion() == 1)
             {
-              setMessageTitle("No se puede agregar TimeOut ");
-              setMessageContenido("La hora de inicio del evento debe coincidir con la final del evento anterior");
-              setMessageBtn1Show(true);
-              setMessageBtn2Show(false);
-              setMessageBtn1("Ok lo corregiré");
-              setShowAlert(!showAlert);
+              toast.error("La hora de inicio del TimeOut debe coincidir con la final del evento anterior");
             }
   
             else{
@@ -942,80 +724,48 @@ const validacion = ()=>{
 
   }
 
-  const deleteStackSavedSingle = async ()=>{
-
-    return await axios
-    .delete("http://localhost:3000/api/shifts/single/"+IDITEMGLOBAL)
-  
-      .then(() => obtenerListadoTurnos())
-      .then(() => IDITEMGLOBAL="")
-      .then(()=> setAuxiliar(!auxiliar))  //este estado notifica al contexto para ser usado en listado)
-      .then(toast.success("Item eliminado correctamente"));
-      
-  
-  }
-
-
   const del = ()=>{
 
-   if(IDITEMGLOBAL == "")
+   if(estadoDia !== "manual")
    {
-      toast.error("Para eliminar un elemento del stack, primero debe seleccionarlo");
+      toast.error("Solo se puede eliminar un elemento de un stack manual");
+      return;
    }
 
-   else{
-    deleteStackSavedSingle();
+   const seleccionado = turnoSeleccionadoData;
+
+   if(!seleccionado)
+   {
+      toast.error("Para eliminar un elemento del stack, primero debe seleccionarlo en el panel derecho");
+      return;
    }
-    
+
+   confirmarAccion({
+     titulo: "¿Eliminar el turno seleccionado?",
+     contenido: "Se recalcularán las horas del stack manual para no dejar huecos entre los eventos.",
+     textoConfirmar: "Sí, eliminar",
+     accion: async () => {
+       const restantes = (data1 ?? []).filter(
+         (turno) => String(turno?._id) !== String(seleccionado._id)
+       );
+
+       const exito = await reemplazarStackManual(restantes);
+
+       if (exito) {
+         setTurnoSeleccionado(null);
+         IDITEMGLOBAL = "";
+         toast.success(
+           restantes.length === 0
+             ? "Stack manual eliminado"
+             : "Turno eliminado del stack"
+         );
+       }
+     },
+   });
   }
 
 
 
-
-  const updateAcciones = (tipo,evento,obse,start,end,e)=>{
-
-     //Actualizamos la info en el formulario
-
-     setStartHour(new Date(start).getTime());
-     setEndHour(new Date(end).getTime());
-     
-     observationRef.current.value=obse;
-
-     if(tipo == "PROGRAMA")
-     {
-      pgmRef.current.value=evento;
-     }
-
-     else if(tipo == "REQUERIMIENTO")
-     {
-      eventRef.current.value = evento;
-     }
-
-     else if(tipo == "CUSTOM")
-     {
-      customRef.current.value = evento;
-     }
-
-
-
-
-      //Aqui lo que nhago es cambiar los estilos para el turno seleccionado;
-
-    if (e.target.classList=="liItem") 
-    {
-
-      let aux = document.getElementsByClassName("hover");
-
-      for (let index = 0; index < aux.length; index++) 
-      {
-        aux[index].classList.remove("hover");
-      }
-
-      e.target.classList.add("hover");
-    }
-
-     
-  }
 
   const extraerHora = (fecha)=>{
     
@@ -1256,11 +1006,11 @@ const validacion = ()=>{
   fullRecess = 0;
   fullLicenses = 0;
   
-  fullPermisions = parseInt(data2[0].Dia);
-  fullBreaks = parseInt(data2[0].Dia);
-  fullIncapacitys = parseInt(data2[0].Dia);
-  fullRecess = parseInt(data2[0].Dia);
-  fullLicenses = parseInt(data2[0].Dia);
+  fullPermisions = parseInt(data2?.[0]?.Dia ?? 0);
+  fullBreaks = parseInt(data2?.[0]?.Dia ?? 0);
+  fullIncapacitys = parseInt(data2?.[0]?.Dia ?? 0);
+  fullRecess = parseInt(data2?.[0]?.Dia ?? 0);
+  fullLicenses = parseInt(data2?.[0]?.Dia ?? 0);
   
  }
 
@@ -1402,18 +1152,6 @@ const validacion = ()=>{
    setIDUSER(iduser);
    setFECHA(fechaPlaner);
   },[iduser,fechaPlaner]);
-
-  function showCalendar(){
-    <DatePicker
-    className='input-especial'
-          selected={calendar}
-          onChange={(date) => setCalendar(date)}
-          showYearDropdown
-          dateFormatCalendar="MMMM"
-          yearDropdownItemNumber={15}
-          scrollableYearDropdown
-    />
-  }
 
 
   const ciclo = (totalgrupo,actual,domingos,idGrupo,isFijo,nombre,sid)=>{
@@ -1671,17 +1409,12 @@ const validacion = ()=>{
 
   
 
- const ok = async () => { 
+ const ejecutarOk = async () => { 
 
-    await obtenerListadoTurnosFull();
+    await recargarShiftsFull();
     
     // Asegurarnos de traer los compensatorios actualizados para validar
-    try {
-      const response = await axios.get("http://localhost:3000/api/compensatories/");
-      setData18(response.data);
-    } catch (error) {
-      console.error("Error trayendo compensatorios:", error);
-    }
+    await obtenerCompensatorios();
 
     let compensatorioAsignado = false;
 
@@ -1761,8 +1494,8 @@ const validacion = ()=>{
         // PASO CLAVE DE REACTIVIDAD: Actualizamos los turnos y el rango de días (data17)
         // para que el Restante, el Balancer y la Matriz inferior se refresquen solos.
         // =========================================================================
-        await obtenerListadoTurnos();
-        await obtenerListadoTurnosDay();
+        await recargarTurnos();
+        await recargarShiftsDay();
 
         setAuxiliar(!auxiliar);  // este estado notifica al contexto para ser usado en listado
         toast.success("Stack sugerido agregado correctamente");
@@ -1785,15 +1518,75 @@ const validacion = ()=>{
     }
   }
 
-  
- const regalo = async () => {
-    try {
-      // 1. Esperamos a que la API nos devuelva los compensatorios actualizados antes de validar
-      const response = await axios.get("http://localhost:3000/api/compensatories/");
-      const compensatoriosActuales = response.data;
+  const ok = () => {
 
-      // Actualizamos también el estado por buena práctica
-      setData18(compensatoriosActuales);
+    if(estadoDia === "compensatorio")
+    {
+      toast.error("El trabajador ya tiene asignado un compensatorio para esta fecha, no se le puede asignar una programación");
+      return;
+    }
+
+    if(estadoDia === "descanso")
+    {
+      toast.error("El trabajador ya tiene asignado un descanso, para asignar un turno primero elimine el descanso asignado");
+      return;
+    }
+
+    if(estadoDia !== "vacio")
+    {
+      toast.error("Ya hay un turno asignado para esta fecha. Límpielo con la escoba si desea volver a programar.");
+      return;
+    }
+
+    if(sinRotacion)
+    {
+      toast.error("El trabajador no tiene una rotación configurada; no hay turno sugerido que asignar");
+      return;
+    }
+
+    if(!IDSCHEMAGLOBAL)
+    {
+      toast.error("El trabajador no tiene un turno según rotación configurado para esta fecha");
+      return;
+    }
+
+    if(!(data11 ?? []).some((stack) => String(stack.ID_esquema) === String(IDSCHEMAGLOBAL)))
+    {
+      toast.error("No hay un stack sugerido configurado para el turno de este trabajador");
+      return;
+    }
+
+    confirmarAccion({
+      titulo: "¿Guardar el turno sugerido según rotación?",
+      contenido: "Se asignará el stack sugerido del turno actual. Después no se podrá crear un stack manual sin limpiar el día.",
+      textoConfirmar: "Sí, guardar",
+      accion: ejecutarOk,
+    });
+  }
+
+ const regalo = async () => {
+
+    if(estadoDia === "compensatorio")
+    {
+      toast.error("El trabajador ya tiene asignado un compensatorio para esta fecha");
+      return;
+    }
+
+    if(estadoDia === "descanso")
+    {
+      toast.error("El trabajador ya tiene asignado un descanso para esta fecha, primero elimine el descanso asignado");
+      return;
+    }
+
+    if(estadoDia !== "vacio")
+    {
+      toast.error("Solo se puede asignar un compensatorio cuando el día no tiene un turno programado");
+      return;
+    }
+
+    try {
+      // 1. Traemos los compensatorios actualizados antes de validar
+      const compensatoriosActuales = (await obtenerCompensatorios()) ?? [];
 
       // Variables locales de validación para evitar problemas de sincronía con estados globales
       let turnoAsignadoPreviamente = false;
@@ -1825,25 +1618,27 @@ const validacion = ()=>{
           ? `${storedUser.nombres} ${storedUser.apellidos}` 
           : (storedUser.nombre || "Usuario");
 
-        // Si deseas activar el POST a la API de compensatorios, des comenta estas líneas:
-        
-        await axios.post("http://localhost:3000/api/compensatories/", {
-            nombre: "Compensatorio General",
-            año: new Date(fechaBarra).getFullYear().toString(),
-            fechainicio: new Date(fechaPlaner).toISOString(),
-            fechafinal: new Date(fechaPlaner).toISOString(),
-            observacion: "Este es un compensatorio asignado directamente desde el programador de turnos",
-            estado: true,
-            nombreempleado: loggedUserName,
-            idempleado: iduser,
+        confirmarAccion({
+          titulo: "¿Asignar un compensatorio al trabajador?",
+          contenido: "Se registrará un compensatorio para la fecha seleccionada y no se podrá programar un turno ese día.",
+          textoConfirmar: "Sí, asignar",
+          accion: async () => {
+            await crearCompensatorio({
+                nombre: "Compensatorio General",
+                año: new Date(fechaBarra).getFullYear().toString(),
+                fechainicio: new Date(fechaPlaner).toISOString(),
+                fechafinal: new Date(fechaPlaner).toISOString(),
+                observacion: "Este es un compensatorio asignado directamente desde el programador de turnos",
+                estado: true,
+                nombreempleado: loggedUserName,
+                idempleado: iduser,
+            });
+
+            // Notificamos el cambio al contexto para refrescar listados
+            setAuxiliar(!auxiliar);
+            toast.success("Se asignó un compensatorio al trabajador");
+          },
         });
-        
-
-        // Notificamos el cambio al contexto para refrescar listados
-        refrescar();
-        setAuxiliar(!auxiliar);
-
-        toast.success("Se asignó un compensatorio al trabajador");
       }
 
     } catch (error) {
@@ -1854,55 +1649,82 @@ const validacion = ()=>{
 
   const clean = ()=>{
 
-     /* valido que no se haya asignafdo un descanso al trabajador*/
-     data4.map((breaks)=>(
-      breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser &&  (validador3 = 1)
-    ))
-
-    if(validador3 == 1)
+    if(estadoDia === "compensatorio")
     {
-      validador3 = 0;
-      toast.error("El trabajador ya tiene asignado un descanso para esta fecha, para realizar cualquier otra acción primero elimine el descanso asignado")
+      toast.error("El trabajador tiene asignado un compensatorio para esta fecha, no se puede limpiar el turno desde aquí");
+      return;
     }
 
-    else{
-      borrarStack();
+    if(estadoDia === "descanso")
+    {
+      toast.error("El trabajador ya tiene asignado un descanso para esta fecha, para realizar cualquier otra acción primero elimine el descanso asignado");
+      return;
     }
-    
-  }
 
-  
+    if(estadoDia === "vacio")
+    {
+      confirmarAccion({
+        titulo: "¿Limpiar el stack sugerido mostrado?",
+        contenido: "No hay turnos guardados para esta fecha; solo se limpiará la vista del stack sugerido.",
+        textoConfirmar: "Sí, limpiar",
+        accion: () => toast.success("Vista del stack sugerido limpiada"),
+      });
+      return;
+    }
 
-  
+    const titulo =
+      estadoDia === "sugeridoGuardado"
+        ? "¿Eliminar el turno sugerido guardado?"
+        : estadoDia === "mixto"
+          ? "¿Eliminar los turnos de esta fecha?"
+          : "¿Eliminar el stack manual de esta fecha?";
 
-  const edit = ()=>{
-
-    toast.success("Turno actualizado");
+    confirmarAccion({
+      titulo,
+      contenido: "Una vez eliminado no podrá recuperarse. Si el stack no está guardado, se perderá.",
+      textoConfirmar: "Sí, eliminar",
+      accion: limpiarTodo,
+    });
   }
 
   const stack = ()=>{
 
+    if(estadoDia === "compensatorio")
+    {
+      toast.error("El trabajador tiene asignado un compensatorio para esta fecha, no se puede traer el turno sugerido");
+      return;
+    }
 
-      /* valido que no se haya asignafdo un descanso al trabajador*/
-      data4.map((breaks)=>(
-        breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser &&  (validador3 = 1)
-      ))
-  
-      if(validador3 == 1)
-      {
-        validador3 = 0;
-        toast.error("El trabajador ya tiene asignado un descanso para esta fecha, para realizar cualquier otra acción primero elimine el descanso asignado")
-      }
+    if(estadoDia === "descanso")
+    {
+      toast.error("El trabajador ya tiene asignado un descanso para esta fecha, para realizar cualquier otra acción primero elimine el descanso asignado");
+      return;
+    }
 
-      else{
-        getAllStacks();
-        traerRotations();
-        validador = 0;
-        toast.success("Stack según turno actualizado");
-      }
+    if(estadoDia === "sugeridoGuardado")
+    {
+      toast.error("El turno sugerido ya está guardado para esta fecha. Use la escoba si desea limpiarlo.");
+      return;
+    }
 
+    if(estadoDia === "manual" || estadoDia === "mixto")
+    {
+      confirmarAccion({
+        titulo: "¿Traer el turno sugerido según rotación?",
+        contenido: "El stack manual actual se eliminará para volver al turno sugerido. Si no está guardado, se perderá.",
+        textoConfirmar: "Sí, traer sugerido",
+        accion: async () => {
+          await limpiarTodo();
+          recargarStacks();
+          recargarRotations();
+        },
+      });
+      return;
+    }
 
-    
+    recargarStacks();
+    recargarRotations();
+    toast.success("Stack según turno actualizado");
   }
 
   const getDurationprogram = (start, end) =>{
@@ -2109,7 +1931,7 @@ const validacion = ()=>{
 
 
   const selectEvent = () =>{
-    getProgrammers();
+    recargarProgrammers();
     SETEVENTO(mainEventRef.current.value);
   }
 
@@ -2127,24 +1949,32 @@ const validacion = ()=>{
   }
 
 
-  const guardar = ()=>{
-
-    setMessageTitle("Ho puede agregar el programa al stack");
-    setMessageContenido("La hora de inicio debe ser igual al la final del evento anterior");
-    setMessageBtn1Show(true);
-    setMessageBtn2Show(false);
-    setMessageBtn1("Ok lo corregiré");
-    setShowAlert(!showAlert);
-  }
-
   const limpiar = ()=>{
 
-    setMessageTitle("¿Realmente desea borrar todos los registros del stack?");
-    setMessageContenido("Si el stack no se ha guardado se perderá");
-    setMessageBtn1Show(false);
-    setMessageBtn2Show(true);
-    setMessageBtn2("Sí limpiar");
-    setShowAlert(!showAlert);
+    if(estadoDia === "compensatorio")
+    {
+      toast.error("El trabajador tiene asignado un compensatorio para esta fecha");
+      return;
+    }
+
+    if(estadoDia === "descanso")
+    {
+      toast.error("El trabajador ya tiene asignado un descanso para esta fecha, primero elimine el descanso asignado");
+      return;
+    }
+
+    if(estadoDia === "vacio")
+    {
+      toast.error("No hay un stack guardado para limpiar en esta fecha");
+      return;
+    }
+
+    confirmarAccion({
+      titulo: "¿Eliminar todos los turnos de esta fecha?",
+      contenido: "Se eliminará el stack completo del trabajador. Si no está guardado, se perderá.",
+      textoConfirmar: "Sí, eliminar",
+      accion: limpiarTodo,
+    });
   }
 
  
@@ -2223,7 +2053,7 @@ const validacion = ()=>{
     return new Date(respuesta).toLocaleTimeString();
   }
 
-  const guardarStack = ()=>{
+  const guardarStack = async ()=>{
     let identificador = 0;
 
     data16?.map((savedStacks)=>(
@@ -2248,25 +2078,30 @@ const validacion = ()=>{
       toast.error("No hay un stack para guardar... la ventana de Stacks esta vacia");
     }
     else{
-     
-      data1?.map((shift)=>(
 
-        crearSaveStack(
-          saveStackRef.current.value,
-          shift.ID_user,
-          shift.Nombres,
-          shift.Index,
-          shift.Event_name,
-          shift.ID_event,
-          shift.Color,
-          shift.Observacion,
-          new Date(shift.Fecha_clave),
-          shift.Id_Schema,
-          new Date(shift.Inicio_main),
-          shift.Out,
-          shift.Type)
-      ))
+      const nombreStack = saveStackRef.current.value;
 
+      await Promise.all(
+        (data1 ?? []).map((shift)=>(
+          crearSaveStack(
+            nombreStack,
+            shift.ID_user,
+            shift.Nombres,
+            shift.Index,
+            shift.Event_name,
+            shift.ID_event,
+            shift.Color,
+            shift.Observacion,
+            new Date(shift.Fecha_clave),
+            shift.Id_Schema,
+            new Date(shift.Inicio_main),
+            shift.Out,
+            shift.Type)
+        ))
+      );
+
+      // Refrescamos la lista de stacks guardados en el panel lateral
+      recargarStacksGuardados();
       saveStackRef.current.value = "";
       toast.success("Stack guardao correctamente");
     }
@@ -2277,42 +2112,24 @@ const validacion = ()=>{
 
   nameEventSavedGlobal = nombreStack;
 
-  return await axios
-    .get("http://localhost:3000/api/savedstacks/corto/",
-    {
-      params:{
-        nombre: nombreStack,
-      }
-    })
-    .then((response) => setData1(response.data))
-    .then(saveStackRef.current.value = nombreStack)
-    .then(()=>(setValidaColor(true)))
-    .then(toast.success("Stack actualizado"));
+  await cargarStackCorto(nombreStack);
+  saveStackRef.current.value = nombreStack;
+  setValidaColor(true);
+  toast.success("Stack actualizado");
 
 }
 
 const updateStackSaved = async ()=>{
 
-  return await axios
-  .put("http://localhost:3000/api/savedstacks/"+nameEventSavedGlobal,
-    {
-      nombre:saveStackRef.current.value,
-    })
-    .then(() => obtenerListadoStacksSaved())
-    .then(toast.success("Nombre del stack guardado, editado correctamente"));
-    
+  await renombrarStackGuardado(nameEventSavedGlobal, saveStackRef.current.value);
+  toast.success("Nombre del stack guardado, editado correctamente");
 
 }
 
 const deleteStackSaved = async ()=>{
 
-  return await axios
-  .delete("http://localhost:3000/api/savedstacks/"+nameEventSavedGlobal)
-
-    .then(() => obtenerListadoStacksSaved())
-    .then(toast.success("Stack eliminado correctamente"))
-    .then(()=>setData1([]));
-    
+  await eliminarStackGuardado(nameEventSavedGlobal);
+  toast.success("Stack eliminado correctamente");
 
 }
 
@@ -2336,7 +2153,7 @@ const editSaveStack = ()=>{
 const openRight = ()=>{
 
   //traemos la data
-  obtenerListadoTurnos();
+  recargarTurnos();
 
   //Limpiamos el input de nombre stcak saved
   saveStackRef.current.value="";
@@ -2373,7 +2190,7 @@ const eliminarItemSavedStack = ()=>{
 const reGet = ()=>{
 
   //traemos la data
-  obtenerListadoTurnos();
+  recargarTurnos();
 
   //Limpiamos el input de nombre stcak saved
   saveStackRef.current.value="";
@@ -2455,19 +2272,6 @@ const corroborarDia = (l,m,mi,j,v,s,d)=>{
   return respuesta;
 }
 
-const restaurarValor = ()=>{
-  validador6 = 0;
-}
-
-
-const traerValores =()=>{
-  data1?.map((shifts)=>(
-    shifts.Color=="red" && (validador6 = 1)
-  ))
-}
-
-
-
 const aplicarStack = ()=>{
   if(nameEventSavedGlobal == "")
   {
@@ -2495,8 +2299,7 @@ const aplicarStack = ()=>{
         savedStacks.Type)
     ))
 
-      obtenerListadoTurnos();
-      obtenerListadoTurnosFull();
+      recargarTurnos();
 
       //Notificamos de el cambio a la barra para que se ponga en color verde de fondo que es el color asignado a un descanso
       setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
@@ -2507,15 +2310,6 @@ const aplicarStack = ()=>{
           
   }
 }
-
-//Funcion que obtiene la data de la api - listado de holidays segun el año actual
-
-const llamarAño = async()=>{
-  return await axios
-    .get('http://localhost:3000/api/holidays/'+new Date(fechaBarra).getFullYear())
-    .then((respuesta1) => setFechaFull(respuesta1.data));
-    
- }
 
  //Funcion que agrega un cero si el numero recibido es de 0 a 9
 const formatearNumero = (Nuevonumero)=>{
@@ -2533,25 +2327,6 @@ const formatearNumero = (Nuevonumero)=>{
   return Nuevonumero;
 }
 
-//Funcion que agrega un cero si el numero recibido es de 0 a 9
-const formatearNumero2 = (Nuevonumero)=>{
-   
-  Nuevonumero++;
-  
-  if(Nuevonumero == 0 || Nuevonumero == 1 || Nuevonumero == 2 || Nuevonumero == 3|| Nuevonumero == 4 || Nuevonumero == 5 || Nuevonumero == 6 || Nuevonumero == 7 || Nuevonumero == 8 || Nuevonumero == 9)
-  {
-      Nuevonumero = "0"+Nuevonumero;
-  }
-
-  else{
-    Nuevonumero =  Nuevonumero;
-  }
-
-  return Nuevonumero;
-}
-
-
- 
  const createArray = (diasRules)=>{
 
   //Proceso para traer los dias correctos segun fecha definida
@@ -2600,20 +2375,6 @@ const formatearNumero2 = (Nuevonumero)=>{
   numDias2.push({dia:auxDias33,mes:mes,año:año});
 }
 
-}
-
-const traerRangoFechas = async ()=>{
-
-  //inicial = ( new Date (item.DiaPeriod).getDate() + " de " + validateMonts(new Date (item.DiaPeriod).getMonth()) + " de " + new Date (item.DiaPeriod).getFullYear()),
-  //final = ( sumaDias(item.DiaPeriod,item.Dia) + " de " + validateMonts(sumaMes(item.DiaPeriod,item.Dia)) + " de " + sumaAño(item.DiaPeriod,item.Dia)),
-
-  data2?.map((item)=>(
-
-    inicial = (""+ new Date (item.DiaPeriod).getFullYear()+"-"+formatearNumero2(new Date (item.DiaPeriod).getMonth())+"-"+ formatearNumero(new Date (item.DiaPeriod).getDate()) +"T00:00:00"),
-    final = (""+sumaAño(item.DiaPeriod,item.Dia)+"-"+formatearNumero(sumaMes(item.DiaPeriod,item.Dia)+1)+"-"+formatearNumero(sumaDias(item.DiaPeriod,item.Dia))+"T00:00:00")
-    
-    
-    ))
 }
 
 const extraerHorasProgram = (idPrograma)=>{
@@ -2819,122 +2580,310 @@ const convertir= (dia,mes,año)=>{
 const calcular = ()=>{
 
   let resultado= 0;
-  resultado = (data2[0].Horas) - globalCantidad;
+  resultado = (data2?.[0]?.Horas ?? 0) - globalCantidad;
   return resultado;
 }
 
+  /* *********************************************************************************************************************** */
+  /* ESTADO DEL DÍA (derivado de la base, sin variables globales)                                                            */
+  /* *********************************************************************************************************************** */
 
-const refrescar = async ()=>{
-  // Asegurarnos de traer los compensatorios actualizados para validar
-    try {
-      const response = await axios.get("http://localhost:3000/api/compensatories/");
-      setData18(response.data);
-    } catch (error) {
-      console.error("Error trayendo compensatorios:", error);
+  const clasificacion = useMemo(() => clasificarDia(data1), [data1]);
+
+  const hayCompensatorio = useMemo(
+    () => compensatorioEnFecha(data18, iduser, fechaPlaner),
+    [data18, iduser, fechaPlaner]
+  );
+
+  const hayDescanso = useMemo(
+    () => rangoCubreFecha(data4, iduser, fechaPlaner),
+    [data4, iduser, fechaPlaner]
+  );
+
+  //Trabajadores sin rotación configurada (antes validador5)
+  const sinRotacion = useMemo(() => {
+    if (!Array.isArray(data10) || data10.length === 0) return false;
+
+    const registros = data10.filter(
+      (registro) => String(registro?.userId) === String(iduser)
+    );
+
+    if (registros.length === 0) return true;
+
+    return registros.some((registro) => Number(registro?.totalGrupo) === 0);
+  }, [data10, iduser]);
+
+  const estadoDia = useMemo(
+    () =>
+      estadoDelDia({
+        turnos: data1,
+        compensatorios: data18,
+        breaks: data4,
+        iduser,
+        fecha: fechaPlaner,
+      }),
+    [data1, data18, data4, iduser, fechaPlaner]
+  );
+
+  //Hora de inicio del stack mostrado: la del esquema si hay turno guardado,
+  //o la del primer elemento manual (así la cadena no depende de globales).
+  const horaInicioDelDia = useMemo(() => {
+    const ordenados = [...(data1 ?? [])].sort(
+      (a, b) => (Number(a?.Index) || 0) - (Number(b?.Index) || 0)
+    );
+
+    const conSchema = ordenados.find(
+      (turno) => turno?.Id_Schema && turno.Id_Schema !== "------"
+    );
+
+    if (conSchema) {
+      return (
+        horaInicioSchema(data9, conSchema.Id_Schema) ?? conSchema.Inicio_main ?? null
+      );
     }
-}
-   /* *********************************************************************************************************************** */
+
+    const manual = ordenados.find((turno) => turno?.Inicio_main);
+
+    return manual?.Inicio_main ?? null;
+  }, [data1, data9]);
+
+  const cadenaGuardada = useMemo(
+    () =>
+      cadenaDeTurnos(data1, horaInicioDelDia, fechaPlaner, {
+        programs: data,
+        programmers: data14,
+        stacks: data11,
+      }),
+    [data1, horaInicioDelDia, fechaPlaner, data, data14, data11]
+  );
+
+  const turnoSeleccionadoData = useMemo(
+    () =>
+      (data1 ?? []).find(
+        (turno) => String(turno?._id) === String(turnoSeleccionado)
+      ) ?? null,
+    [data1, turnoSeleccionado]
+  );
+
+  /* *********************************************************************************************************************** */
+  /* ALERTAS Y TEXTOS DE APOYO                                                                                               */
+  /* *********************************************************************************************************************** */
+
+  const abrirAlerta = ({ titulo, contenido, botones = [] }) =>
+    setAlerta({ titulo, contenido, botones });
+
+  const cerrarAlerta = () => setAlerta(null);
+
+  const confirmarAccion = ({
+    titulo,
+    contenido,
+    textoConfirmar = "Sí, continuar",
+    textoCancelar = "Cancelar",
+    accion,
+  }) =>
+    abrirAlerta({
+      titulo,
+      contenido,
+      botones: [
+        { texto: textoCancelar },
+        { texto: textoConfirmar, accion },
+      ],
+    });
+
+  const etiquetaEstado = () => {
+    if (estadoDia === "vacio") return "Sugerido según rotación";
+    if (estadoDia === "manual") return `Stack manual (${clasificacion.manuales.length})`;
+    if (estadoDia === "sugeridoGuardado") return "Sugerido guardado";
+    if (estadoDia === "mixto") return "Mixto: requiere limpieza";
+    if (estadoDia === "compensatorio") return "Compensatorio";
+    if (estadoDia === "descanso") return "Descanso";
+    return "";
+  };
+
+  const textoDeTurno = (item, duracionMin) => {
+    if (!item) return "";
+
+    if (item.Type === "Null" || item.Event_name === "Null-30") {
+      return <span className='nulo'>Null-30</span>;
+    }
+
+    if (item.Type === "Custom") {
+      return (
+        <span className='Tcustom'>
+          {item.Event_name}
+          <span className='customDuration'>{` (${duracionMin} Minutos)`}</span>
+        </span>
+      );
+    }
+
+    if (item.Type === "TimeOut") {
+      return <span className='nulo'>{`TimeOut ${duracionMin} Minutos`}</span>;
+    }
+
+    if (item.Type === "Programmer") {
+      const programmer = data14?.find(
+        (programa) => String(programa?._id) === String(item.ID_event ?? item.Event_name)
+      );
+      return (
+        <span className='TProgram'>
+          {programmer?.Nombre ?? item.Event_name}
+          <span className='pgmDuration'>{` (${duracionMin} Minutos)`}</span>
+        </span>
+      );
+    }
+
+    const programa = data?.find(
+      (itemPrograma) => String(itemPrograma?._id) === String(item.Event_name)
+    );
+
+    return (
+      <span className={item.Type === "Secondary" ? "TSecondary" : "TProgram"}>
+        {programa?.nombre ?? item.Event_name}
+        <span className='pgmDuration'>{` (${duracionMin} Minutos)`}</span>
+      </span>
+    );
+  };
+
+  const seleccionarTurno = (item) => {
+    if (estadoDia !== "manual" || !item?._id) return;
+
+    const id = String(item._id);
+    const esElMismo = String(turnoSeleccionado) === id;
+    const nuevo = esElMismo ? null : id;
+
+    setTurnoSeleccionado(nuevo);
+    IDITEMGLOBAL = nuevo ?? "";
+  };
+
+  /**
+   * Reemplaza el stack manual completo recalculando la cadena de horas.
+   * Se usa al eliminar un elemento para no dejar huecos ni horas
+   * incoherentes entre los turnos.
+   */
+  const reemplazarStackManual = async (turnos) => {
+    const lista = (Array.isArray(turnos) ? turnos : [])
+      .slice()
+      .sort((a, b) => (Number(a?.Index) || 0) - (Number(b?.Index) || 0));
+    const horaBase =
+      horaInicioSchema(data9, IDSCHEMAGLOBAL) ??
+      aFecha(lista[0]?.Inicio_main) ??
+      horaInicioDelDia;
+
+    const cadena = construirCadena(
+      lista.map((turno, posicion) => ({ ...turno, Index: posicion + 1 })),
+      horaBase,
+      fechaPlaner,
+      (turno) =>
+        duracionDeTurno(turno, {
+          programs: data,
+          programmers: data14,
+          stacks: data11,
+        })
+    );
+
+    if (cadena.filas.some((fila) => fila.duracionMin <= 0)) {
+      toast.error("No se pudo recalcular el stack: revise las horas de los eventos");
+      return false;
+    }
+
+    const payloads = cadena.filas.map((fila) => {
+      const turno = fila.item;
+      const guardaHora =
+        turno.Type === "Custom" ||
+        turno.Type === "TimeOut" ||
+        turno.Type === "Programmer";
+
+      return {
+        idUser: iduser,
+        nombres,
+        index: fila.orden,
+        idPrograma: turno.Type === "Null" ? "Null-30" : turno.Event_name,
+        eventId: turno.ID_event ?? "------",
+        color: "red",
+        observacion: turno.Observacion ?? "",
+        fechaClave: new Date(fechaPlaner),
+        idSchema: "------",
+        inicioMain: fila.inicio ?? new Date(fechaPlaner),
+        out: guardaHora && fila.fin ? fila.fin.toISOString() : "------",
+        tipo: turno.Type,
+      };
+    });
+
+    const guardado = await reemplazarTurnosDeFecha(payloads, {
+      userId: iduser,
+      fecha: fechaPlaner,
+    });
+
+    if (!guardado) return false;
+
+    setAuxiliar(!auxiliar);
+    return true;
+  };
+
+  const minutosDelDia = () =>
+    estadoDia === "vacio" ? fullTime() : cadenaGuardada.totalMin;
+
+  /* *********************************************************************************************************************** */
      /* EFECTOS
    /* *********************************************************************************************************************** */
   
-
-  useEffect(() => {
-    obtenerListadoPrograms();
-  }, []);
-
-  useEffect(() => {
-    traerCompensatoriesTrabajador();
-  }, [iduser, fechaPlaner]); // Se ejecuta al abrir o cambiar de usuario/fecha
-
   useEffect(()=> {
-    obtenerListadoTurnos();
+    //Al cambiar de trabajador o fecha se rearma el formulario de acciones
     setPgm("---------------------------------");
     setEvent("---------------------------------");
     setCustom("");
     setObs("");
   }, [IDUSER, FECHA]);
 
+  //La selección solo tiene sentido sobre el stack manual
   useEffect(() => {
-    getRules();
-  }, []);
+    if (estadoDia !== "manual") {
+      setTurnoSeleccionado(null);
+      IDITEMGLOBAL = "";
+    }
+  }, [estadoDia]);
 
-  
- useEffect(()=>{
-  traerPermisosTrabajador();
- },[])
+  //Si el turno seleccionado desaparece (borrado) se limpia la selección
+  useEffect(() => {
+    if (!turnoSeleccionado) return;
 
- useEffect(()=>{
-  traerBreaksTrabajador();
- },[auxiliar])
+    const sigueExistiendo = (data1 ?? []).some(
+      (turno) => String(turno?._id) === String(turnoSeleccionado)
+    );
 
- useEffect(()=>{
-  traerIncapacitysTrabajador();
- },[])
+    if (!sigueExistiendo) {
+      setTurnoSeleccionado(null);
+      IDITEMGLOBAL = "";
+    }
+  }, [data1, turnoSeleccionado]);
 
- useEffect(()=>{
-  traerRecessTrabajador();
- },[])
+  //Las anotaciones se refrescan al abrir el modal y al cambiar de trabajador/fecha
+  useEffect(() => {
+    if (estado) recargarNotations();
+  }, [estado, iduser, fechaPlaner]);
 
- useEffect(()=>{
-  traerLicensesTrabajador();
- },[])
+  //...y también al abrir el panel de notas, por si se crearon desde Barra
+  useEffect(() => {
+    if (showNotas) recargarNotations();
+  }, [showNotas]);
 
- useEffect(()=>{
-  traerLicensesTrabajador();
- },[])
+  //Cerrar el panel de notas con la tecla Escape
+  useEffect(() => {
+    if (!showNotas) return undefined;
 
- useEffect(()=>{
-  traerPayroll();
- },[])
+    const alPresionarTecla = (evento) => {
+      if (evento.key === "Escape") setShowNotas(false);
+    };
 
- useEffect(()=>{
-  traerRotations();
- },[])
+    window.addEventListener("keydown", alPresionarTecla);
 
- useEffect(()=>{
-  getAllRotationsManager();
- },[])
+    return () => window.removeEventListener("keydown", alPresionarTecla);
+  }, [showNotas]);
 
- useEffect(()=>{
-  getAllStacks();
- },[])
-
- useEffect(()=>{
-  obtenerListadoTurnosFull();
- },[])
-
- useEffect(()=>{
-  getSubstitutions();
- },[])
- 
-
- useEffect(()=>{
-  getNotatiosIdFecha();
- }, [IDUSER, FECHA])
-
- useEffect(()=>{
-  getProgrammers();
- },[showRight])
-
- useEffect(()=>{
-  obtenerListadoStacksSaved();
- },[showRight])
-
-
- useEffect(()=>{
-  traerValores();
- },[]);
-
- useEffect(()=>{
-  setTimeout(function(){
-    obtenerListadoTurnosDay();
-}, 1000);
- 
-},[]);
-
-useEffect(()=>{
-  traerRangoFechas();
-},[data2,data8]);
+  //Al cerrar el modal, el panel de notas también se cierra
+  useEffect(() => {
+    if (!estado) setShowNotas(false);
+  }, [estado]);
 
 
 
@@ -2958,7 +2907,7 @@ useEffect(()=>{
             </h3>
 
             <h2 className="fecha">{fechaPlaner.toDateString()}</h2>
-            <img src={Calendar} alt="calendar" className="img-calendar" onClick={showCalendar}/>
+            <img src={Calendar} alt="calendar" className="img-calendar"/>
           </div>
 
           <div className="actividad">
@@ -2974,7 +2923,7 @@ useEffect(()=>{
                       }
                     </span><progress 
                       value={fullPermissionsUser(iduser)} 
-                      max={parseInt(data2[0].Dia)} 
+                      max={Math.max(1, parseInt(regla?.Dia ?? 0))} 
                       className='progress'/>
                     </li>
 
@@ -2985,7 +2934,7 @@ useEffect(()=>{
                       }
                       </span><progress 
                       value={fullBreaksUser(iduser)} 
-                      max={parseInt(data2[0].Dia)} 
+                      max={Math.max(1, parseInt(regla?.Dia ?? 0))} 
                       className='progress'/>
                     </li>
 
@@ -2996,7 +2945,7 @@ useEffect(()=>{
                       }
                      </span><progress 
                        value={fullIncapacitysUser(iduser)} 
-                       max={parseInt(data2[0].Dia)} 
+                       max={Math.max(1, parseInt(regla?.Dia ?? 0))} 
                        className='progress'/>
                     </li>
 
@@ -3009,7 +2958,7 @@ useEffect(()=>{
                        }
                       </span><progress 
                         value={fullRecessUser(iduser)} 
-                        max={parseInt(data2[0].Dia)} 
+                        max={Math.max(1, parseInt(regla?.Dia ?? 0))} 
                         className='progress'/>
                     </li>
 
@@ -3021,7 +2970,7 @@ useEffect(()=>{
                        }
                       </span><progress
                         value={fullLicensesUser(iduser)} 
-                        max={parseInt(data2[0].Dia)} 
+                        max={Math.max(1, parseInt(regla?.Dia ?? 0))} 
                         className='progress'/>
                     </li> 
 
@@ -3040,41 +2989,82 @@ useEffect(()=>{
                   
           <div className="cuerpoModal">
 
-          <div className={showAlert == true ? "alert" : "hideAlert"}>
-            <img src={handStop} alt="stop" className='handStop'/>
-            <div className="cierre" onClick={()=>setShowAlert(!showAlert)}>x</div>
-            <div className="alert-conten">
-              {messageTitle}
+          {alerta && (
+            <div className="alert" role="alertdialog" aria-modal="true">
+              <img src={handStop} alt="stop" className='handStop'/>
+              <div className="cierre" onClick={cerrarAlerta}>x</div>
+              <div className="alert-conten">
+                {alerta.titulo}
+              </div>
+              <div className="alert-subtitulo">
+                {alerta.contenido}
+              </div>
+              <div className="alert-butoms">
+                {(alerta.botones ?? []).map((boton, posicion) => (
+                  <div
+                    key={posicion}
+                    className={posicion === (alerta.botones.length - 1) ? "btn-confirm" : "btn-no"}
+                    onClick={() => {
+                      cerrarAlerta();
+                      boton.accion?.();
+                    }}
+                  >
+                    {boton.texto}
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="alert-subtitulo">
-            {messageContenido}
-            </div>
-            <div className="alert-butoms">
-              { messageBtn1Show == true && <div className="btn-no" onClick={()=>setShowAlert(!showAlert)}>{messageBtn1}</div>}
-              { messageBtn2Show == true && <div className="btn-confirm" onClick={()=>confirmacionAlert()}>{messageBtn2}</div>}
-            </div>
-
-          </div>
+          )}
 
 
-            <div className={showNotas == true ? "notasShow" : "notasHide"}>
-              <h3 className='notas-title'>
-                Notas para <span className='nombreTitulo'>{nombres}</span> <br /> 
-                _____________________________________________________
-              </h3>
+            {showNotas &&
+              createPortal(
+                <div
+                  className="notas-overlay"
+                  onClick={(evento) => {
+                    if (evento.target === evento.currentTarget) setShowNotas(false);
+                  }}
+                >
+                  <section
+                    id="panel-anotaciones"
+                    className="notasShow"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="notas-titulo"
+                  >
+                    <header className="notas-header">
+                      <span className="notas-eyebrow">Anotaciones</span>
+                      <h3 className="notas-title" id="notas-titulo">{nombres}</h3>
+                      <span className="notas-fecha">{fechaPlaner.toDateString()}</span>
+                      <button
+                        type="button"
+                        className="notas-cerrar"
+                        onClick={() => setShowNotas(false)}
+                        aria-label="Cerrar anotaciones"
+                      >
+                        ×
+                      </button>
+                    </header>
 
-              {
-                data15?.map((anotaciones,index)=>(  
-                  <span className='main-nt' key={anotaciones._id}>
-                    <h5 key={index} className='numero-notas'>{index+1}</h5>
-                    <p className='notas-contenido' key={anotaciones._id}>
-                      {anotaciones.Contenido}
-                    </p>
-                  </span>
-                ))
-              }
-              
-            </div>
+                    <ul className="notas-lista">
+                      {data15.map((anotacion, index) => (
+                        <li className="main-nt" key={anotacion._id}>
+                          <span className="numero-notas">{index + 1}</span>
+                          <p className="notas-contenido">{anotacion.Contenido}</p>
+                        </li>
+                      ))}
+
+                      {data15.length === 0 && (
+                        <li className="notas-vacio">
+                          <img src={documento} alt="" aria-hidden="true" />
+                          <p>Sin anotaciones para esta fecha</p>
+                        </li>
+                      )}
+                    </ul>
+                  </section>
+                </div>,
+                document.body
+              )}
 
           <div className="close2" onClick={() => cambiarEstado(!estado)}>X</div>
 
@@ -3099,7 +3089,7 @@ useEffect(()=>{
                           <span className='indicador'>
                             {exist2(item._id,item.grupo,"-",item.nombres,item.apellidos)}
                           </span>                                                                      
-                          <progress value={exist2(item._id,item.grupo,"-",item.nombres,item.apellidos)} max={data2[0].Horas} className='progress'/>
+                          <progress value={exist2(item._id,item.grupo,"-",item.nombres,item.apellidos)} max={Number(regla?.Horas) || 1} className='progress'/>
                         </li>
                         :
                         null
@@ -3120,9 +3110,6 @@ useEffect(()=>{
                     {   
                           data8.map((payroll)=>(
                             IDGLOBAL = payroll._id,
-                            validador4 = 0,
-                            validador5 = 0,
-                            desabilitar(),
 
                             data10?.map((rotationsManager)=>(
                               IDGLOBAL == rotationsManager.userId && rotationsManager.groupId == gpid && payroll.activo == true ? 
@@ -3329,43 +3316,36 @@ useEffect(()=>{
 
               <div className={validaColor == false ? "seccionButons" : "seccionButonsNone"}>
                 <div className="containerSingleButtom">
-                  <img src={Pencil} alt="pencil" className='img-butons' onClick={edit}/>
-                </div>
-                <div className="containerSingleButtom">
-                 <img src={Plus} alt="plus" className='img-butons' onClick={add}/>
+                 <img src={Plus} alt="plus" title="Agregar evento al stack" className='img-butons' onClick={add}/>
                 </div>
                 <div className="containerSingleButtomDel">
-                 <img src={Trash} alt="trash" className='img-butons' onClick={del}/>
+                 <img src={Trash} alt="trash" title="Eliminar turno seleccionado" className='img-butons' onClick={del}/>
                 </div>
                
               </div>
 
 
-                {
-                  traerValores()
-                }
+                <div className="acciones-hibrido">
+                  {estadoDia === "vacio" && !sinRotacion && (
+                    <div
+                      className="containerSingleButtom-agendado"
+                      title="Aceptar el turno sugerido según rotación"
+                      onClick={ok}
+                    >
+                      <img src={Ok} alt="Aceptar turno sugerido" className='img-butons'/>
+                    </div>
+                  )}
 
-                {
-                  validador6 == 1
-                  ?
-
-                  <div className="containerSingleButtom-open">
-                   <img src={flechaLeft} alt="plus" className='img-butons' onClick={()=>openRight()}/>
-                  </div>
-
-                  :
-
-                  validador6 == 0
-
-                  ? 
-
-                     <div className="containerSingleButtom-agendado">
-                      <img src={Ok} alt="plus" className='img-butons' onClick={()=>toast.success("Para el trabajador actual ya se ha asignado el turno sugerido según rotación.")}/>
-                     </div>
-
-                  : null
-
-                }
+                  {(estadoDia === "vacio" || estadoDia === "manual" || estadoDia === "mixto") && (
+                    <div
+                      className="containerSingleButtom-open"
+                      title={showRight ? "Cerrar turnos especiales" : "Abrir turnos especiales"}
+                      onClick={openRight}
+                    >
+                      <img src={flechaLeft} alt="Turnos especiales" className='img-butons'/>
+                    </div>
+                  )}
+                </div>
                 
               
                 
@@ -3380,161 +3360,87 @@ useEffect(()=>{
                 <h2>TURNO SEGUN ROTACION</h2>
                 
                 <p className='name-turno-rotacion'>{Pronostico(iduser)}</p>
-                
+                <span className={`estado-dia estado-${estadoDia}`}>{etiquetaEstado()}</span>
               </div>
 
+              {estadoDia === "vacio" && !sinRotacion && (
+                <ul className="ulLista-rotation">
+                  <span className='horaIN' key={data1.length}>
+                    {devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN()}
+                  </span>
 
-              {/* ANTES QUE NADA DEBO VALIDAR SI YA HAY O NO UNA PROGRAMACION GUARDADA PARA EL USUARIO  */}
+                  {data11?.map((stack)=>(
+                    String(stack.ID_esquema) === String(IDSCHEMAGLOBAL) ? (
+                      <li className="liItem-rotation" key={stack._id}>
+                        {resolver(stack.ID_programa,stack.Type,stack.ID_programa,stack.Duration,stack.Order,stack.Value)}
+                      </li>
+                    ) : null
+                  ))}
 
-              {
-                /* valido que no se haya asignado un compensatorio al trabajador*/
-                  data18.map((compensatory)=>(
-                    compensatory.FechaInicio == new Date(fechaPlaner).toISOString() && compensatory.Id_Empleado == iduser &&  (validador4 = 1)
-                  ))
-              }
-
-             {
-              traerValores()
-             }
-
-              {
-                data1.length == 0 
-                ?
-                
-                <ul className={validador4==1 ? "ulLista-rotation-compensatory" : "ulLista-rotation"}>
-
-                  {/* Esta imagen se debe mostrar solo si se asigno un descanso al trabajador*/}
-                  {validador5 == 1 
-                    ? 
-                      <img src={less} alt="less"  className='img-coffe'/> 
-                      
-                    : validador4 == 1 && 
-                    
-                    <img src={cafe} alt="coffe"  className='img-coffe'/>
-                  }
-                  
-                  
-                  {
-                    validador5 == 0 && validador4 == 0 && (
-    <span className='horaIN' key={data1.length}>
-      {devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN()}
-    </span>
-  )
-                  }
-
-                 
-                  
-
-                  {
-                    
-                    data11?.map((stack)=>( 
-                  
-                  stack.ID_esquema == IDSCHEMAGLOBAL && validador4 == 0 && validador5 == 0 ? 
-                  (
-                   
-                    <li className="liItem-rotation" onClick={(e)=>updateAcciones()}   ref={pruebaRef} key={stack._id}>
-                    
-                      {resolver(stack.ID_programa,stack.Type,stack.ID_programa,stack.Duration,stack.Order,stack.Value)}
-                      
-                    </li>
-                  )
-
-                  : null
-                  
-                  
-                ))
-                }
-                {
-                  validador5 == 0 && validador4 == 0 &&
                   <span className='horaOUT'>{auxOut == "Invalid Date" ? "--:--:--" : auxOut }</span>
-                }
-                
-                  </ul>
-                  
-                
-                    
-                :   
-                
-                //validar color rojo aqui
-                //---------------------------------------------------------------------------------------------------
+                </ul>
+              )}
 
+              {estadoDia === "vacio" && sinRotacion && (
+                <ul className="ulLista-rotation">
+                  <img src={less} alt="Sin rotación" className='img-coffe'/>
+                </ul>
+              )}
 
-                
-                
-                validador6 == 1 
-                ?
+              {estadoDia === "descanso" && (
+                <ul className="ulLista-rotation">
+                  <img src={less} alt="Descanso" className='img-coffe'/>
+                </ul>
+              )}
 
-             
-            
-                  <ul className="ulLista-rotation-saved">
-                  <span className='horaIN'>{devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN() }</span>
-                  {
-                    data11?.map((stack)=>( 
-                  
-                    stack.ID_esquema == IDSCHEMAGLOBAL 
-                    ? 
-                      (
-                        <li className="liItem-rotation" onClick={(e)=>updateAcciones()}   ref={pruebaRef} key={stack._id}>
-                        
-                          {resolver(stack.ID_programa,stack.Type,stack.ID_programa,stack.Duration,stack.Order,stack.Value)}
-                          
-                        </li>
-                      )
+              {estadoDia === "compensatorio" && (
+                <ul className="ulLista-rotation-compensatory">
+                  <img src={cafe} alt="Compensatorio" className='img-coffe'/>
+                </ul>
+              )}
 
-                    : null
-                  
-                  
-                    ))
-                   }
-                    <span className='horaOUT'>{auxOut == "Invalid Date" ? "--:--:--" : auxOut }</span>
-                    {restaurarValor()}
-                  </ul>
+              {(estadoDia === "manual" || estadoDia === "sugeridoGuardado" || estadoDia === "mixto") && (
+                <ul className={`${estadoDia === "sugeridoGuardado" ? "ulLista-rotation-ok" : "ulLista-rotation-saved"}${estadoDia === "manual" ? " ulLista-editable" : ""}`}>
+                  {estadoDia === "mixto" && (
+                    <li className="aviso-mixto">
+                      Hay un stack manual y un turno sugerido guardado en esta fecha. Limpie el día para continuar.
+                    </li>
+                  )}
 
-                  : 
+                  <span className='horaIN'>
+                    {cadenaGuardada.inicio ? formatearHora(cadenaGuardada.inicio) : "--:--:--"}
+                  </span>
 
-                  validador6 == 0
+                  {cadenaGuardada.filas.map((fila) => (
+                    <li
+                      className={`liItem-rotation${
+                        estadoDia === "manual" &&
+                        String(turnoSeleccionado) === String(fila.item?._id)
+                          ? " liItem-rotation--activo"
+                          : ""
+                      }`}
+                      key={fila.item?._id ?? fila.orden}
+                      onClick={() => seleccionarTurno(fila.item)}
+                      title={estadoDia === "manual" ? "Clic para seleccionar el turno (la caneca lo elimina)" : undefined}
+                    >
+                      {textoDeTurno(fila.item, fila.duracionMin)}
+                    </li>
+                  ))}
 
-                  ?
-
-                
-
-                  <ul className="ulLista-rotation-ok">
-                  <span className='horaIN'>{devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN() }</span>
-                  {
-                    data11?.map((stack)=>( 
-                  
-                    stack.ID_esquema == IDSCHEMAGLOBAL 
-                    ? 
-                      (
-                        <li className="liItem-rotation" onClick={(e)=>updateAcciones()}   ref={pruebaRef} key={stack._id}>
-                        
-                          {resolver(stack.ID_programa,stack.Type,stack.ID_programa,stack.Duration,stack.Order,stack.Value)}
-                          
-                        </li>
-                      )
-
-                    : null
-                  
-                  
-                    ))
-                   }
-                    <span className='horaOUT'>{auxOut == "Invalid Date" ? "--:--:--" : auxOut }</span>
-
-                    {restaurarValor()}
-                  </ul>
-
-                  
-                : null
-              }
+                  <span className='horaOUT'>
+                    {cadenaGuardada.fin ? formatearHora(cadenaGuardada.fin) : "--:--:--"}
+                  </span>
+                </ul>
+              )}
     
               
 
 
 
-              <div className={validador5 == 1 ? "seccionButons2-hide" :"seccionButons2"}>
+              <div className={sinRotacion ? "seccionButons2-hide" :"seccionButons2"}>
               <div className="containerSingleButtom">
               {
-                data15 != 0 ?
+                data15.length > 0 ?
 
                 <span className='noti'>
                   {data15.length}
@@ -3546,7 +3452,15 @@ useEffect(()=>{
               }
                 
 
-                  <img src={documento} alt="pencil" className='img-butons' onClick={()=>setShowNotas(!showNotas)}/>
+                  <img
+                    src={documento}
+                    alt="Ver anotaciones"
+                    title="Ver anotaciones"
+                    className='img-butons'
+                    aria-expanded={showNotas}
+                    aria-controls="panel-anotaciones"
+                    onClick={()=>setShowNotas(!showNotas)}
+                  />
                 </div>
                 <div className="containerSingleButtom">
                   <img src={capas} alt="pencil" className='img-butons' onClick={stack} ref={stackRef}/>
@@ -3580,8 +3494,8 @@ useEffect(()=>{
             Acumulado
            </div>
            <div className="aux1_label">
-            {fullTime() + " Minutos"}
-            <p className='aux_label-1'>{(fullTime()/60).toFixed(1) + " Horas"}</p>
+            {minutosDelDia() + " Minutos"}
+            <p className='aux_label-1'>{(minutosDelDia()/60).toFixed(1) + " Horas"}</p>
            </div>
           </div>
           </div> 

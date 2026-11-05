@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import io from 'socket.io-client';
 
 import { REALTIME_URL } from '../api/client';
@@ -176,4 +177,9 @@ export function ChatProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useChat = () => useContext(ChatContext);
+
+ChatProvider.propTypes = {
+  children: PropTypes.node,
+};

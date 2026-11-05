@@ -2,8 +2,8 @@
 //Este contexto se define aqui pero se llenara en listado cuando se llama la fecha en el datapicker
 //en el Listado.jsx para traer la programación segun se actualice la fecha en la barra
 
-import React, { createContext, useEffect } from 'react';
-import { useState } from 'react';
+import PropTypes from 'prop-types';
+import { createContext, useState } from 'react';
 
 
 
@@ -26,4 +26,8 @@ export const PronosticoTurnosProvider = ({children}) => {
     </PronosticoContext.Provider>
     
   )
+}
+
+PronosticoTurnosProvider.propTypes = {
+  children: PropTypes.node,
 }

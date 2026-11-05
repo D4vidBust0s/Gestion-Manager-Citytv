@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import PropTypes from "prop-types";
 import "./Login.css";
 import axios from "axios";
 import { Toaster, toast } from "react-hot-toast";
@@ -86,3 +87,6 @@ export default function Login({ onLoginSuccess }) {
     </div>
   );
 }
+Login.propTypes = {
+  onLoginSuccess: PropTypes.func,
+};

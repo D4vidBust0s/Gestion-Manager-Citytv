@@ -23,13 +23,13 @@ export default function PayrollManagerContent() {
   const [modal1, setModal1] = useState(false);
 
   // Estados para los grupos
-  const [data, setData] = useState([]);
+  const [, setData] = useState([]);
 
   // Estado para el payroll completo / filtrado por grupo
   const [data2, setData2] = useState([]);
 
   // Estado para recuperar la informacion de un trabajador
-  const [data3, setData3] = useState([]);
+  const [, setData3] = useState([]);
 
   // Estado para la persona seleccionada
   const [selectPerson, setSelectPerson] = useState("-----");
@@ -77,6 +77,7 @@ export default function PayrollManagerContent() {
 };
 
   // Muestra los usuarios pertenecientes a un grupo
+  // eslint-disable-next-line no-unused-vars
   const showUsersGroup = async (groupID) => {
     setIdGroupGlobal(groupID);
     setSelectPerson("-----");

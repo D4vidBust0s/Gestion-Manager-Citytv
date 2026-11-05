@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -65,6 +64,8 @@ export default function TasksContent() {
     if (currentUser) {
       fetchTasks();
     }
+    // Dependencia intencional en currentUser para recargar al cambiar de usuario.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
   const handleOpenCreateModal = () => {

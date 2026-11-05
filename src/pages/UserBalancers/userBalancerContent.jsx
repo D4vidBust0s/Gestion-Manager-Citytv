@@ -70,7 +70,7 @@ const buildPlannerPayload = (userId, groupId) => ({
   dayKey: new Date().setHours(0, 0, 0, 0),
 });
 
-const userBalancerContent = () => {
+const UserBalancerContent = () => {
 
   /* ESTADOS */
   const [groups, setGroups] = useState([]);
@@ -348,4 +348,4 @@ const userBalancerContent = () => {
   )
 }
 
-export default userBalancerContent
+export default UserBalancerContent

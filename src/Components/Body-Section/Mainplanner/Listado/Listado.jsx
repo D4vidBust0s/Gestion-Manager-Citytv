@@ -141,7 +141,6 @@ export default function Listado() {
   
   let auxi = 0;
   
-  // eslint-disable-next-line no-unused-vars
   let idGroupGlobal = "";
 
   //Identificador de la última petición de turnos origen (evita respuestas viejas)

@@ -2,8 +2,8 @@
 //en el Listado.jsx para traer la programación segun se actualice la fecha en la barra
 
 
-import React, { createContext } from 'react'
-import { useState } from 'react'
+import PropTypes from 'prop-types'
+import { createContext, useState } from 'react'
 
 export const FechaBarraContext = createContext(null)
 
@@ -21,3 +21,7 @@ export const FechaBarraProvider = ({children}) => {
 }
 
 
+
+FechaBarraProvider.propTypes = {
+  children: PropTypes.node,
+}

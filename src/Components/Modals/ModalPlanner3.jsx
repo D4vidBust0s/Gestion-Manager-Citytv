@@ -22,7 +22,7 @@ import DatePicker from 'react-datepicker';
 
 
 
-function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color,tipo}) {
+function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,color,tipo}) {
 
   const [, setDate] = useState();
  

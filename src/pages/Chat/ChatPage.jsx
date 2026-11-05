@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styled, { css } from 'styled-components';
 import { Toaster, toast } from "react-hot-toast";
 import axios from 'axios';
@@ -72,6 +72,8 @@ export default function ChatPage() {
   // Limpiamos el contador global al montar la vista de chat
   useEffect(() => {
     limpiarContadorGlobal();
+    // Solo al montar: limpiarContadorGlobal es estable y no debe re-dispararse.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -232,6 +234,8 @@ export default function ChatPage() {
       socket.off("recibir_mensaje", handleRecibirMensaje);
       socket.off("usuario_escribiendo", handleUsuarioEscribiendo);
     };
+    // Dependencia intencional: reconectar solo al cambiar de chat o usuario.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatActivo.id, userId]);
 
   const handleInputChange = (e) => {

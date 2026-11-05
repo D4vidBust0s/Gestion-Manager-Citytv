@@ -303,6 +303,8 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
     if (op == 1 && id) {
       obtenerSinglePayroll();
     }
+    // Dependencia intencional en id/op; anadir la funcion provocaria bucles.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, op]);
 
   useEffect(() => {

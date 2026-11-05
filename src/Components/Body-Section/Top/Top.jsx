@@ -4,11 +4,13 @@ import { toast } from 'react-hot-toast';
 import PropTypes from 'prop-types';
 import menu from '../../../assets/menu.svg';
 import defaultAvatar from '../../../assets/Ana-Brenda.jpg';
+import { useUserActivity, DEFAULT_IDLE_TIMEOUT_MS } from '../../../hooks/useUserActivity';
 import "./Top.css";
 
-function Top({ sidebarCollapsed = false, onToggleSidebar }) {
+function Top({ sidebarCollapsed = false, onToggleSidebar, idleTimeoutMs = DEFAULT_IDLE_TIMEOUT_MS }) {
   const [clockState, setClockState] = useState();
   const [dateState, setDateState] = useState();
+  const isActive = useUserActivity(idleTimeoutMs);
 
   const [userData, setUserData] = useState({
     id: '',
@@ -108,9 +110,9 @@ function Top({ sidebarCollapsed = false, onToggleSidebar }) {
 
   return (
     <>
-      <div className="container">
+      <div className={`container${isActive ? ' container--activo' : ''}`} data-actividad={isActive ? 'activa' : 'inactiva'}>
         <div className="content-avatar" onClick={() => setShowModal(true)} title="Editar perfil" style={{ cursor: 'pointer' }}>
-          <img src={userData.avatar} alt="Avatar" className="avatar" />
+          <img src={userData.avatar} alt="Avatar" className={`avatar${isActive ? ' avatar--activo' : ''}`} />
         </div>
         <button
           type="button"
@@ -219,6 +221,7 @@ function Top({ sidebarCollapsed = false, onToggleSidebar }) {
 Top.propTypes = {
   sidebarCollapsed: PropTypes.bool,
   onToggleSidebar: PropTypes.func,
+  idleTimeoutMs: PropTypes.number,
 };
 
 export default Top;

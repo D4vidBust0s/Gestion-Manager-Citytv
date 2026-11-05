@@ -37,6 +37,8 @@ export const useFetch = (url, type ) => {
 
     useEffect(() => {
         getFetch();
+        // Dependencia intencional solo en url para evitar refetch en cada render.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [url]);
 
     /*----------------------------------------------------------------------------------------------------*/

@@ -3,6 +3,7 @@ import './MainPage.css';
 import {useEffect, useState} from 'react';
 import {BrowserRouter,Routes,Route} from 'react-router-dom';
 import Swal from "sweetalert2";
+import PropTypes from "prop-types";
 
 /*Componentes */
 import Sidebar from '/src/Components/Sidebar-Section/Sidebar';
@@ -450,3 +451,7 @@ useEffect(()=>{
 }
 
 export default MainPage
+
+MainPage.propTypes = {
+  onLogout: PropTypes.func,
+};

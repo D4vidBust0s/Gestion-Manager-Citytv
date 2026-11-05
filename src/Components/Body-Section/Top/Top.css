@@ -51,11 +51,16 @@
         border-radius: 100%;
         border: .4rem solid var(--Secondary);
         box-shadow: 2px 2px 10px var(--Black);;
+        transition: border-color .25s ease;
     }
 
     .avatar:hover{
         transform: scale(1.1);
         cursor: pointer;
+    }
+
+    .avatar--activo{
+        border-color: var(--Especial);
     }
 
     .content-menu{

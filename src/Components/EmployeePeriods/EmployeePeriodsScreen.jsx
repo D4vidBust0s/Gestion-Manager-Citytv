@@ -1,5 +1,6 @@
 import DatePicker from "react-datepicker";
 import { Toaster } from "react-hot-toast";
+import PropTypes from "prop-types";
 
 import {
   NO_GROUP,
@@ -253,3 +254,16 @@ export default function EmployeePeriodsScreen({ config }) {
     </div>
   );
 }
+
+EmployeePeriodsScreen.propTypes = {
+  config: PropTypes.shape({
+    api: PropTypes.object,
+    texts: PropTypes.object,
+    avatarAlt: PropTypes.string,
+    loadPeople: PropTypes.func,
+    employeeNameFromSelection: PropTypes.bool,
+    requireRecordToEdit: PropTypes.bool,
+    includeVirtualUsers: PropTypes.bool,
+    formatRecordLabel: PropTypes.func,
+  }).isRequired,
+};

@@ -23,7 +23,7 @@ export default function ModalDiasFestivos() {
   const [data1, setData1] = useState([]);
   const [data2, setData2] = useState([]);
   const [data3, setData3] = useState([]);
-  const [data4, setData4] = useState([]);
+  const [, setData4] = useState([]);
   //const [aux,setAux] = useState(0);
  
   let vAño = 0;
@@ -375,6 +375,7 @@ const clonar = async ()=>{
 //HOCKS
 useEffect(()=>{
   traer();
+// eslint-disable-next-line react-hooks/exhaustive-deps
 },[startDate]);
 
 useEffect(()=>{
@@ -385,10 +386,12 @@ useEffect(()=>{
   llamarAño();
   llamarMes();
   llamarDia();
+// eslint-disable-next-line react-hooks/exhaustive-deps
 },[startDate])
 
 useEffect(()=>{
   llamarAñoUpdate();
+// eslint-disable-next-line react-hooks/exhaustive-deps
 },[startDate2])
 
 
