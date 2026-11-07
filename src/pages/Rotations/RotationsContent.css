@@ -513,6 +513,27 @@
      float: right;
      
 }
+
+.rotationReset{
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .5rem;
+}
+
+.rotationReset_btn{
+    background: #EB464B;
+    color: #FFFFFF;
+    border: none;
+    border-radius: .3rem;
+    padding: .3rem .6rem;
+    font-size: .75rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.rotationReset_btn:hover{
+    background: #701CF5;
+}
 .asiganation_li{
     background: #00094B;
     width: 40rem;

@@ -2,7 +2,6 @@
 import './MainPage.css';
 import {useEffect, useState} from 'react';
 import {BrowserRouter,Routes,Route} from 'react-router-dom';
-import Swal from "sweetalert2";
 import PropTypes from "prop-types";
 
 /*Componentes */
@@ -51,21 +50,6 @@ import { ChatProvider } from '../../context/ChatContext';
 
 /* Variables */
 
-let day;
-let mes;
-let año;
-
-let fechaActual;
-let dayActual;
-let mesActual;
-let añoActual;
-
-let aux;
-let fechaRules;
-let total2;
-
-let id;
-
 let DiaClave;
 let totalSche;
 let totalGP;
@@ -79,7 +63,6 @@ function MainPage({ onLogout }) {
   
 /* estado para la ventana modal1 */
 const [modal1, setModal1] = useState(false); 
-const [data, setData] = useState([]);
 const [data1, setData1] = useState([]);
 const [data2, setData2] = useState([]);
 
@@ -100,22 +83,6 @@ const handleToggleSidebar = () => setSidebarCollapsed((prev) => !prev);
 //----------------------------------------------------------------------------------------------------------------------------
 // FUNCIONES
 //----------------------------------------------------------------------------------------------------------------------------
-//Estas dos  funcion actualiza el dia clave para el resto de operaciones del sistema
-
-const obtenerListadoRules = async () => {
-  return await axios
-    .get("http://localhost:3000/api/rules")
-    .then((response) => setData(response.data));
-
-};
-
-const update= async () => {
-    
-  await axios.put("http://localhost:3000/api/rules/" + id, {
-    DiaPeriod: total2,
-   
-  });
-}
 
 //Traer todos los registros de rotationsManager
 const getAllRotationsManager= async () => {
@@ -282,84 +249,6 @@ const operaciones = (payrollID)=>{
 
 
 
-//Traemos la fecha actual
-fechaActual = new Date().setHours(0,0,0,0);
-dayActual = new Date(fechaActual).getDate();        //Dia actual
-mesActual = new Date(fechaActual).getMonth();       //Mes actual
-añoActual = new Date(fechaActual).getFullYear();    //Año actual
-
-
-//Traemos las configuraciones 
-data?.map((dato)=>{
-
- fechaRules = new Date(dato.DiaPeriod).setHours(0,0,0,0);
- total2 = new Date (fechaRules);
- total2.setDate(total2.getDate() + parseInt(dato.Dia) ) // se trae la cantidad de dias definidas en rules
-                                                            //  y se agrega un dia mas para que concuerde con el sabado que pasaria a ser el nuevo dia clave
- day = new Date(total2).getDate();
- mes = new Date(total2).getMonth();
- año = new Date(total2).getFullYear();
-
-
-//------------------------------------------------------------------------------------------------------------------------
- // OPERACIONES PARA MANTENER ACTUALIZADO EL DIA CLAVE
-//------------------------------------------------------------------------------------------------------------------------
-
-  if(new Date(fechaRules).getDate()==dayActual && mes == mesActual && año == añoActual)
-  {
-    //Procedemos a actualizar el dia clave en rules si 
-    console.log("MOMENTO DE ACTUALIZAR LA FECHA DEL NUEVO PERIODO");
-    aux = 1;
-  }
-  else{
-  
-    /*
-      console.log("NO ES TIEMPO DE ACTUALIZAR PERIODO");
-      console.log("----------------------------------");
-      console.log("Dia actual " + dayActual +" Dia meta " + new Date(fechaRules).getDate());
-      console.log("Mes actual " + mesActual +" Mes meta " + mes);
-      console.log("Año actual " + añoActual +" Año meta " + año);
-      console.log("Dias Rules " + data[0].Dia);
-    */
-
-    if(mes < mesActual && añoActual == año)
-    {
-      
-
-      Swal.fire({
-      
-        title: "La fecha de evaluación de periodo está desactualizada, por favor actualícela inmediatamente",
-        //showDenyButton: true,
-        showCancelButton: true,
-        confirmButtonText: "Ok la actualizaré",
-        //denyButtonText: `Ok la actualizaré`,
-        footer: '<h5>Gestión Manager Citytv</h5> <br> <h6>Mensajes del sistema</h6>',
-        
-        
-      }).then((result) => {
-        
-        /* Read more about isConfirmed, isDenied below */
-        if (result.isConfirmed) {
-          //Swal.fire("Saved!", "", "success");
-        } else if (result.isDenied) 
-        {
-          //EliminarGP();
-          //Swal.fire("Registro eliminado del sistema", "", "success");
-        }
-      });
-      
-    }
-
-  }
-
-})
-
-if(aux == 1)
-{
-   id=data[0]._id;
-   update();
-}
-
 //----------------------------------------------------------------------------------------------------------------------------
  // OPERACIONES PARA LA GESTION DE ROTACIONES DE TURNOS
 //----------------------------------------------------------------------------------------------------------------------------
@@ -372,10 +261,6 @@ if(aux == 1)
 // ************************************************************************************************************** FIN
 
 
-
-useEffect(()=>{
-  obtenerListadoRules();
-},[]);
 
 useEffect(()=>{
   getAllPayroll();

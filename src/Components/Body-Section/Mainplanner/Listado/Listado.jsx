@@ -26,6 +26,10 @@ import Swal from "sweetalert2";
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { shiftsApi } from '../../../../api/shifts';
+import { substitutionsApi } from '../../../../api/substitutions';
+import { mismoDia } from '../../../../utils/plannerStack';
+import { useAbsencePeriods } from '../../../../Custom_Hooks/useAbsencePeriods';
+import { obtenerEstadoAusencia } from '../../../../utils/absenceStatus';
 
 /* Helpers para normalizar fechas y trabajar siempre con medianoche local */
 const inicioDelDia = (fecha) => {
@@ -57,6 +61,14 @@ const formatearFecha = (fecha) => {
   });
 };
 
+const escaparHtml = (valor) =>
+  String(valor ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 
 export default function Listado() {
   /* estado para la ventana modal1 */
@@ -84,6 +96,7 @@ export default function Listado() {
   const [cargandoOrigen, setCargandoOrigen] = useState(false);
   const [replicando, setReplicando] = useState(false);
   const [limpiando, setLimpiando] = useState(false);
+  const [guardandoSustitucion, setGuardandoSustitucion] = useState(false);
   
   
 
@@ -148,6 +161,7 @@ export default function Listado() {
   //Candados síncronos para impedir dobles envíos antes de que React re-renderice
   const replicandoRef = useRef(false);
   const limpiandoRef = useRef(false);
+  const guardandoSustitucionRef = useRef(false);
   
   
   
@@ -156,6 +170,44 @@ export default function Listado() {
   const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext); //Define un estado para la fecha de la barra
   const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [Aux,setAux] = useContext(AuxSustitutions); // Permite avisar a la barra que debe ser actualizada
+
+  const {
+    ausencias,
+    cargando: cargandoAusencias,
+    error: errorAusencias,
+  } = useAbsencePeriods({ refreshKey: auxiliar });
+
+  const propsEstadoAusencia = (persona) => {
+    const estado = obtenerEstadoAusencia({
+      id: persona?._id,
+      fecha: fechaBarra,
+      ausencias,
+    });
+
+    return {
+      estado,
+      style: estado
+        ? { backgroundColor: estado.color, color: estado.textColor }
+        : undefined,
+      title: estado
+        ? `${estado.label} · ${formatearFecha(fechaBarra)}`
+        : undefined,
+    };
+  };
+
+  const turnosEnFechaDeUsuario = (idUsuario) =>
+    (Array.isArray(data7) ? data7 : []).filter(
+      (turno) =>
+        String(turno?.ID_user) === String(idUsuario) &&
+        mismoDia(turno?.Fecha_clave, fechaBarra)
+    );
+
+  const estaAsignadoComoSustituto = (idUsuario) =>
+    (Array.isArray(data13) ? data13 : []).some(
+      (sustitucion) =>
+        String(sustitucion?.ID_user_sustituto) === String(idUsuario) &&
+        mismoDia(sustitucion?.Fecha_dia, fechaBarra)
+    );
 
   //FUNCIONES
   //Funcion que obtiene la data de la api - listado de grupos
@@ -1605,8 +1657,27 @@ const showUsersGroupAux = async (groupID,e) => {
     
 };
 
+const esMismaPersona = (id, otroId) =>
+  id !== undefined &&
+  id !== null &&
+  id !== "-----" &&
+  otroId !== undefined &&
+  otroId !== null &&
+  otroId !== "-----" &&
+  String(id) === String(otroId);
+
 //Funcion para actualizar usuarioi de la izquierda
 const operationP = (id,name, apellido,idGroup,e) =>{
+
+  if (estaAsignadoComoSustituto(id)) {
+    toast.error("El trabajador ya está asignado como sustituto para esta fecha");
+    return;
+  }
+
+  if (esMismaPersona(id, selectPersonIdDer)) {
+    toast.error("La misma persona no puede estar en la columna 2 y en la columna 3");
+    return;
+  }
 
   setSelectPersonIz(name + " " + apellido);
   setSelectPersonIdIz(id);
@@ -1631,6 +1702,11 @@ const operationP = (id,name, apellido,idGroup,e) =>{
 //Funcion para usuario remplazo derecha
 const operationP2 = (id,name, apellido,idGroup,e) =>{
 
+  if (esMismaPersona(id, selectPersonIdIz)) {
+    toast.error("La misma persona no puede estar en la columna 2 y en la columna 3");
+    return;
+  }
+
   setSelectPersonDer(name + " " + apellido);
   setSelectPersonIdDer(id);
   setSelectPersonGroupDer(idGroup);
@@ -1648,6 +1724,21 @@ const operationP2 = (id,name, apellido,idGroup,e) =>{
 
      e.target.classList.add("active3");
    }
+};
+
+const limpiarSeleccionSustitucion = () => {
+  setSelectPersonIz("-----");
+  setSelectPersonIdIz("-----");
+  setSelectPersonGroupIz("-----");
+  setSelectPersonDer("-----");
+  setSelectPersonIdDer("-----");
+  setSelectPersonGroupDer("-----");
+
+  document
+    .querySelectorAll("#miElemento .active2, #miElemento .active3")
+    .forEach((elemento) => {
+      elemento.classList.remove("active2", "active3");
+    });
 };
 
 const EliminarItem = async(id) =>{
@@ -1692,85 +1783,183 @@ const delitem = (id,nombreLeft,nombreRight) =>{
   });
 }
 
-const saveSustitucion = async () =>{
+const solicitarSustitucion = async () => {
+  if (guardandoSustitucionRef.current) return;
 
-//Creamos el registro en la base de datos
-await axios.post("http://localhost:3000/api/substitutions/", {
+  if (selectPersonIdIz === "-----" && selectPersonIdDer === "-----") {
+    toast.error("Aún no ha especificado la información de usuarios para el cambio temporal");
+    return;
+  }
+
+  if (esMismaPersona(selectPersonIdIz, selectPersonIdDer)) {
+    toast.error("Los usuarios seleccionados son los mismos");
+    return;
+  }
+
+  if (selectPersonIdIz === "-----") {
+    toast.error("No ha seleccionado un trabajador de alguno de los grupos");
+    return;
+  }
+
+  if (selectPersonIdDer === "-----") {
+    toast.error("No ha seleccionado un trabajador para que sirva de sustituto temporal");
+    return;
+  }
+
+  if (cargandoAusencias) {
+    toast("Verificando los estados de ausencia. Intente de nuevo en un momento.");
+    return;
+  }
+
+  if (errorAusencias) {
+    await Swal.fire({
+      icon: "error",
+      title: "No se pudieron verificar las ausencias",
+      text:
+        errorAusencias ||
+        "No es posible validar si el sustituto está en ausencia. Intente nuevamente.",
+      footer: "<h6>Gestión Manager Citytv</h6>",
+    });
+    return;
+  }
+
+  const estadoSustituto = obtenerEstadoAusencia({
+    id: selectPersonIdIz,
+    fecha: fechaBarra,
+    ausencias,
+  });
+
+  if (estadoSustituto) {
+    await Swal.fire({
+      icon: "warning",
+      title: "El sustituto está en ausencia",
+      html: `
+        <p><b>${escaparHtml(selectPersonIz)}</b> está en <b>${escaparHtml(
+          estadoSustituto.label
+        )}</b> para el ${escaparHtml(formatearFecha(fechaBarra))}.</p>
+        <p>No puede sustituir a otro trabajador mientras esté en ausencia.</p>
+      `,
+      confirmButtonText: "Entendido",
+      footer: "<h6>Gestión Manager Citytv</h6>",
+    });
+    return;
+  }
+
+  const yaAsignado = data13?.some(
+    (sustitucion) =>
+      String(sustitucion.ID_user_sustituto) === String(selectPersonIdIz) &&
+      mismoDia(sustitucion.Fecha_dia, fechaBarra)
+  );
+
+  if (yaAsignado) {
+    toast.error(
+      "El trabajador sustituto " + selectPersonIz + " ya ha sido asignado para esta fecha."
+    );
+    return;
+  }
+
+  const turnosSustituto = turnosEnFechaDeUsuario(selectPersonIdIz);
+  const tieneTurnoAsignado = turnosSustituto.length > 0;
+  const primerTurno = turnosSustituto[0];
+  const horaInicioTurno =
+    primerTurno && esFechaValida(primerTurno.Inicio_main)
+      ? new Date(primerTurno.Inicio_main).toLocaleTimeString("es-CO", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : null;
+
+  const advertenciaTurno = tieneTurnoAsignado
+    ? `
+      <div style="text-align:left; background:#FFF4E5; border-left:4px solid #EB464B; padding:.6rem .7rem; margin-bottom:.7rem; border-radius:6px; color:#5a2a00;">
+        <b>Advertencia:</b> ${escaparHtml(selectPersonIz)} ya tiene ${
+          turnosSustituto.length === 1
+            ? "un turno asignado"
+            : `${turnosSustituto.length} turnos asignados`
+        } para esta fecha${
+          horaInicioTurno
+            ? `, desde las ${escaparHtml(horaInicioTurno)}`
+            : ""
+        }
+      </div>
+    `
+    : "";
+
+  guardandoSustitucionRef.current = true;
+  setGuardandoSustitucion(true);
+
+  try {
+    const confirmacion = await Swal.fire({
+      icon: tieneTurnoAsignado ? "warning" : "question",
+      title: tieneTurnoAsignado
+        ? "El sustituto ya tiene un turno asignado"
+        : "¿Confirmar sustitución temporal?",
+      html: `
+        ${advertenciaTurno}
+        <p style="margin-bottom:.5rem">Se registrará la siguiente sustitución:</p>
+        <p><b>${escaparHtml(selectPersonIz)}</b> sustituirá a <b>${escaparHtml(
+          selectPersonDer
+        )}</b></p>
+        <p><b>Área:</b> ${escaparHtml(nombreGrupo || "—")}</p>
+        <p><b>Fecha:</b> ${escaparHtml(formatearFecha(fechaBarra))}</p>
+      `,
+      showCancelButton: true,
+      confirmButtonText: tieneTurnoAsignado
+        ? "Sustituir de todos modos"
+        : "Sí, sustituir",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: tieneTurnoAsignado ? "#EB464B" : "#26610d",
+      cancelButtonColor: tieneTurnoAsignado ? "#545454" : "#EB464B",
+      reverseButtons: true,
+      focusCancel: true,
+      footer: "<h6>Gestión Manager Citytv</h6>",
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    await substitutionsApi.create({
       idUserMain: selectPersonIdDer,
       idUserSustituto: selectPersonIdIz,
       nombreLeft: selectPersonIz,
       nombreRight: selectPersonDer,
       idGrupoIz: selectPersonGroupIz,
       idGrupoDer: selectPersonGroupDer,
-      fechaDia: new Date(fechaBarra).setHours(0,0,0,0),
+      fechaDia: new Date(fechaBarra).setHours(0, 0, 0, 0),
       operacion: 0,
     });
 
-    getSubstitutions();
-
-  Swal.fire({
-    title: "<h5>Sustitución realizada con éxito, el trabajador " + "<span class='userder'>"+selectPersonIz+ "</span>"+ " sustituirá a "  +"<span class='useriz'>"+ selectPersonDer+"</span>"+ " en la fecha seleccionada</h5>",
-    //showDenyButton: true,
-    //showCancelButton: true,
-    //confirmButtonText: "No",
-    denyButtonText: `OK`,
-    footer: '<h6>Gestión Manager Citytv</h6>',
-    
-  }).then((result) => {
-    /* Read more about isConfirmed, isDenied below */
-    if (result.isConfirmed) {
-      //Swal.fire("Saved!", "", "success");
-    } else if (result.isDenied) 
-    {
-      EliminarItem();
-      //Swal.fire("Registro eliminado del sistema", "", "success");
+    try {
+      await getSubstitutions();
+    } catch (error) {
+      console.error("No se pudo refrescar el listado de sustituciones:", error);
     }
-  });
-}
 
-const asignar = () =>{
+    setAux(!Aux);
 
-  let aux = 0;
+    await Swal.fire({
+      icon: "success",
+      title: "Sustitución realizada",
+      text: `${selectPersonIz} sustituirá a ${selectPersonDer} el ${formatearFecha(
+        fechaBarra
+      )}.`,
+      footer: "<h6>Gestión Manager Citytv</h6>",
+    });
 
-  data13?.map((sustitutions)=>(
-    sustitutions.ID_user_sustituto == selectPersonIdIz && sustitutions.Fecha_dia == new Date(fechaBarra).toISOString() && (aux = 1)
-  ))
-
- 
-
-  if(selectPersonIdIz == "-----" &&  selectPersonIdDer == "-----")
-  {
-    toast.error("Aún no ha especificado la información de usuarios para el cambio temporal");
+    limpiarSeleccionSustitucion();
+  } catch (error) {
+    await Swal.fire({
+      icon: "error",
+      title: "No se pudo registrar la sustitución",
+      text:
+        error?.message ||
+        "Ocurrió un error al crear la sustitución temporal. Intente nuevamente.",
+      footer: "<h6>Gestión Manager Citytv</h6>",
+    });
+  } finally {
+    guardandoSustitucionRef.current = false;
+    setGuardandoSustitucion(false);
   }
-
-  else if(selectPersonIdIz == selectPersonIdDer)
-  {
-    toast.error("Los usuarios seleccionados son los mismos");
-  }
-
-  else if(selectPersonIdIz == "-----")
-  {
-    toast.error("No ha seleccionado un trabajador de alguno de los grupos");
-  }
-
-  else if(selectPersonIdDer == "-----")
-  {
-    toast.error("No ha seleccionado un trabajador para que sirva de sustituto temporal");
-  }
-
-  else if(aux == 1)
-  {
-    toast.error("El trabajador sustituto " + selectPersonIz + " ya ha sido asignado para esta fecha. ");
-  }
-
-
-  else{
- 
-      saveSustitucion();
-      setAux(!Aux);
-  }
- 
-}
+};
 
 
 /* ********************************************************************************************************************* */
@@ -2313,15 +2502,42 @@ const limpiarDiaActual = async () => {
           <ul className='ListUL'>
 
             {
-               data11.map((payroll,index)=>(
+               data11.map((payroll,index)=>{
+                const estadoAusencia = propsEstadoAusencia(payroll);
+                const yaAsignado = estaAsignadoComoSustituto(payroll._id);
 
-                payroll.cargo != "USERBALANCER" ?
-                <li className="sb" key={payroll._id || index}>
-                  <div className="subGrupo">{payroll.subGrupo}</div>
-                   <div className={payroll.activo==false?'ListLI2':'ListLI'} onClick={(e)=> operationP(payroll._id,payroll.nombres,payroll.apellidos,payroll.grupoID,e)}>{payroll.nombres} {payroll.apellidos}</div>
-                </li>
-                :null
-               ))
+                return payroll.cargo != "USERBALANCER" ? (
+                  <li className="sb" key={payroll._id || index}>
+                    <div className="subGrupo">{payroll.subGrupo}</div>
+                    <div
+                      className={`${
+                        payroll.activo == false ? 'ListLI2' : 'ListLI'
+                      }${yaAsignado ? ' ListLI--asignado' : ''}`}
+                      style={estadoAusencia.style}
+                      title={
+                        yaAsignado
+                          ? "Trabajador ya asignado para esta fecha"
+                          : estadoAusencia.title
+                      }
+                      aria-disabled={yaAsignado || undefined}
+                      onClick={(e) =>
+                        operationP(
+                          payroll._id,
+                          payroll.nombres,
+                          payroll.apellidos,
+                          payroll.grupoID,
+                          e
+                        )
+                      }
+                    >
+                      {payroll.nombres} {payroll.apellidos}
+                      {yaAsignado && (
+                        <span className="asignado-tag">Asignado</span>
+                      )}
+                    </div>
+                  </li>
+                ) : null;
+               })
             } 
           </ul>
         </div>
@@ -2335,15 +2551,35 @@ const limpiarDiaActual = async () => {
           <ul className='ListUL'>
 
             {
-               data12.map((payroll,index)=>(
+               data12.map((payroll,index)=>{
+                const estadoAusencia = propsEstadoAusencia(payroll);
 
-                payroll.cargo  ?
-                <li className="sb" key={payroll._id || index}>
-                  <div className="subGrupo">{payroll.subGrupo}</div>
-                   <div className={payroll.cargo=="USERBALANCER" ?'balancer':'ListLI22'} onClick={(e)=> operationP2(payroll._id,payroll.nombres,payroll.apellidos,payroll.grupoID,e)}>{payroll.nombres} {payroll.apellidos}</div>
-                </li>
-                :null
-               ))
+                return payroll.cargo ? (
+                  <li className="sb" key={payroll._id || index}>
+                    <div className="subGrupo">{payroll.subGrupo}</div>
+                    <div
+                      className={
+                        payroll.cargo == "USERBALANCER"
+                          ? 'balancer'
+                          : 'ListLI22'
+                      }
+                      style={estadoAusencia.style}
+                      title={estadoAusencia.title}
+                      onClick={(e) =>
+                        operationP2(
+                          payroll._id,
+                          payroll.nombres,
+                          payroll.apellidos,
+                          payroll.grupoID,
+                          e
+                        )
+                      }
+                    >
+                      {payroll.nombres} {payroll.apellidos}
+                    </div>
+                  </li>
+                ) : null;
+               })
             } 
           </ul>
 
@@ -2384,8 +2620,18 @@ const limpiarDiaActual = async () => {
         </div>
       </div>
 
-      <div className="content-btn-volador">
-        <img src={flecha} alt="flecha" className='botonflecha' onClick={() => asignar()}/>
+      <div
+        className={`content-btn-volador${
+          guardandoSustitucion ? ' content-btn-volador--disabled' : ''
+        }`}
+        aria-busy={guardandoSustitucion}
+      >
+        <img
+          src={flecha}
+          alt="flecha"
+          className='botonflecha'
+          onClick={() => solicitarSustitucion()}
+        />
       </div>
         
         

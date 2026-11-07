@@ -30,7 +30,7 @@ import {
 /** Milisegundos de espera antes de persistir una celda mientras se escribe. */
 const ESPERA_GUARDADO = 500;
 
-export const useBalancerData = () => {
+export const useBalancerData = (refreshToken) => {
   /* ESTADOS */
   const [groups, setGroups] = useState([]);
   const [payroll, setPayroll] = useState([]);
@@ -198,7 +198,7 @@ export const useBalancerData = () => {
       activo = false;
       controller.abort();
     };
-  }, [rangoIn, rangoOut]);
+  }, [rangoIn, rangoOut, refreshToken]);
 
   /* DERIVADOS */
 

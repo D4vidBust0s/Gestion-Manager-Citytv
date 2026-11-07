@@ -201,6 +201,42 @@
             padding-bottom: 5rem;
         }
 
+        .list-turnos--anterior .ulLista-rotation-saved,
+        .list-turnos--anterior .ulLista-rotation-ok,
+        .list-turnos--anterior .ulLista-rotation-anterior{
+            background: #00094B;
+        }
+
+        .ulLista-rotation-anterior-vacia{
+            padding: 0;
+            margin: 0;
+            margin-top: 2rem;
+            text-align: center;
+            font-size: .9rem;
+            width: 100%;
+            min-height: 12rem;
+            background: #545454;
+            color: #FFFFFF;
+            padding: 1.5rem;
+            border-radius: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mensaje-turno-anterior{
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+            font-size: .9rem;
+        }
+
+        .mensaje-turno-anterior span{
+            font-size: .8rem;
+            color: #DADADA;
+        }
+
         .liItem{
             background: #545454;
             margin-bottom: .6rem;
@@ -226,6 +262,26 @@
             align-items: center;
             border-radius: 2rem;
             height: 3rem;
+        }
+
+        .separador-dia-stack{
+            list-style: none;
+            display: block;
+            width: 100%;
+            margin: 1.2rem 0 .8rem;
+            padding: .45rem 1rem;
+            border-radius: 1rem;
+            background: #00094B;
+            color: #FFFFFF;
+            font-size: .8rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .liItem-rotation--continuacion{
+            background: #1b1b1b;
+            border: 1px dashed #DADADA;
+            cursor: default;
         }
 
         .liItem:hover{
@@ -622,8 +678,122 @@
     padding: .3rem;
     font-size: .8rem;
     color: #000000;
-    overflow: auto;
+    overflow: visible;
     border-radius: .5rem;
+}
+
+.matrizScroll{
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    padding-right: 3rem;
+    box-sizing: border-box;
+}
+
+.btn-expandir-matriz{
+    position: absolute;
+    top: .35rem;
+    right: 1.5%;
+    z-index: 120;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: 50%;
+    background: #00094B;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
+}
+
+.btn-expandir-matriz:hover{
+    background: #701CF5;
+}
+
+.matriz-overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 2700;
+    background: rgba(0, 0, 0, .7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.matriz-modal{
+    width: min(96vw, 1700px);
+    height: min(90vh, 900px);
+    background: #D9D9D9;
+    border-radius: 1rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+}
+
+.matriz-modal-header{
+    background: #00094B;
+    color: #FFFFFF;
+    padding: .75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.matriz-modal-header h2{
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.btn-cerrar-matriz{
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: 50%;
+    background: #EB464B;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+.matriz-modal-body{
+    flex: 1;
+    overflow: auto;
+    padding: .75rem;
+}
+
+.matriz-modal .inspectorContainer{
+    height: auto;
+    min-width: max-content;
+    padding-top: .3rem;
+}
+
+.matriz-modal .inspectorContainer > ul:first-child{
+    margin: 0;
+    padding: 0;
+}
+
+.matriz-modal .liInspector2{
+    position: static;
+    margin-top: 0;
+    margin-left: 0;
+    padding-left: .9rem;
+}
+
+.matriz-modal .nameUS,
+.matriz-modal .nameUSActual{
+    flex: 0 0 180px;
+    width: 180px;
+}
+
+.matriz-modal .cajaNumero{
+    margin-left: 1rem;
 }
 
 .aux1{
@@ -688,7 +858,12 @@
     height: 40vh;
     padding: .3rem;
     color: #D9D9D9;
-    padding-top: 2rem;
+    padding-top: .3rem;
+}
+
+.inspectorContainer > ul:first-child{
+    margin: 0;
+    padding: 0;
 }
 
 .liInspector{
@@ -703,9 +878,12 @@
     display: flex;
     align-items: center;
     margin-bottom: 2px;
-    position: fixed;
-    left: 16.85%;
-    margin-top: -2.7rem;
+    position: static;
+    width: 100%;
+    box-sizing: border-box;
+    padding-left: .9rem;
+    margin-top: 0;
+    background: #545454;
     
 }
 
@@ -737,32 +915,68 @@
 .cuadro20{
     background: #DADADA;
     color: #000000;
-    padding: .5rem;
+    padding: .5rem .2rem;
     margin-right: 1px;
     font-weight: bold;
     width: 36px;
+    min-height: 2.1rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
 }
 
 .cuadro21{
     background: #DADADA;
     color: #EB464B;
-    padding: .5rem;
+    padding: .5rem .2rem;
     margin-right: 1px;
     font-weight: bold;
     width: 36px;
+    min-height: 2.1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.6rem;
 }
 
+.cuadro20Proy{
+    background: #D6CFF0;
+    color: #701CF5;
+    font-size: .68rem;
+}
+
+.liInspectorProy{
+    background: #0B1555;
+}
+
+.nameUSProy{
+    font-size: .68rem;
+    font-weight: 700;
+    color: #DADADA;
+}
+
+.liInspectorProyActual{
+    box-shadow: inset 3px 0 0 #701CF5;
+}
+
+.cuadroTotalProy{
+    background: #701CF5;
+}
+
+.cuadroTotalProy .celda-proy{
+    color: #FFFFFF;
+}
+
+.cuadroDifVacio{
+    width: 60px;
+    min-height: 2.1rem;
+    margin-right: 1px;
+}
+
 .cuadro201{
     background: #000000;
-    color: #EB464B;
+    color: #FFFFFF;
     padding: .5rem;
     margin-right: 1px;
     font-weight: bold;
@@ -785,6 +999,81 @@
 .p_cuadro{
     font-size: .5rem;
     color: #FFFFFF;
+}
+
+.celda-lab{
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.05;
+    color: #000000;
+}
+
+.celda-proy{
+    font-size: .95rem;
+    font-weight: 800;
+    line-height: 1.05;
+    color: #701CF5;
+}
+
+.liInspectorActual{
+    box-shadow: inset 3px 0 0 var(--Secondary);
+}
+
+.cuadroTotalHeader,
+.cuadroTotal{
+    background: var(--PrimaryColor);
+    color: #FFFFFF;
+    padding: .3rem .15rem;
+    margin-right: 1px;
+    width: 54px;
+    min-height: 2.1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: .7rem;
+    font-weight: 800;
+    line-height: 1.05;
+}
+
+.cuadroTotalHeader .p_cuadro,
+.cuadroDifHeader .p_cuadro{
+    font-size: .6rem;
+}
+
+.cuadroTotal .celda-lab{
+    color: #FFFFFF;
+}
+
+.cuadroTotal .celda-proy{
+    color: #BCA8FF;
+}
+
+.cuadroDifHeader,
+.cuadroDif{
+    background: var(--Secondary);
+    color: #FFFFFF;
+    padding: .3rem .15rem;
+    margin-right: 1px;
+    width: 60px;
+    min-height: 2.1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: .62rem;
+    font-weight: 800;
+    line-height: 1.05;
+}
+
+.cuadroDif{
+    font-size: 1rem;
+}
+
+.cuadroDif.excedido{
+    background: #2F800D;
 }
 
 
@@ -1406,28 +1695,6 @@
     transform: scale(1.1);
 }
 
-.containerSingleButtom-agendado{
-    position: absolute;
-    background: #547725;
-    padding: .2rem;
-    border-radius: .5rem;
-    box-shadow: .2rem .2rem .8rem #545454;
-    right: 50px;
-    top:42%;
-
-    .img-butons{
-        height: 3rem;
-        width: 4rem;
-        
-    }
-}
-
-
-.containerSingleButtom-agendado:hover{
-    cursor: pointer;
-    transform: scale(1.1);
-}
-
 .hideRight{
     position: absolute;
     display: none;
@@ -1802,24 +2069,7 @@
 .estado-mixto{ background: #a308a8; }
 .estado-compensatorio{ background: #701CF5; }
 .estado-descanso{ background: #00094B; }
-
-.acciones-hibrido{
-    position: absolute;
-    right: 50px;
-    top: 36%;
-    display: flex;
-    flex-direction: column;
-    gap: .5rem;
-    z-index: 5;
-}
-
-/* Los dos controles comparten la posición del contenedor, no la absoluta de antes */
-.acciones-hibrido .containerSingleButtom-open,
-.acciones-hibrido .containerSingleButtom-agendado{
-    position: static;
-    right: auto;
-    top: auto;
-}
+.estado-anterior{ background: #545454; }
 
 .aviso-mixto{
     font-size: .65rem;
@@ -1839,7 +2089,31 @@
 
 .container-modal1 .cuerpoModal .ulLista-editable .liItem-rotation{
     cursor: pointer;
+    flex-direction: column;
+    height: auto;
+    min-height: 3rem;
+    padding: .35rem .6rem;
     transition: transform .15s ease, background-color .15s ease, color .15s ease;
+}
+
+.turno-titulo{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.turno-observacion{
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    font-size: .68rem;
+    font-weight: 500;
+    color: var(--Base2);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .container-modal1 .cuerpoModal .ulLista-editable .liItem-rotation:hover{

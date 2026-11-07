@@ -491,6 +491,83 @@ const RotationsContent = () => {
     return rotationsManagerApi.updateTotalSchema(groupId, payload);
   };
 
+  //Actualiza los totales del grupo sin tocar el dayKey (ancla de rotación).
+  const actualizarTotalesGrupo = async (groupId, tipo) => {
+    const payload = {
+      totalschema: (tipo === TIPO_FS ? data5 : data4).length,
+      totalgrupo: personasActivas.length,
+    };
+
+    if (tipo === TIPO_FS) {
+      return rotationsManagerFsApi.updateGroupTotals(groupId, payload);
+    }
+
+    return rotationsManagerApi.updateGroupTotals(groupId, payload);
+  };
+
+  //Única acción que mueve el ancla de rotación. Debe ser explícita.
+  const reiniciarRotacion = async (tipo) => {
+    const managers = tipo === TIPO_FS ? data16 : data8;
+    const grupoSeleccionado = getGroupId();
+    const manager = managers.find(
+      (item) => String(item.groupName) === String(grupoSeleccionado)
+    );
+
+    if (!manager) {
+      toast.error("Seleccione el grupo cuya rotación desea reiniciar");
+      return;
+    }
+
+    const grupoId = manager.groupName;
+    if (!grupoId) {
+      toast.error("No se pudo identificar el grupo de la rotación");
+      return;
+    }
+
+    const lunes = new Date(obtenerLunesSemana());
+    const dos = (numero) => String(numero).padStart(2, "0");
+    const fechaInicial = `${lunes.getFullYear()}-${dos(lunes.getMonth() + 1)}-${dos(lunes.getDate())}`;
+
+    const resultado = await Swal.fire({
+      title: "Reiniciar rotación",
+      text: "Esta acción cambia la fecha base de toda la rotación del grupo. Úsela solo si va a iniciar un ciclo nuevo.",
+      input: "date",
+      inputValue: fechaInicial,
+      showCancelButton: true,
+      confirmButtonText: "Sí, reiniciar",
+      cancelButtonText: "Cancelar",
+      footer: '<h6>Gestión Manager Citytv</h6>',
+    });
+
+    if (!resultado.isConfirmed || !resultado.value) return;
+
+    const nuevaFecha = new Date(`${resultado.value}T00:00:00`);
+    if (Number.isNaN(nuevaFecha.getTime())) {
+      toast.error("La fecha seleccionada no es válida");
+      return;
+    }
+
+    try {
+      const payload = {
+        newDayKey: nuevaFecha,
+        totalschema: tipo === TIPO_FS ? data5.length : data4.length,
+        totalgrupo: personasActivas.length,
+      };
+
+      if (tipo === TIPO_FS) {
+        await rotationsManagerFsApi.updateGroup(grupoId, payload);
+      } else {
+        await rotationsManagerApi.updateGroup(grupoId, payload);
+      }
+
+      await cargarManager(tipo);
+      toast.success("Rotación reiniciada correctamente");
+    } catch (error) {
+      console.error("Error al reiniciar la rotación:", error);
+      toast.error(mensajeError(error, "No se pudo reiniciar la rotación"));
+    }
+  };
+
   const limpiarSeleccionDeEsquema = (tipo, limpiarStacks) => {
     if (tipo === TIPO_FS) {
       setTitleFs(SIN_ESQUEMA);
@@ -1007,7 +1084,14 @@ const RotationsContent = () => {
         return;
       }
 
-      await actualizarDiaClave(manager.groupName, TIPO_ES);
+      //Asignar un trabajador no debe reiniciar el ancla del grupo.
+      //Solo se inicializa si el grupo todavía no tiene dayKey.
+      if (!manager.dayKey) {
+        await actualizarDiaClave(manager.groupName, TIPO_ES);
+      } else {
+        await actualizarTotalesGrupo(manager.groupName, TIPO_ES);
+      }
+
       await rotationsManagerApi.updateIndex(userId, {
         nameschema: corroborarNombre(schemaId, TIPO_ES),
         actual: corroborarActual(schemaId, TIPO_ES),
@@ -1060,7 +1144,12 @@ const RotationsContent = () => {
         return;
       }
 
-      await actualizarDiaClave(manager.groupName, TIPO_FS);
+      if (!manager.dayKey) {
+        await actualizarDiaClave(manager.groupName, TIPO_FS);
+      } else {
+        await actualizarTotalesGrupo(manager.groupName, TIPO_FS);
+      }
+
       await rotationsManagerFsApi.updateIndex(userId, {
         nameschema: corroborarNombre(schemaId, TIPO_FS),
         actual: corroborarActual(schemaId, TIPO_FS),
@@ -1481,6 +1570,23 @@ const RotationsContent = () => {
       <Toaster />
 
       {/* ASIGNACIONES DE PERSONAL */}
+      <div className="rotationReset">
+        <button
+          type="button"
+          className="rotationReset_btn"
+          onClick={() => reiniciarRotacion(TIPO_ES)}
+        >
+          Reiniciar rotación ES
+        </button>
+        <button
+          type="button"
+          className="rotationReset_btn"
+          onClick={() => reiniciarRotacion(TIPO_FS)}
+        >
+          Reiniciar rotación FS
+        </button>
+      </div>
+
       <div className="asignations">
         <div>
           {personasActivas.map((persona) => {

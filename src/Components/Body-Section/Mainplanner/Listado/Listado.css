@@ -499,6 +499,12 @@
   
 }
 
+/* La selección debe seguir visible aunque la fila tenga color de ausencia. */
+.changeGroups .active2,
+.changeGroups .active3{
+  box-shadow: inset 0 0 0 3px #547725;
+}
+
 .ListLI22{
   border-bottom: 1px solid #701CF5;
   padding: .18rem 0 .18rem 0;
@@ -506,6 +512,30 @@
   padding-left: .5rem;
   font-weight: 100;
   
+}
+
+.ListLI--asignado,
+.ListLI2--asignado{
+  opacity: .55;
+  cursor: not-allowed !important;
+  text-decoration: line-through;
+}
+
+.asignado-tag{
+  display: inline-flex;
+  align-items: center;
+  margin-left: .4rem;
+  padding: 0 .25rem;
+  border-radius: 4px;
+  background: #EB464B;
+  color: #FFFFFF;
+  font-size: .55rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  line-height: 1.2;
+  text-decoration: none;
+  text-transform: uppercase;
+  vertical-align: middle;
 }
 
 .ListLI22:hover{
@@ -529,6 +559,12 @@
 .content-btn-volador:hover{
   transform: scale(1.05);
   cursor: pointer;
+}
+
+.content-btn-volador--disabled{
+  opacity: .55;
+  pointer-events: none;
+  cursor: wait;
 }
 
 .botonflecha{

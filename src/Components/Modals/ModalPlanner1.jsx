@@ -30,8 +30,9 @@ import bandera from '../../assets/Flag-Colombia.gif';
 
 
 /* Import dependencies */
-import { useEffect, useMemo, useRef, useState, useContext } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, useContext } from 'react';
 import { createPortal } from 'react-dom';
+import { FiMaximize2, FiX } from 'react-icons/fi';
 import DatePicker from 'react-datepicker';
 import {Toaster, toast} from 'react-hot-toast';
 
@@ -51,8 +52,11 @@ import {
   horaInicioSchema,
   construirCadena,
   duracionDeTurno,
+  duracionDeElemento,
   aFecha,
+  normalizarHoraDelDia,
 } from '../../utils/plannerStack';
+import { construirDias, indexarHorasPorUsuario } from '../../utils/balancer';
 
 /* VARIABLES */
 let fullPermisions = 0;
@@ -84,7 +88,6 @@ let totalGrupo = 0;
 let totalSchema = 0;
 let auxOut = "--:--:--";
 let fullTime = 0;
-let index = 0;
 
 //Variables 
 let DiaClave;
@@ -107,7 +110,6 @@ let validador8 = 0;
 
 let fechaAuxGlobal;
 let fechaAuxGlobalIn = "--:--:--";
-let nameEventSavedGlobal = "";
 let IDITEMGLOBAL = "";
 let globalCantidad = 0;
 
@@ -150,6 +152,10 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
 
   const [pr,setPr]= useState(0);
   const [showRight,setShowRight]= useState(false);
+  const [continuacion, setContinuacion] = useState([]);
+  const [showMatrizCompleta, setShowMatrizCompleta] = useState(false);
+  const [stackSeleccionado, setStackSeleccionado] = useState("");
+  const [filasStackSeleccionado, setFilasStackSeleccionado] = useState([]);
 
   //Datos del planificador: única conversación con la API (Custom_Hooks/usePlannerData).
   //Los alias conservan los nombres históricos del componente (data, data1, ...).
@@ -173,6 +179,7 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
     savedStacks: data16,
     shiftsDay: data17,
     compensatorios: data18,
+    projections: data19,
     recargarTurnos,
     recargarShiftsFull,
     recargarShiftsDay,
@@ -182,12 +189,15 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
     recargarStacksGuardados,
     recargarProgrammers,
     recargarNotations,
+    recargarProjections,
     guardarTurno,
     guardarStackGuardado,
     limpiarTurnos,
     reemplazarTurnosDeFecha,
+    reemplazarTurnosDeFechas,
     crearCompensatorio,
     cargarStackCorto,
+    obtenerStackGuardado,
     renombrarStackGuardado,
     eliminarStackGuardado,
     vaciarStacks,
@@ -217,6 +227,7 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const observationRef = useRef();
   const stackRef = useRef();
   const saveStackRef = useRef();
+  const guardandoRef = useRef(false);
 
  
   
@@ -251,7 +262,7 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
 
   const crearSaveStack = async (NOMBRESTACK,IDUSER,NOMBRES,INDEX,IDPROGRAMA,EVENT_ID,COLOR,OBSERVACION,FECHA_CLAVE,ID_SCHEMA,INICIO_MAIN,OUT,TIPO)=>{
 
-    await guardarStackGuardado({
+    return await guardarStackGuardado({
       nombreStack: NOMBRESTACK,
       idUser: IDUSER,
       nombres: NOMBRES,
@@ -271,8 +282,19 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
 
   const cleanRegistro = async ()=>{
 
-    //La fecha que se está programando es la del modal (no la de la barra)
-    return await limpiarTurnos(iduser, new Date(fechaPlaner).toISOString());
+    //La fecha que se está programando es la del modal (no la de la barra).
+    //Si el stack tiene continuación en días siguientes, también se limpia.
+    const fechas = [
+      new Date(fechaPlaner),
+      ...(continuacion ?? [])
+        .map((turno) => aFecha(turno?.Inicio_main))
+        .filter(Boolean),
+    ];
+
+    return await reemplazarTurnosDeFechas([], {
+      userId: iduser,
+      fechas,
+    });
 
   };
 
@@ -280,49 +302,11 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
 
     //Limpiamos los registros en la base de datos y refrescamos las vistas
     await cleanRegistro();
+    setContinuacion([]);
     setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
 
     toast.success("Limpieza de lista ejecutado correctamente");
   }
-
-  const validarTimes = ()=>{
-    const inicio = new Date(startHour).getTime();
-    const salida = new Date(EndHour).getTime();
-
-    if(inicio > salida)
-    {
-      toast.error("La hora de inicio del evento es mayor que la hora de salida");
-      return 1;
-    }
-
-    if(inicio === salida)
-    {
-      toast.error("La hora de inicio del evento y la hora de salida son iguales");
-      return 1;
-    }
-
-    return 0;
-  }
-
-  const validarTimesTimeOut = ()=>{
-    const inicio = new Date(startHour).getTime();
-    const salida = new Date(EndHour).getTime();
-
-    if(inicio > salida)
-    {
-      toast.error("La hora de inicio del TimeOut es mayor que la hora de salida");
-      return 1;
-    }
-
-    if(inicio === salida)
-    {
-      toast.error("La hora de inicio del TimeOut y la hora de salida son iguales");
-      return 1;
-    }
-
-    return 0;
-  }
-
 
   const getNameProgram = (idEvento,tipo,ID_event) =>{
 
@@ -377,46 +361,6 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
 
   }
 
-  const getIndex = () =>{
-    let actual = index;
-    let aumentado = actual +1;
-    index = aumentado;
-    return aumentado;
-  }
-
-const transformarNullIndex1 = ()=>{
-  let normal = new Date(fechaBarra);
-  let horas = new Date(startHour).getHours();
-  let minutos = new Date(startHour).getMinutes();
-
-  let nueva = new Date(normal).setHours(horas);
-  let nueva2 = new Date(nueva).setMinutes(minutos);
-
-  return new Date(nueva2);
-}
-
-const transformarPGMIndex1 = ()=>{
-  let normal = new Date(fechaBarra);
-  let horas = new Date(startHour).getHours();
-  let minutos = new Date(startHour).getMinutes();
-
-  let nueva = new Date(normal).setHours(horas);
-  let nueva2 = new Date(nueva).setMinutes(minutos);
-
-  return new Date(nueva2);
-}
-
-const transformarCustomIndexIn = ()=>{
-  let normal = new Date(fechaBarra);
-  let horas = new Date(startHour).getHours();
-  let minutos = new Date(startHour).getMinutes();
-
-  let nueva = new Date(normal).setHours(horas);
-  let nueva2 = new Date(nueva).setMinutes(minutos);
-
-  return new Date(nueva2);
-}
-
 const transformarGenericSalida = ()=>{
   let normal = new Date(fechaBarra);
   let horas = new Date(fechaAuxGlobal).getHours();
@@ -439,32 +383,7 @@ const transformarGenericIn = ()=>{
   return new Date(nueva2);
 }
 
-const transformarCustomIndexOut = ()=>{
-  let normal = new Date(fechaBarra);
-  let horas = new Date(EndHour).getHours();
-  let minutos = new Date(EndHour).getMinutes();
-
-  let nueva = new Date(normal).setHours(horas);
-  let nueva2 = new Date(nueva).setMinutes(minutos);
-
-  return new Date(nueva2);
-}
-
-const validacion = ()=>{
-  let respuesta = 0;
-
-  if( new Date(startHour).toLocaleTimeString() != new Date(fechaAuxGlobal).toLocaleTimeString() )
-  {
-    respuesta = 1;
-  }
-
- return respuesta;
-}
-
-
-
-
-  const add = ()=>{
+  const add = async ()=>{
 
     if(estadoDia === "compensatorio")
     {
@@ -490,238 +409,333 @@ const validacion = ()=>{
       return;
     }
 
-    //obtenerListadoTurnos(); pendiente por optimizar esto ya que a medida que crezca el sistema se volvera mas lenta la consulta
-    index = data1.length;
+    //Evita altas duplicadas por doble clic
+    if(guardandoRef.current) return;
 
-    //PROCESO PARA AGREGAR UN EVENTO TIPO (Programa - Requerimiento - Secundario - custom - programmer - null-30 - time-out)
-    //-------------------------------------------------------------------------------------------------------------------------
+    guardandoRef.current = true;
 
+    try {
+      const observacion = observationRef.current?.value ?? "";
+      const { manuales, horaEsperada } = calcularCadenaManual();
+      const esPrimerEvento = manuales.length === 0;
+      const inicioPanel = enFechaPlaner(aFecha(startHour));
+      const finPanel = enFechaPlaner(aFecha(EndHour));
+      const validarCadena = !esPrimerEvento && Boolean(horaEsperada);
 
-    if(EVENTO == "pgm")
-    {
-       
-      //Valida que se halla seleccionado un programa
-      if(pgmRef.current.value == "" || pgmRef.current.value == "none" )
-      {
-          toast.error("Para agregar un Programa, primero seleccionelo de la lista desplegable");
-      }
+      const esMedianoche = (fecha) => {
+        const valor = aFecha(fecha);
+        return (
+          !!valor &&
+          valor.getHours() === 0 &&
+          valor.getMinutes() === 0 &&
+          valor.getSeconds() === 0
+        );
+      };
 
-  
-      else{
+      const sumarUnDia = (fecha) => {
+        const valor = aFecha(fecha);
+        return valor ? new Date(valor.getTime() + 24 * 60 * 60 * 1000) : null;
+      };
 
-        if(index==0)
-        {
-          crear(iduser,nombres,getIndex(),pgmRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",transformarPGMIndex1(),"------","Programa");
-          setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-          toast.success("Programa agregado al Stack");
+      let borrador = null;
+      let mensajeExito = "Evento agregado al stack manual";
+      let rangoCruce = null;
+
+      const guardarEvento = async (borradores, mensaje = mensajeExito) => {
+        const ultimoIndex = Number(manuales[manuales.length - 1]?.Index);
+        const base = Number.isFinite(ultimoIndex) ? ultimoIndex : manuales.length;
+
+        const lista = borradores.map((evento, posicion) => ({
+          ...evento,
+          Index: base + posicion + 1,
+        }));
+
+        const guardado = await reemplazarStackManual([...manuales, ...lista]);
+
+        if (guardado) {
+          if (observationRef.current) observationRef.current.value = "";
+          toast.success(mensaje);
         }
 
-        else if(index >= 1)
-        {
+        return guardado;
+      };
 
-          if(validacion() == 1)
+      if(EVENTO == "pgm" || EVENTO == "secundary")
+      {
+        const referencia = EVENTO == "pgm" ? pgmRef : secRef;
+        const idPrograma = referencia?.current?.value;
+
+        if(!idPrograma || idPrograma == "none")
+        {
+          toast.error(EVENTO == "pgm"
+            ? "Para agregar un Programa, primero seleccionelo de la lista desplegable"
+            : "Para agregar un Evento Secundario, primero seleccionelo de la lista desplegable");
+          return;
+        }
+
+        const programa = data?.find((item) => String(item?._id) === String(idPrograma));
+        let inicioPrograma = enFechaPlaner(programa?.Start);
+
+        if(!inicioPrograma)
+        {
+          toast.error("El evento seleccionado no tiene una hora de inicio válida");
+          return;
+        }
+
+        //Un evento que abre el stack a las 00:00 pertenece al día siguiente.
+        if(esPrimerEvento && esMedianoche(inicioPrograma))
+        {
+          inicioPrograma = sumarUnDia(inicioPrograma);
+        }
+
+        if(validarCadena && !mismaHoraMinuto(inicioPrograma, horaEsperada))
+        {
+          toast.error(`La hora de inicio debe ser ${formatearHora(horaEsperada)} para mantener la cadena del stack`);
+          return;
+        }
+
+        borrador = {
+          Type: EVENTO == "pgm" ? "Programa" : "Secondary",
+          Event_name: idPrograma,
+          ID_event: "------",
+          Inicio_main: inicioPrograma,
+          Out: "------",
+          Observacion: observacion,
+        };
+        mensajeExito = EVENTO == "pgm"
+          ? "Programa agregado al Stack"
+          : "Evento secundario agregado al Stack";
+      }
+
+      else if(EVENTO == "req")
+      {
+        toast.error("Aun esta pendiente por implemetar el sistema de gestion de requerimientos...");
+        return;
+      }
+
+      else if(EVENTO == "custom" || EVENTO == "timeout" || EVENTO == "programmer")
+      {
+        let inicio = inicioPanel;
+        let fin = finPanel;
+
+        //El primer Programmer arranca con la hora real del programador,
+        //no con la hora del panel central.
+        if(EVENTO == "programmer" && esPrimerEvento)
+        {
+          const idProgrammer = pgmRef.current?.value;
+          const programmer = data14?.find(
+            (item) => String(item?._id) === String(idProgrammer)
+          );
+
+          inicio = enFechaPlaner(programmer?.Time_in);
+          fin = enFechaPlaner(programmer?.Time_out);
+
+          if(!inicio || !fin)
           {
-            toast.error("La hora de inicio del programa debe coincidir con la final del evento anterior");
+            toast.error("El programador seleccionado no tiene horas de inicio y fin válidas");
+            return;
           }
-
-          else{
-            crear(iduser,nombres,getIndex(),pgmRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",new Date(fechaAuxGlobal),"------","Programa");
-            setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-            toast.success("Programa agregado al Stack");
-          }
-          
         }
 
-           
-      }
-      
-    }
+        //Si el evento abre el stack a las 00:00, pertenece al día siguiente.
+        if(esPrimerEvento && esMedianoche(inicio))
+        {
+          inicio = sumarUnDia(inicio);
+          fin = fin ? sumarUnDia(fin) : fin;
+        }
 
-    else if(EVENTO == "req")
-    {
-      toast.error("Aun esta pendiente por implemetar el sistema de gestion de requerimientos...");
-    }
-    
-    else if(EVENTO == "secundary")
-    {
-      
-      //Valida que se halla seleccionado un programa
-      if(secRef.current.value == "" || secRef.current.value == "none" )
+        //Fin a las 00:00 o antes del inicio: termina al día siguiente.
+        //La fecha del evento sigue siendo la del inicio.
+        if(inicio && fin && fin.getTime() < inicio.getTime())
+        {
+          fin = sumarUnDia(fin);
+        }
+
+        if(!inicio || !fin || fin.getTime() <= inicio.getTime())
+        {
+          toast.error("La hora de salida debe ser mayor a la hora de inicio");
+          return;
+        }
+
+        if(validarCadena && !mismaHoraMinuto(inicio, horaEsperada))
+        {
+          toast.error(`La hora de inicio debe ser ${formatearHora(horaEsperada)} para mantener la cadena del stack`);
+          return;
+        }
+
+        rangoCruce = { inicio, fin };
+
+        if(EVENTO == "custom")
+        {
+          const nombre = customRef.current?.value?.trim();
+
+          if(!nombre)
+          {
+            toast.error("Para agregar un evento Custom, por favor, especifique un nombre descriptivo.");
+            customRef.current?.focus();
+            return;
+          }
+
+          borrador = {
+            Type: "Custom",
+            Event_name: nombre,
+            ID_event: "------",
+            Inicio_main: inicio,
+            Out: fin.toISOString(),
+            Observacion: observacion,
+          };
+          mensajeExito = "Evento custom agregado al Stack";
+        }
+
+        else if(EVENTO == "timeout")
+        {
+          borrador = {
+            Type: "TimeOut",
+            Event_name: "TimeOut",
+            ID_event: "------",
+            Inicio_main: inicio,
+            Out: fin.toISOString(),
+            Observacion: observacion,
+          };
+          mensajeExito = "Evento TimeOut agregado al Stack";
+        }
+
+        else
+        {
+          const idProgrammer = pgmRef.current?.value;
+
+          if(!idProgrammer || idProgrammer == "none")
+          {
+            toast.error("Para agregar un evento Programmer, primero seleccionelo de la lista desplegable");
+            return;
+          }
+
+          borrador = {
+            Type: "Programmer",
+            Event_name: idProgrammer,
+            ID_event: "------",
+            Inicio_main: inicio,
+            Out: fin.toISOString(),
+            Observacion: observacion,
+          };
+          mensajeExito = "Programmer agregado al Stack";
+        }
+      }
+
+      else if(EVENTO == "null30")
       {
-          toast.error("Para agregar un Evento Secundario, primero seleccionelo de la lista desplegable");
+        //El primer Null-30 parte de la hora del panel central. En eventos
+        //posteriores manda el fin del evento anterior.
+        let inicioNull = esPrimerEvento
+          ? inicioPanel
+          : (enFechaPlaner(horaEsperada) ?? inicioPanel);
+
+        //Un Null-30 que abre el stack a las 00:00 pertenece al día siguiente.
+        if(esPrimerEvento && esMedianoche(inicioNull))
+        {
+          inicioNull = sumarUnDia(inicioNull);
+        }
+
+        if(!inicioNull)
+        {
+          toast.error("Seleccione una hora de inicio válida en el panel central");
+          return;
+        }
+
+        borrador = {
+          Type: "Null",
+          Event_name: "Null-30",
+          ID_event: "------",
+          Inicio_main: inicioNull,
+          Out: "------",
+          Observacion: observacion,
+        };
+        mensajeExito = "Null-30 agregado al Stack";
       }
 
       else
       {
-        if(index==0)
+        if(mainEventRef.current.value == "" || mainEventRef.current.value == "none")
         {
-          crear(iduser,nombres,getIndex(),secRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",transformarPGMIndex1(),"------","Secondary");
-          setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-          toast.success("Evento secundario agregado al Stack");
-        }
-
-        else if(index >= 1)
-        {
-
-          if(validacion() == 1)
-          {
-            toast.error("La hora de inicio del evento secundario debe coincidir con la final del evento anterior");
-            
-          }
-
-          else{
-            crear(iduser,nombres,getIndex(),secRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",new Date(fechaAuxGlobal),"------","Secondary");
-            setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-            toast.success("Evento secundario agregado al Stack");
-          }
-          
-        }
-      }
-    }
-
-    else if(EVENTO == "custom")
-    {
-       //Valida que se halla escrito un nombre para el evento custom
-       if(customRef.current.value == "" || customRef.current.value == "none" )
-       {
-           toast.error("Para agregar un evento Custom, por favor, especifique un nombre descriptivo.");
-           customRef.current.focus();
-       }
-
-       else{
-        //Validamos que los horarios time sean coherentes
-        if(validarTimes() == 0)
-        {
-          if(index==0)
-          {
-            crear(iduser,nombres,getIndex(),customRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",transformarCustomIndexIn(),transformarCustomIndexOut(),"Custom");
-            setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-            toast.success("Evento custom agregado al Stack");
-          }
-  
-          else if(index >= 1)
-          {
-            if(validacion() == 1)
-            {
-              toast.error("La hora de inicio del evento debe coincidir con la final del evento anterior");
-            }
-  
-            else{
-              crear(iduser,nombres,getIndex(),customRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",new Date(fechaAuxGlobal),transformarCustomIndexOut(),"Custom");
-              setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-              toast.success("Evento custom agregado al Stack");
-            }
-          }
-        }
-       }
-
-
-      
-     
-     
-
-
-      
-    }
-
-    else if(EVENTO == "programmer")
-    {
-      //Valida que se halla seleccionado un programmer de la lista desplegable
-      if(pgmRef.current.value == "" || pgmRef.current.value == "none" )
-      {
-          toast.error("Para agregar un evento Programmer, primero seleccionelo de la lista desplegable");
-      }
-      else
-      {
-        if(index==0)
-        {
-          crear(iduser,nombres,getIndex(),pgmRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",transformarPGMIndex1(),transformarCustomIndexOut(),"Programmer");
-          setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-          toast.success("Programmer agregado al Stack");
-        }
-
-        else if(index >= 1)
-        {
-
-          if(validacion() == 1)
-          {
-            toast.error("La hora de inicio del evento programmer debe coincidir con la final del evento anterior");
-          }
-
-          else{
-            crear(iduser,nombres,getIndex(),pgmRef.current.value,"------","red",observationRef.current.value,new Date(fechaPlaner),"------",new Date(fechaAuxGlobal),transformarCustomIndexOut(),"Programmer");
-            setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-            toast.success("Programmer agregado al Stack");
-          }
-          
-        }
-      }
-    }
-
-    else if(EVENTO == "null30")
-    {
-      
-      //valido si es el primer elemento o no y opero segun corresponda para un null-30
-      if(index==0)
-      {
-          crear(iduser,nombres,getIndex(),"Null-30","------","red",observationRef.current.value,new Date(fechaPlaner),"------",transformarNullIndex1(),"------","Null");
-          toast.success("Null-30 agregado al Stack");
-          setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-          
-      }
-
-      else if(index >= 1)
-      {
-        crear(iduser,nombres,getIndex(),"Null-30","------","red",observationRef.current.value,new Date(fechaPlaner),"------",new Date(fechaAuxGlobal),"------","Null");
-        toast.success("Null-30 agregado al Stack");
-        setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-
-      }
-      
-    }
-
-    else if(EVENTO == "timeout")
-    {
-       //Validamos que los horarios time sean coherentes
-       if(validarTimesTimeOut() == 0)
-       {
-        if(index==0)
-        {
-          crear(iduser,nombres,getIndex(),"TimeOut","------","red",observationRef.current.value,new Date(fechaPlaner),"------",transformarCustomIndexIn(),transformarCustomIndexOut(),"TimeOut");
-          setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-          toast.success("Evento TimeOut agregado al Stack");
-        }
-
-        else if(index >= 1)
-          {
-            if(validacion() == 1)
-            {
-              toast.error("La hora de inicio del TimeOut debe coincidir con la final del evento anterior");
-            }
-  
-            else{
-              crear(iduser,nombres,getIndex(),"TimeOut","------","red",observationRef.current.value,new Date(fechaPlaner),"------",new Date(fechaAuxGlobal),transformarCustomIndexOut(),"TimeOut");
-              setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-              toast.success("Evento TimeOut agregado al Stack");
-            }
-          }
-
-       }
-
-
-
-    }
-
-    else{
-      //Valida que se halla escrito un nombre para el evento custom
-      if(mainEventRef.current.value == "" || mainEventRef.current.value == "none" )
-      {
           toast.error("Debe seleccionar un tipo de evento de la lista desplegable.");
           mainEventRef.current.focus();
+        }
+        return;
       }
+
+      const medianoche = rangoCruce
+        ? new Date(
+            rangoCruce.inicio.getFullYear(),
+            rangoCruce.inicio.getMonth(),
+            rangoCruce.inicio.getDate() + 1,
+            0,
+            0,
+            0,
+            0
+          )
+        : null;
+
+      const cruzaMedianoche =
+        rangoCruce &&
+        medianoche &&
+        rangoCruce.fin.getTime() > medianoche.getTime();
+
+      if(cruzaMedianoche)
+      {
+        const inicio = rangoCruce.inicio;
+        const fin = rangoCruce.fin;
+        const diaActual = inicio.toLocaleDateString("es-CO", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        });
+        const diaSiguiente = medianoche.toLocaleDateString("es-CO", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        });
+
+        const primeraParte = {
+          ...borrador,
+          Inicio_main: inicio,
+          Out: medianoche.toISOString(),
+          Observacion: observacion,
+        };
+
+        const segundaParte = {
+          ...borrador,
+          Inicio_main: medianoche,
+          Out: fin.toISOString(),
+          Observacion: "",
+        };
+
+        confirmarAccion({
+          titulo: "El turno cruza la medianoche",
+          contenido: `El turno de ${formatearHora(inicio)} a ${formatearHora(fin)} termina después de las 00:00. ¿Deseas dividirlo en dos registros? La parte de ${formatearHora(inicio)} a 00:00 quedará en ${diaActual} y la parte de 00:00 a ${formatearHora(fin)} quedará en ${diaSiguiente}.`,
+          textoConfirmar: "Sí, dividir turno",
+          textoCancelar: "No, cancelar",
+          accion: async () => {
+            if(guardandoRef.current) return;
+
+            guardandoRef.current = true;
+
+            try {
+              await guardarEvento(
+                [primeraParte, segundaParte],
+                "Turno dividido y agregado al Stack"
+              );
+            } finally {
+              guardandoRef.current = false;
+            }
+          },
+        });
+        return;
+      }
+
+      await guardarEvento([borrador]);
+    } finally {
+      guardandoRef.current = false;
     }
-
-
   }
 
   const del = ()=>{
@@ -745,7 +759,7 @@ const validacion = ()=>{
      contenido: "Se recalcularán las horas del stack manual para no dejar huecos entre los eventos.",
      textoConfirmar: "Sí, eliminar",
      accion: async () => {
-       const restantes = (data1 ?? []).filter(
+       const restantes = turnosVisibles.filter(
          (turno) => String(turno?._id) !== String(seleccionado._id)
        );
 
@@ -1133,13 +1147,11 @@ const validacion = ()=>{
    }
    
 
-   const antes = (FECHAINICIO,FECHAFINAL)=>{
-    //para el antes debo contar cuantas semanas han pasado desde la registrada hasta la semana actual y hacer la operacion correcta
-    //para dejar al dia la rotacion correcta de los turnos
-  
-    //console.log("Entró a ANTES")
+   const antes = ()=>{
+    //La rama "antes" no predice el turno sugerido: la vista muestra
+    //únicamente lo que ya esté guardado para esa fecha.
     return "Respuesta desde antes"
-  }
+   }
 
 
   useEffect(() => {
@@ -1156,57 +1168,31 @@ const validacion = ()=>{
 
   const ciclo = (totalgrupo,actual,domingos,idGrupo,isFijo,nombre,sid)=>{
 
-    let index = 0;
+    let index = actual;
     let turno = "";
-    
-    //ordenamos de menor a mayor el array de turnos variables
-    arrayVariables.sort(function(a,b){return a-b})
-    
-    
-    //Numero de semanas transcurridas (actual aumentado progresivamente)
-    for(let i=0; i<domingos; i++ )                                                     
+    const esFijo = isFijo === true || isFijo === "true" || isFijo === 1;
+
+    //Solo las rotaciones de los trabajadores no fijos participan.
+    //Se eliminan duplicados para que la secuencia no se repita.
+    arrayVariables = [...new Set(arrayVariables.map(Number))].sort((a, b) => a - b);
+
+    //Número de semanas completas transcurridas
+    for(let i=0; i<domingos; i++ )
     {
-      //Procedimiento exclusivo para los turnos que NO son fijos 
-      if(isFijo == false)  
+      if(!esFijo && arrayVariables.length > 0)
       {
-      
-        let contador = 1;
-        for (let a = 0; a < arrayVariables.length; a++)
+        const posicion = arrayVariables.indexOf(Number(actual));
+
+        if(posicion !== -1)
         {
-          if (contador == arrayVariables.length) 
-          {
-            index = arrayVariables[0];
-            a = arrayVariables.length;
-            actual = index;
-          }
-  
-          else{
-            if (actual == arrayVariables[a]) 
-            {
-              index = arrayVariables[a+1];
-              a = arrayVariables.length;
-              actual=index;
-            }
-          }
-  
-          contador++;
-          
+          actual = arrayVariables[(posicion + 1) % arrayVariables.length];
+          index = actual;
         }
-       
       }
-  
-      //Procedimiento exclusivo para los turnos que SI son fijos 
-      else if(isFijo == true)
+      else if(esFijo)
       {
-          index=actual;
+        index = actual;
       }
-  
-      else{
-        console.log("isfijo no se definio");
-      }
-  
-      
-  
     }
     
   
@@ -1237,7 +1223,59 @@ const validacion = ()=>{
     return turno;  /*+ "  ----- " + (domingos == 0 ? "Semana actual" :  domingos == 1 ? domingos +" Semana " : domingos + " Semanas ");*/
   }
 
+  //Estado de la fecha frente al período de evaluación de Rules.
+  //Es independiente del trabajador: no usa dayKey ni el esquema.
+  const obtenerEstadoPeriodo = (idUsuario, fechaReferencia = fechaPlaner) => {
+    const regla = data2?.[0];
+    const referencia = aFecha(fechaReferencia);
+
+    const textoPeriodo = String(regla?.DiaPeriod ?? "");
+    const partesPeriodo = textoPeriodo.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const inicioPeriodo = partesPeriodo
+      ? new Date(
+          Number(partesPeriodo[1]),
+          Number(partesPeriodo[2]) - 1,
+          Number(partesPeriodo[3])
+        )
+      : aFecha(regla?.DiaPeriod);
+
+    if (!regla || !referencia || !inicioPeriodo) {
+      return "sin-rotacion";
+    }
+
+    const inicio = new Date(
+      inicioPeriodo.getFullYear(),
+      inicioPeriodo.getMonth(),
+      inicioPeriodo.getDate()
+    );
+    const fin = new Date(inicio.getTime());
+    fin.setDate(inicio.getDate() + (Number(regla.Dia) || 0));
+
+    const fecha = new Date(
+      referencia.getFullYear(),
+      referencia.getMonth(),
+      referencia.getDate()
+    );
+
+    if (fecha.getTime() < inicio.getTime()) return "antes";
+    if (fecha.getTime() > fin.getTime()) return "despues";
+    return "entre";
+  };
+
   const Pronostico = (PAYROLLID)=>{ 
+    IDSCHEMAGLOBAL = "";
+    const periodo = obtenerEstadoPeriodo(PAYROLLID, fechaPlaner);
+
+    if(periodo === "antes")
+    {
+      return "Respuesta desde antes";
+    }
+
+    if(periodo === "sin-rotacion")
+    {
+      return "Sin rotación";
+    }
+
     data10.map((rotationsManager)=>(
       PAYROLLID == rotationsManager.userId  &&  
   
@@ -1253,12 +1291,26 @@ const validacion = ()=>{
         
     ))
 
-    //creo un nuevo arreglo con los datos de turnos variables para enviarlos a ciclo, y excluyo el actual 0 que es para las personas desactivadas
-    data10?.map((RM)=>(
-      RM.groupId == globalIdGroup && RM.fijo == false && RM.actual != 0
-      ? arrayVariables.push(RM.actual) 
-      :null
-   ))
+    //Turnos variables del grupo: solo personal no fijo, sin duplicados.
+    data10?.forEach((RM) => {
+      const esFijo = RM.fijo === true || RM.fijo === "true" || RM.fijo === 1;
+
+      if (
+        RM.groupId == globalIdGroup &&
+        !esFijo &&
+        RM.actual != 0 &&
+        !arrayVariables.includes(RM.actual)
+      ) {
+        arrayVariables.push(RM.actual);
+      }
+    });
+
+    //Tanto “entre” como “después” avanzan por semanas completas.
+    //“Antes” ya salió arriba y no predice.
+    if(periodo === "entre" || periodo === "despues")
+    {
+      return despues(null, null, DiaClave, totalSche, totalGP, actual, PAYROLLID);
+    }
 
    
   
@@ -1309,7 +1361,7 @@ const validacion = ()=>{
           //que des alguna de estas tres opciones por el dia actual con respecto al dia clave ejemplo:  si el dia actual es menor que el dia clave entonces se usara la funcion "antes", si el dia actual es
           //mayor al dia clave, se usara la funcion despues, y si el dia actual corresponde a la semana del dia clave, se usara la funcion "entre"
           
-          let fechaActual = new Date(fechaBarra).setHours(0,0,0,0);
+          let fechaActual = new Date(fechaPlaner).setHours(0,0,0,0);
   
             //validacion 1 (si la fecha actual eesta dentro de del rango de fechas de inicio y final del dia clave)
             fechaActual >= fechaInicioSemana && fechaActual <= fechaFinalSemana 
@@ -1366,26 +1418,23 @@ const validacion = ()=>{
     //para el despues tambien debo contar cuantas semanas han pasado y hacer la operacion correcta simplemete que no debo actualizar nada 
     //en la base de datos si no solo mostrar en que turno estaria el trabajador para esa fecha
   
-    //OBTENGO LA DIFERENCIA EN DIAS DE LA FECHA FUTURA  Y EL DIA CLAVE
-    let fechaInicio = new Date(new Date(DIACLAVE).getTime()).setHours(0,0,0,0);
-    let fechaFin    = new Date(new Date(fechaBarra).getTime()).setHours(0,0,0,0);
-  
-    let diff = fechaFin - fechaInicio;
-    let diasPasados = diff/(1000*60*60*24) // (1000*60*60*24) --> milisegundos -> segundos -> minutos -> horas -> días
-    //console.log("Dias pasados "+diasPasados + " -- " + new Date(DIACLAVE).toDateString());  
-  
-    //ya que tengo los dias que han pasado, debo calcular cuantas semanas han pasado
+    //Se cuentan semanas completas: el domingo de la semana en curso no
+    //adelanta la rotación; solo el paso al lunes siguiente.
+    const inicio = aFecha(DIACLAVE);
+    const fin = aFecha(fechaPlaner);
+
     let Domingos = 0;
-  
-    for (let index = 1; index <= diasPasados; index++) 
-    {
-       let fecha = new Date (new Date(DIACLAVE).setHours(0,0,0,0)).setDate(new Date(DIACLAVE).getDate()+index)
-       
-       if(new Date(fecha).getUTCDay()==0) //cero es el dia domingo
-       {
-          Domingos++;
-       }
-  
+
+    if (inicio && fin) {
+      const inicioDia = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+      const finDia = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate());
+      const diasPasados = Math.floor(
+        (Date.UTC(finDia.getFullYear(), finDia.getMonth(), finDia.getDate()) -
+          Date.UTC(inicioDia.getFullYear(), inicioDia.getMonth(), inicioDia.getDate())) /
+          (1000 * 60 * 60 * 24)
+      );
+
+      Domingos = diasPasados > 0 ? Math.floor(diasPasados / 7) : 0;
     }
   
     
@@ -1411,114 +1460,147 @@ const validacion = ()=>{
 
  const ejecutarOk = async () => { 
 
-    await recargarShiftsFull();
-    
-    // Asegurarnos de traer los compensatorios actualizados para validar
-    await obtenerCompensatorios();
+    //Se revalida el día justo antes de escribir: entre la confirmación y la
+    //acción el estado pudo cambiar (compensatorio, descanso u otro stack).
+    const compensatoriosActuales = (await obtenerCompensatorios()) ?? [];
 
-    let compensatorioAsignado = false;
+    if (compensatorioEnFecha(compensatoriosActuales, iduser, fechaPlaner)) {
+      toast.error("El trabajador ya tiene asignado un compensatorio para esta fecha, no se le puede asignar una programación");
+      return;
+    }
 
-    // Validamos si ya tiene un compensatorio asignado en la fecha actual
-    data18?.forEach((compensatory) => {
-      if (
-        compensatory.FechaInicio && 
-        new Date(compensatory.FechaInicio).toISOString() === new Date(fechaPlaner).toISOString() && 
-        compensatory.Id_Empleado === iduser
-      ) {
-        compensatorioAsignado = true;
+    if (rangoCubreFecha(data4, iduser, fechaPlaner)) {
+      toast.error("El trabajador ya tiene asignado un descanso, para asignar un turno primero elimine el descanso asignado");
+      return;
+    }
+
+    const items = [...(data11 ?? [])]
+      .filter((stack) => String(stack?.ID_esquema) === String(IDSCHEMAGLOBAL))
+      .sort((a, b) => (Number(a?.Order) || 0) - (Number(b?.Order) || 0));
+
+    if (items.length === 0) {
+      toast.error("No hay un stack sugerido configurado para el turno de este trabajador");
+      return;
+    }
+
+    //Respaldo: conserva el guardado anterior si la cadena no se puede calcular.
+    const guardarSugeridoAnterior = async () => {
+      const promesas = (data11 ?? []).map((stacks, index) => {
+        if (String(stacks.ID_esquema) === String(IDSCHEMAGLOBAL)) {
+          return crear(
+            iduser,
+            nombres,
+            index,
+            stacks.ID_programa,
+            stacks._id,
+            "Brown",
+            observationRef.current?.value ?? "",
+            new Date(fechaPlaner),
+            stacks.ID_esquema,
+            inicioMain,
+            "------",
+            stacks.Type,
+            stacks.Value
+          );
+        }
+        return null;
+      });
+
+      await Promise.all(promesas);
+      await recargarTurnos();
+      await recargarShiftsDay();
+      await recargarShiftsFull();
+
+      if (observationRef.current?.value === "") {
+        observationRef.current.value = "-----";
       }
+
+      setAuxiliar(!auxiliar);
+      toast.success("Stack sugerido agregado correctamente");
+    };
+
+    const usarRespaldo = async (motivo) => {
+      await guardarSugeridoAnterior();
+      toast(motivo);
+    };
+
+    const inicioNormalizado = enFechaPlaner(
+      horaInicioRotacion() ?? horaInicioSchema(data9, IDSCHEMAGLOBAL)
+    );
+
+    if (!inicioNormalizado) {
+      await usarRespaldo("No se pudo calcular la hora inicial; el stack se guardó con el método anterior.");
+      return;
+    }
+
+    //Cada evento empieza donde termina el anterior. La cadena puede cruzar
+    //la medianoche; por eso se guardan las fechas reales de Inicio y Out.
+    const cadena = construirCadena(
+      items,
+      inicioNormalizado,
+      fechaPlaner,
+      (item) =>
+        duracionDeElemento(item, {
+          programs: data,
+          programmers: data14,
+        })
+    );
+
+    if (cadena.filas.some((fila) => fila.duracionMin <= 0)) {
+      await usarRespaldo("No se pudieron calcular todas las duraciones; el stack se guardó con el método anterior.");
+      return;
+    }
+
+    const observacion =
+      (observationRef.current?.value ?? "").trim() || "-----";
+
+    const payloads = cadena.filas.map((fila, posicion) => {
+      const item = fila.item;
+      const guardaHora =
+        item.Type === "Custom" ||
+        item.Type === "TimeOut" ||
+        item.Type === "Programmer";
+
+      return {
+        idUser: iduser,
+        nombres,
+        index: fila.orden,
+        idPrograma: item.ID_programa,
+        eventId: item._id ?? "------",
+        color: "Brown",
+        observacion: posicion === 0 ? observacion : "-----",
+        fechaClave: new Date(fechaPlaner),
+        idSchema: item.ID_esquema,
+        inicioMain: fila.inicio,
+        out: guardaHora && fila.fin ? fila.fin.toISOString() : "------",
+        tipo: item.Type,
+      };
     });
 
-    // Validamos que tipo de agregado es, si es del stack sugerido o uno custom (0 => sugerido, 1 => custom)
-    if(validador == 0)
-    {
-      
-      //valido que no haya un registro realizado previamente 
-      data12.map((shifts)=>(
-        shifts.Fecha_clave == new Date(fechaPlaner).toISOString() && shifts.ID_user == iduser &&  (validador2 = 1)
-      ))
+    //Reemplaza el día completo para no dejar turnos a medias si algo falla.
+    const guardado = await reemplazarTurnosDeFecha(payloads, {
+      userId: iduser,
+      fecha: fechaPlaner,
+    });
 
-      /* valido que no se haya asignado un descanso al trabajador*/
-      data4?.map((breaks)=>(
-        breaks.FechaInicio == new Date(fechaPlaner).toISOString() && breaks.Id_Empleado == iduser &&  (validador3 = 1)
-      ))
+    if (!guardado) return;
 
-      if(compensatorioAsignado) {
-        toast.error("El trabajador ya tiene asignado un compensatorio para esta fecha, no se le puede asignar una programación");
-      }
+    if (observationRef.current) observationRef.current.value = "";
 
-      else if(validador2 == 1)
-      {
-        setIDUSER(iduser);
-        validador2 = 0;
-        toast.error("Ya se ha guardado el stack sugerido para la fecha actual ");
-      }
-
-      else if(validador3 == 1)
-      {
-        validador3 = 0;
-        toast.error("El Trabajador ya tiene asignado un descanso, para asignar un turno primero elimine el descanso asignado ");
-      }
-
-      else{
-        validador2 = 0;
-        
-        setIDUSER(iduser);
-      
-        // Recorremos y creamos cada elemento del stack sugerido
-        const promesasCreacion = data11.map((stacks, index) => {
-          if (stacks.ID_esquema == IDSCHEMAGLOBAL) {
-            return crear(
-              iduser,
-              nombres,
-              index,
-              stacks.ID_programa,
-              stacks._id,
-              "Brown",
-              observationRef.current.value,
-              new Date(fechaPlaner),
-              stacks.ID_esquema,
-              inicioMain,
-              "------",
-              stacks.Type,
-              stacks.Value
-            );
-          }
-          return null;
-        });
-
-        // Esperamos a que se terminen de guardar todos los registros en la API
-        await Promise.all(promesasCreacion);
-
-        // =========================================================================
-        // PASO CLAVE DE REACTIVIDAD: Actualizamos los turnos y el rango de días (data17)
-        // para que el Restante, el Balancer y la Matriz inferior se refresquen solos.
-        // =========================================================================
-        await recargarTurnos();
-        await recargarShiftsDay();
-
-        setAuxiliar(!auxiliar);  // este estado notifica al contexto para ser usado en listado
-        toast.success("Stack sugerido agregado correctamente");
-      }
-      
-
-      if(observationRef.current.value == "")
-      {
-        observationRef.current.value = "-----"
-      }
-        
-    }
-
-    else if(validador == 1){
-      toast.success("Estack CUSTOM");
-    }
-
-    else{
-        toast.error("NO SE PUDO DEFINIR EL TIPO DE OPERACION QUE SE DESEA REALIZAR");
-    }
+    await Promise.all([
+      recargarShiftsFull(),
+      recargarShiftsDay(),
+    ]);
+    setAuxiliar(!auxiliar);
+    toast.success("Stack sugerido agregado correctamente");
   }
 
   const ok = () => {
+
+    if (esTurnoAnterior) {
+      toast.error("Esta fecha es anterior a la rotación. No hay un turno sugerido para aceptar.");
+      return;
+    }
 
     if(estadoDia === "compensatorio")
     {
@@ -1529,6 +1611,24 @@ const validacion = ()=>{
     if(estadoDia === "descanso")
     {
       toast.error("El trabajador ya tiene asignado un descanso, para asignar un turno primero elimine el descanso asignado");
+      return;
+    }
+
+    if(estadoDia === "mixto")
+    {
+      toast.error("Hay turnos manuales y sugeridos mezclados en esta fecha. Limpie el día antes de continuar.");
+      return;
+    }
+
+    if(estadoDia === "sugeridoGuardado")
+    {
+      toast.error("Ya existe el turno sugerido guardado para esta fecha. Use la escoba si desea limpiarlo.");
+      return;
+    }
+
+    if(estadoDia === "manual")
+    {
+      toast.error("Hay un stack manual en esta fecha. Use la escoba si desea volver al turno sugerido.");
       return;
     }
 
@@ -1558,7 +1658,7 @@ const validacion = ()=>{
 
     confirmarAccion({
       titulo: "¿Guardar el turno sugerido según rotación?",
-      contenido: "Se asignará el stack sugerido del turno actual. Después no se podrá crear un stack manual sin limpiar el día.",
+      contenido: "Se asignarán los eventos del turno actual con sus horas encadenadas. Después no se podrá crear un stack manual sin limpiar el día.",
       textoConfirmar: "Sí, guardar",
       accion: ejecutarOk,
     });
@@ -1935,20 +2035,6 @@ const validacion = ()=>{
     SETEVENTO(mainEventRef.current.value);
   }
 
-  const getTime = (fecha) =>{
-    let recibida = new Date(fecha).getTime();
-    let nueva = new Date(recibida).toLocaleTimeString();
-
-    //Valido si es el primer index para guardar el valor en una variable
-    if(index==1)
-    {
-      //FECHAINICIOGLOBAL = nueva;
-    }
-    
-    return nueva;
-  }
-
-
   const limpiar = ()=>{
 
     if(estadoDia === "compensatorio")
@@ -2043,110 +2129,157 @@ const validacion = ()=>{
   }
 
   const timeAcumulado = ()=>{
-    let salida =  new Date(transformarGenericSalida()).getTime();
-    let inicio =  new Date(transformarGenericIn()).getTime();
-    let nueva = (salida - inicio)/ (1000 * 60);
-
-    let respuesta = new Date().setHours(0,0,0,0);
-    respuesta = new Date(respuesta).setMinutes(nueva);
-
-    return new Date(respuesta).toLocaleTimeString();
+    const minutos = Math.max(0, Number(minutosDelDia()) || 0);
+    const respuesta = new Date();
+    respuesta.setHours(0, 0, 0, 0);
+    respuesta.setMinutes(minutos);
+    return respuesta.toLocaleTimeString();
   }
 
   const guardarStack = async ()=>{
-    let identificador = 0;
 
-    data16?.map((savedStacks)=>(
-      saveStackRef.current.value == savedStacks.Nombre_Stack && (identificador = 1)
-    ))
+    const nombreStack = saveStackRef.current?.value?.trim() ?? "";
 
-    if(saveStackRef.current.value == "")
+    if(!nombreStack)
     {
       toast.error("Para salvar un stack creado, primero debe asignarle un nombre");
-      saveStackRef.current.focus();
+      saveStackRef.current?.focus();
+      return;
     }
 
-    else if(identificador == 1)
-    { 
-      //Validar si ya existe el nombre
+    const nombreDuplicado = (data16 ?? []).some(
+      (savedStacks) => String(savedStacks?.Nombre_Stack) === String(nombreStack)
+    );
+
+    if(nombreDuplicado)
+    {
       toast.error("El nombre que desea asignar al stack ya existe");
+      return;
     }
 
-    else if(data1.length==0)
-    { 
-      //Validar si hay un stack para guardar, es decir que no este en blanco
+    if((data1 ?? []).length === 0)
+    {
       toast.error("No hay un stack para guardar... la ventana de Stacks esta vacia");
+      return;
     }
-    else{
 
-      const nombreStack = saveStackRef.current.value;
+    const resultados = await Promise.all(
+      (data1 ?? []).map((shift)=>(
+        crearSaveStack(
+          nombreStack,
+          shift.ID_user,
+          shift.Nombres,
+          shift.Index,
+          shift.Event_name,
+          shift.ID_event,
+          shift.Color,
+          shift.Observacion,
+          new Date(shift.Fecha_clave),
+          shift.Id_Schema,
+          new Date(shift.Inicio_main),
+          shift.Out,
+          shift.Type)
+      ))
+    );
 
-      await Promise.all(
-        (data1 ?? []).map((shift)=>(
-          crearSaveStack(
-            nombreStack,
-            shift.ID_user,
-            shift.Nombres,
-            shift.Index,
-            shift.Event_name,
-            shift.ID_event,
-            shift.Color,
-            shift.Observacion,
-            new Date(shift.Fecha_clave),
-            shift.Id_Schema,
-            new Date(shift.Inicio_main),
-            shift.Out,
-            shift.Type)
-        ))
-      );
-
-      // Refrescamos la lista de stacks guardados en el panel lateral
-      recargarStacksGuardados();
-      saveStackRef.current.value = "";
-      toast.success("Stack guardao correctamente");
+    if(resultados.some((resultado) => resultado === false))
+    {
+      toast.error("No se pudo guardar el stack completo");
+      return;
     }
+
+    await recargarStacksGuardados();
+    saveStackRef.current.value = "";
+    toast.success("Stack guardado correctamente");
   }
  
-  //Funcion que sobrescribe la indormacion en data1
+ //Carga el stack seleccionado sin tocar los turnos reales del día.
  const traer= async (nombreStack) => {
 
-  nameEventSavedGlobal = nombreStack;
+  const filas = await obtenerStackGuardado(nombreStack);
 
-  await cargarStackCorto(nombreStack);
+  if(filas === null) return;
+
+  setStackSeleccionado(nombreStack);
+  setFilasStackSeleccionado(Array.isArray(filas) ? filas : []);
   saveStackRef.current.value = nombreStack;
   setValidaColor(true);
-  toast.success("Stack actualizado");
-
+  toast.success("Stack cargado. Revísalo y usa Aplicar Stack.");
 }
 
-const updateStackSaved = async ()=>{
+const updateStackSaved = async (nombreActual, nuevoNombre)=>{
 
-  await renombrarStackGuardado(nameEventSavedGlobal, saveStackRef.current.value);
-  toast.success("Nombre del stack guardado, editado correctamente");
+  const actualizado = await renombrarStackGuardado(nombreActual, nuevoNombre);
 
+  if(actualizado)
+  {
+    setStackSeleccionado(nuevoNombre);
+    toast.success("Nombre del stack guardado, editado correctamente");
+  }
+
+  return actualizado;
 }
 
-const deleteStackSaved = async ()=>{
+const deleteStackSaved = async (nombre)=>{
 
-  await eliminarStackGuardado(nameEventSavedGlobal);
-  toast.success("Stack eliminado correctamente");
+  const eliminado = await eliminarStackGuardado(nombre);
 
+  if(eliminado)
+  {
+    setStackSeleccionado("");
+    setFilasStackSeleccionado([]);
+    toast.success("Stack eliminado correctamente");
+  }
+
+  return eliminado;
 }
 
 
 
 
 //boton editar stack
-const editSaveStack = ()=>{
-  if(nameEventSavedGlobal == "")
+const editSaveStack = async ()=>{
+  const nombreActual = stackSeleccionado;
+  const nuevoNombre = saveStackRef.current?.value?.trim() ?? "";
+
+  if(nombreActual === "")
   {
     toast.error("Para editar el nombre de un stack guardado, primero seleccionelo dando doble click");
+    return;
   }
 
-  else{
-    updateStackSaved();
+  if(nuevoNombre === "")
+  {
+    toast.error("El stack debe tener un nombre");
+    saveStackRef.current?.focus();
+    return;
+  }
+
+  if(nuevoNombre === nombreActual)
+  {
+    toast.error("El nuevo nombre debe ser diferente al actual");
+    return;
+  }
+
+  const nombreDuplicado = (data16 ?? []).some(
+    (savedStacks) =>
+      String(savedStacks?.Nombre_Stack) === String(nuevoNombre) &&
+      String(savedStacks?.Nombre_Stack) !== String(nombreActual)
+  );
+
+  if(nombreDuplicado)
+  {
+    toast.error("El nombre que desea asignar al stack ya existe");
+    return;
+  }
+
+  const actualizado = await updateStackSaved(nombreActual, nuevoNombre);
+
+  if(actualizado)
+  {
     saveStackRef.current.value = "";
-    nameEventSavedGlobal="";
+    setStackSeleccionado("");
+    setFilasStackSeleccionado([]);
   }
 }
 
@@ -2158,8 +2291,9 @@ const openRight = ()=>{
   //Limpiamos el input de nombre stcak saved
   saveStackRef.current.value="";
 
-  //reiniciamos la variable que indica que se habia llamado un stack guardado
-  nameEventSavedGlobal = "";
+  //Reiniciamos el stack seleccionado
+  setStackSeleccionado("");
+  setFilasStackSeleccionado([]);
 
   //Mostramos o ocultamos la ventana
   setShowRight(!showRight);
@@ -2171,19 +2305,20 @@ const openRight = ()=>{
   IDITEMGLOBAL = "";
 }
 
-const eliminarItemSavedStack = ()=>{
+const eliminarItemSavedStack = async ()=>{
 
-  if(nameEventSavedGlobal == "")
+  if(stackSeleccionado === "")
   {
     toast.error("Para eliminar un stack guardado, primero seleccionelo dando doble click");
+    return;
   }
 
-  else{
-    deleteStackSaved();
+  const eliminado = await deleteStackSaved(stackSeleccionado);
+
+  if(eliminado)
+  {
     saveStackRef.current.value = "";
-    nameEventSavedGlobal="";
   }
-  
 }
 
 
@@ -2194,6 +2329,10 @@ const reGet = ()=>{
 
   //Limpiamos el input de nombre stcak saved
   saveStackRef.current.value="";
+
+  //Reiniciamos el stack seleccionado
+  setStackSeleccionado("");
+  setFilasStackSeleccionado([]);
 
   //reiniciamos el color por defecto del item
   setValidaColor(false);
@@ -2272,43 +2411,94 @@ const corroborarDia = (l,m,mi,j,v,s,d)=>{
   return respuesta;
 }
 
-const aplicarStack = ()=>{
-  if(nameEventSavedGlobal == "")
+const aplicarStack = async ()=>{
+  if(stackSeleccionado === "" || filasStackSeleccionado.length === 0)
   {
     toast.error("Para aplicar un stack guardado, primero seleccionelo dando doble click");
+    return;
   }
 
-  else{
+  const filas = [...filasStackSeleccionado].sort(
+    (a, b) => (Number(a?.Index) || 0) - (Number(b?.Index) || 0)
+  );
 
-    //toast.success("Es.. " + data1.length);
-    
-    data1?.map((savedStacks)=>(
+  const horaBase = enFechaPlaner(filas[0]?.Inicio_main);
 
-      crear(
-        iduser,
-        nombres,
-        savedStacks.Index,
-        savedStacks.Event_name,
-        savedStacks.ID_event,
-        savedStacks.Color,
-        savedStacks.Observacion,
-        new Date(fechaBarra),
-        savedStacks.Id_Schema,
-        new Date(savedStacks.Inicio_main),
-        savedStacks.Out,
-        savedStacks.Type)
-    ))
-
-      recargarTurnos();
-
-      //Notificamos de el cambio a la barra para que se ponga en color verde de fondo que es el color asignado a un descanso
-      setAuxiliar(!auxiliar);  //este estado notifica al contexto para ser usado en listado
-
-      saveStackRef.current.value = "";
-      toast.success("Stack aplicadocorrectamente");
-  
-          
+  if(!horaBase)
+  {
+    toast.error("El stack guardado no tiene una hora de inicio válida");
+    return;
   }
+
+  const cadena = construirCadena(
+    filas,
+    horaBase,
+    fechaPlaner,
+    (turno) =>
+      duracionDeTurno(turno, {
+        programs: data,
+        programmers: data14,
+        stacks: data11,
+      })
+  );
+
+  if(cadena.filas.some((fila) => fila.duracionMin <= 0))
+  {
+    toast.error("No se pudo aplicar el stack: revise las horas de sus eventos");
+    return;
+  }
+
+  const diaLocal = (valor) => {
+    const fecha = aFecha(valor) ?? aFecha(fechaPlaner) ?? new Date();
+    const dia = new Date(fecha.getTime());
+    dia.setHours(0, 0, 0, 0);
+    return dia;
+  };
+
+  const diaPlaner = diaLocal(fechaPlaner);
+  const indicesPorDia = new Map();
+
+  const payloads = cadena.filas.map((fila) => {
+    const turno = fila.item;
+    const guardaHora =
+      turno.Type === "Custom" ||
+      turno.Type === "TimeOut" ||
+      turno.Type === "Programmer";
+
+    const fechaClave = diaLocal(fila.inicio);
+    const claveDia = fechaClave.toISOString();
+    const index = (indicesPorDia.get(claveDia) ?? 0) + 1;
+    indicesPorDia.set(claveDia, index);
+
+    return {
+      idUser: iduser,
+      nombres,
+      index,
+      idPrograma: turno.Type === "Null" ? "Null-30" : turno.Event_name,
+      eventId: turno.ID_event ?? "------",
+      color: "red",
+      observacion: turno.Observacion ?? "",
+      fechaClave,
+      idSchema: "------",
+      inicioMain: fila.inicio ?? fechaClave,
+      out: guardaHora && fila.fin ? fila.fin.toISOString() : "------",
+      tipo: turno.Type,
+    };
+  });
+
+  const guardado = await reemplazarTurnosDeFechas(payloads, {
+    userId: iduser,
+    fechas: [diaPlaner, ...payloads.map((payload) => payload.fechaClave)],
+  });
+
+  if(!guardado) return;
+
+  setStackSeleccionado("");
+  setFilasStackSeleccionado([]);
+  saveStackRef.current.value = "";
+  setValidaColor(false);
+  setAuxiliar(!auxiliar);
+  toast.success("Stack aplicado correctamente");
 }
 
  //Funcion que agrega un cero si el numero recibido es de 0 a 9
@@ -2486,21 +2676,11 @@ const operarDiaslaborados = (mes, dia, año, iduser)=>{
 
 }
 
-const exist = (payrollId,payrollGrupo,groupNombre,payrollNombres, payrollApellidos ) =>{
-
-
-
-  return (
-    
-
-          numDias2?.map((item,index)=>(
-            
-            <div className={operarDiaslaborados(item.mes,item.dia,item.año,payrollId) != 0 ? "cuadro20" : "cuadro21"} key={index}>{operarDiaslaborados(item.mes,item.dia,item.año,payrollId)}</div>
-  
-          )) 
-  
-  );
-}
+const formatearHorasBalance = (valor, decimales = 2) => {
+  const numero = Number(valor);
+  if (!Number.isFinite(numero)) return "0";
+  return String(Number(numero.toFixed(decimales)));
+};
 
 const exist2 = (payrollId,payrollGrupo,groupNombre,payrollNombres, payrollApellidos ) =>{
 
@@ -2579,9 +2759,10 @@ const convertir= (dia,mes,año)=>{
 
 const calcular = ()=>{
 
-  let resultado= 0;
-  resultado = (data2?.[0]?.Horas ?? 0) - globalCantidad;
-  return resultado;
+  const totalPeriodoActual =
+    balancePorUsuario.get(String(iduser))?.laboradas ?? 0;
+
+  return (Number(data2?.[0]?.Horas) || 0) - totalPeriodoActual;
 }
 
   /* *********************************************************************************************************************** */
@@ -2625,10 +2806,36 @@ const calcular = ()=>{
     [data1, data18, data4, iduser, fechaPlaner]
   );
 
+  //El estado se calcula con el período de evaluación de Rules:
+  //antes = anterior a DiaPeriod; entre = dentro del período; después = posterior.
+  const estadoRotacion = useMemo(() => {
+    const registro = (data10 ?? []).find(
+      (item) => String(item?.userId) === String(iduser)
+    );
+
+    return {
+      estado: obtenerEstadoPeriodo(iduser, fechaPlaner),
+      schemaId: registro?.schemaId ?? "",
+      schemaName: registro?.SchemaName ?? "",
+    };
+  }, [data2, data10, iduser, fechaPlaner]);
+
+  const esTurnoAnterior = estadoRotacion.estado === "antes";
+
   //Hora de inicio del stack mostrado: la del esquema si hay turno guardado,
   //o la del primer elemento manual (así la cadena no depende de globales).
+  const turnosVisibles = useMemo(
+    () =>
+      [...(data1 ?? []), ...(continuacion ?? [])].sort(
+        (a, b) =>
+          (aFecha(a?.Inicio_main)?.getTime() ?? 0) -
+          (aFecha(b?.Inicio_main)?.getTime() ?? 0)
+      ),
+    [data1, continuacion]
+  );
+
   const horaInicioDelDia = useMemo(() => {
-    const ordenados = [...(data1 ?? [])].sort(
+    const ordenados = [...turnosVisibles].sort(
       (a, b) => (Number(a?.Index) || 0) - (Number(b?.Index) || 0)
     );
 
@@ -2645,17 +2852,50 @@ const calcular = ()=>{
     const manual = ordenados.find((turno) => turno?.Inicio_main);
 
     return manual?.Inicio_main ?? null;
-  }, [data1, data9]);
+  }, [turnosVisibles, data9]);
 
   const cadenaGuardada = useMemo(
     () =>
-      cadenaDeTurnos(data1, horaInicioDelDia, fechaPlaner, {
+      cadenaDeTurnos(turnosVisibles, horaInicioDelDia, fechaPlaner, {
         programs: data,
         programmers: data14,
         stacks: data11,
       }),
-    [data1, horaInicioDelDia, fechaPlaner, data, data14, data11]
+    [turnosVisibles, horaInicioDelDia, fechaPlaner, data, data14, data11]
   );
+
+  //El stack puede cruzar la medianoche: se agrupa por día de inicio para
+  //cerrar un timeline y abrir el siguiente en el panel derecho.
+  const gruposCadena = useMemo(() => {
+    const grupos = [];
+
+    (cadenaGuardada.filas ?? []).forEach((fila) => {
+      const inicio = aFecha(fila.inicio) ?? aFecha(fechaPlaner) ?? new Date();
+      const dia = new Date(
+        inicio.getFullYear(),
+        inicio.getMonth(),
+        inicio.getDate()
+      );
+      const clave = dia.toISOString();
+      let grupo = grupos[grupos.length - 1];
+
+      if (!grupo || grupo.clave !== clave) {
+        grupo = {
+          clave,
+          dia,
+          inicio: fila.inicio,
+          fin: fila.fin,
+          filas: [],
+        };
+        grupos.push(grupo);
+      }
+
+      grupo.filas.push(fila);
+      grupo.fin = fila.fin ?? grupo.fin;
+    });
+
+    return grupos;
+  }, [cadenaGuardada, fechaPlaner]);
 
   const turnoSeleccionadoData = useMemo(
     () =>
@@ -2691,8 +2931,14 @@ const calcular = ()=>{
     });
 
   const etiquetaEstado = () => {
+    if (esTurnoAnterior) {
+      return estadoDia === "vacio"
+        ? "Sin turno guardado"
+        : "Turno guardado (anterior)";
+    }
+
     if (estadoDia === "vacio") return "Sugerido según rotación";
-    if (estadoDia === "manual") return `Stack manual (${clasificacion.manuales.length})`;
+    if (estadoDia === "manual") return `Stack manual (${clasificacion.manuales.length + continuacion.length})`;
     if (estadoDia === "sugeridoGuardado") return "Sugerido guardado";
     if (estadoDia === "mixto") return "Mixto: requiere limpieza";
     if (estadoDia === "compensatorio") return "Compensatorio";
@@ -2755,6 +3001,85 @@ const calcular = ()=>{
     IDITEMGLOBAL = nuevo ?? "";
   };
 
+  const minutosDelDiaValor = (fecha) => {
+    const valor = aFecha(fecha);
+    if (!valor) return null;
+    return valor.getHours() * 60 + valor.getMinutes();
+  };
+
+  const mismaHoraMinuto = (a, b, tolerancia = 1) => {
+    const minutosA = minutosDelDiaValor(a);
+    const minutosB = minutosDelDiaValor(b);
+
+    if (minutosA === null || minutosB === null) return false;
+
+    return Math.abs(minutosA - minutosB) <= tolerancia;
+  };
+
+  //La hora siempre pertenece al día que se está programando. Si el DatePicker
+  //o un evento trae otra fecha, se conserva solo la hora y se ancla a fechaPlaner.
+  const enFechaPlaner = (valor) => {
+    const fecha = aFecha(valor);
+
+    if (!fecha) {
+      return normalizarHoraDelDia(valor, fechaPlaner);
+    }
+
+    const base = aFecha(fechaPlaner) ?? new Date();
+    const anclada = new Date(base.getTime());
+
+    anclada.setHours(
+      fecha.getHours(),
+      fecha.getMinutes(),
+      fecha.getSeconds(),
+      0
+    );
+
+    return anclada;
+  };
+
+  //Hora de inicio de la rotación solo si el trabajador realmente tiene rotación
+  const horaInicioRotacion = () => {
+    if (sinRotacion) return null;
+    if (!Array.isArray(data10) || data10.length === 0) return null;
+    return horaInicioSchema(data9, IDSCHEMAGLOBAL);
+  };
+
+  const calcularCadenaManual = () => {
+    const manuales = [...turnosVisibles].sort((a, b) => {
+      const indexA = Number(a?.Index);
+      const indexB = Number(b?.Index);
+
+      if (Number.isFinite(indexA) && Number.isFinite(indexB) && indexA !== indexB) {
+        return indexA - indexB;
+      }
+
+      return (
+        (aFecha(a?.Inicio_main)?.getTime() ?? 0) -
+        (aFecha(b?.Inicio_main)?.getTime() ?? 0)
+      );
+    });
+
+    const base =
+      aFecha(manuales[0]?.Inicio_main) ??
+      horaInicioRotacion() ??
+      horaInicioDelDia;
+
+    const cadena = construirCadena(
+      manuales,
+      base,
+      fechaPlaner,
+      (turno) =>
+        duracionDeTurno(turno, {
+          programs: data,
+          programmers: data14,
+          stacks: data11,
+        })
+    );
+
+    return { manuales, base, horaEsperada: cadena.fin ?? base };
+  };
+
   /**
    * Reemplaza el stack manual completo recalculando la cadena de horas.
    * Se usa al eliminar un elemento para no dejar huecos ni horas
@@ -2763,14 +3088,30 @@ const calcular = ()=>{
   const reemplazarStackManual = async (turnos) => {
     const lista = (Array.isArray(turnos) ? turnos : [])
       .slice()
-      .sort((a, b) => (Number(a?.Index) || 0) - (Number(b?.Index) || 0));
+      .sort((a, b) => {
+        const indexA = Number(a?.Index);
+        const indexB = Number(b?.Index);
+
+        if (
+          Number.isFinite(indexA) &&
+          Number.isFinite(indexB) &&
+          indexA !== indexB
+        ) {
+          return indexA - indexB;
+        }
+
+        return (
+          (aFecha(a?.Inicio_main)?.getTime() ?? 0) -
+          (aFecha(b?.Inicio_main)?.getTime() ?? 0)
+        );
+      });
     const horaBase =
-      horaInicioSchema(data9, IDSCHEMAGLOBAL) ??
       aFecha(lista[0]?.Inicio_main) ??
+      horaInicioRotacion() ??
       horaInicioDelDia;
 
     const cadena = construirCadena(
-      lista.map((turno, posicion) => ({ ...turno, Index: posicion + 1 })),
+      lista,
       horaBase,
       fechaPlaner,
       (turno) =>
@@ -2786,6 +3127,16 @@ const calcular = ()=>{
       return false;
     }
 
+    const diaLocal = (valor) => {
+      const fecha = aFecha(valor) ?? aFecha(fechaPlaner) ?? new Date();
+      const dia = new Date(fecha.getTime());
+      dia.setHours(0, 0, 0, 0);
+      return dia;
+    };
+
+    const diaPlaner = diaLocal(fechaPlaner);
+    const indicesPorDia = new Map();
+
     const payloads = cadena.filas.map((fila) => {
       const turno = fila.item;
       const guardaHora =
@@ -2793,39 +3144,194 @@ const calcular = ()=>{
         turno.Type === "TimeOut" ||
         turno.Type === "Programmer";
 
+      const fechaClave = diaLocal(fila.inicio);
+      const claveDia = fechaClave.toISOString();
+      const index = (indicesPorDia.get(claveDia) ?? 0) + 1;
+      indicesPorDia.set(claveDia, index);
+
       return {
         idUser: iduser,
         nombres,
-        index: fila.orden,
+        index,
         idPrograma: turno.Type === "Null" ? "Null-30" : turno.Event_name,
         eventId: turno.ID_event ?? "------",
         color: "red",
         observacion: turno.Observacion ?? "",
-        fechaClave: new Date(fechaPlaner),
+        fechaClave,
         idSchema: "------",
-        inicioMain: fila.inicio ?? new Date(fechaPlaner),
+        inicioMain: fila.inicio ?? fechaClave,
         out: guardaHora && fila.fin ? fila.fin.toISOString() : "------",
         tipo: turno.Type,
       };
     });
 
-    const guardado = await reemplazarTurnosDeFecha(payloads, {
+    const fechas = [
+      diaPlaner,
+      ...payloads.map((payload) => payload.fechaClave),
+    ];
+
+    const guardado = await reemplazarTurnosDeFechas(payloads, {
       userId: iduser,
-      fecha: fechaPlaner,
+      fechas,
     });
 
     if (!guardado) return false;
 
+    const nuevaContinuacion = payloads
+      .map((payload, posicion) => ({ payload, fila: cadena.filas[posicion] }))
+      .filter(
+        ({ payload }) => payload.fechaClave.getTime() > diaPlaner.getTime()
+      )
+      .map(({ payload, fila }) => {
+        const turno = fila.item;
+
+        return {
+          ...turno,
+          _id: `continuacion-${payload.fechaClave.toISOString()}-${payload.index}`,
+          ID_user: iduser,
+          Index: fila.orden,
+          Inicio_main: payload.inicioMain,
+          Out: payload.out,
+          Event_name: turno.Event_name ?? payload.idPrograma,
+          Id_Schema: payload.idSchema,
+          Type: payload.tipo,
+          Observacion: payload.observacion,
+          Color: "red",
+          EsContinuacion: true,
+        };
+      });
+
+    setContinuacion(nuevaContinuacion);
     setAuxiliar(!auxiliar);
     return true;
   };
 
+  const totalSugeridoMin = useMemo(() => {
+    if (sinRotacion) return 0;
+
+    const items = [...(data11 ?? [])]
+      .filter((stack) => String(stack?.ID_esquema) === String(IDSCHEMAGLOBAL))
+      .sort((a, b) => (Number(a?.Order) || 0) - (Number(b?.Order) || 0));
+
+    if (items.length === 0) return 0;
+
+    const inicio = horaInicioSchema(data9, IDSCHEMAGLOBAL);
+    if (!inicio) return 0;
+
+    return construirCadena(
+      items,
+      inicio,
+      fechaPlaner,
+      (item) =>
+        duracionDeElemento(item, {
+          programs: data,
+          programmers: data14,
+        })
+    ).totalMin;
+  }, [data11, data, data14, data9, fechaPlaner, sinRotacion]);
+
   const minutosDelDia = () =>
-    estadoDia === "vacio" ? fullTime() : cadenaGuardada.totalMin;
+    estadoDia === "vacio" ? totalSugeridoMin : cadenaGuardada.totalMin;
+
+  /* Referencia Balancer: proyectadas vs. laboradas (solo consulta) */
+
+  const diasBalance = useMemo(
+    () => construirDias(data2?.[data2.length - 1]),
+    [data2]
+  );
+
+  const intensidadProyeccion = useMemo(() => {
+    const valor = data2?.[0]?.IntensidadHorariaDiaria;
+    return valor ? parseFloat(valor) || 8 : 8;
+  }, [data2]);
+
+  const turnosParaMatriz = useMemo(() => {
+    const mapa = new Map();
+
+    [...(data17 ?? []), ...(data12 ?? []), ...(data1 ?? [])].forEach((turno) => {
+      if (!turno) return;
+
+      const clave =
+        turno._id ??
+        `${turno.ID_user}_${turno.Fecha_clave}_${turno.Index}_${turno.Event_name}`;
+
+      if (!mapa.has(clave)) mapa.set(clave, turno);
+    });
+
+    return [...mapa.values()];
+  }, [data17, data12, data1]);
+
+  const horasPorUsuarioDia = useMemo(
+    () => indexarHorasPorUsuario(turnosParaMatriz, data11, data),
+    [turnosParaMatriz, data11, data]
+  );
+
+  const proyeccionesMap = useMemo(() => {
+    const mapa = {};
+
+    (Array.isArray(data19) ? data19 : []).forEach((item) => {
+      if (!item) return;
+      mapa[`${item.userId}_${item.fechaClave}`] = item.valorProyeccion;
+    });
+
+    return mapa;
+  }, [data19]);
+
+  const balancePorUsuario = useMemo(() => {
+    const mapa = new Map();
+
+    (Array.isArray(data8) ? data8 : []).forEach((persona) => {
+      let totalLaboradas = 0;
+      let totalProyectadas = 0;
+
+      const filas = diasBalance.map((dia) => {
+        const minutos =
+          horasPorUsuarioDia.get(String(persona?._id))?.get(dia.iso) ?? 0;
+        const laboradas = Number.isFinite(Number(minutos))
+          ? Number(minutos) / 60
+          : 0;
+
+        const guardado = proyeccionesMap[`${persona?._id}_${dia.iso}`];
+        const valor =
+          guardado !== undefined && guardado !== ""
+            ? parseFloat(guardado)
+            : intensidadProyeccion;
+        const proyectadas = Number.isNaN(valor) ? 0 : valor;
+
+        totalLaboradas += laboradas;
+        totalProyectadas += proyectadas;
+
+        return { ...dia, laboradas, proyectadas };
+      });
+
+      mapa.set(String(persona?._id), {
+        filas,
+        laboradas: totalLaboradas,
+        proyectadas: totalProyectadas,
+        diferencia: totalProyectadas - totalLaboradas,
+      });
+    });
+
+    return mapa;
+  }, [
+    data8,
+    diasBalance,
+    horasPorUsuarioDia,
+    proyeccionesMap,
+    intensidadProyeccion,
+  ]);
+
+  const horasPeriodo = (idUsuario) =>
+    balancePorUsuario.get(String(idUsuario))?.laboradas ?? 0;
 
   /* *********************************************************************************************************************** */
      /* EFECTOS
    /* *********************************************************************************************************************** */
+
+  //Refresca proyecciones al abrir el modal para reflejar cambios hechos en Balancer
+  useEffect(() => {
+    if (estado) recargarProjections();
+  }, [estado]);
   
   useEffect(()=> {
     //Al cambiar de trabajador o fecha se rearma el formulario de acciones
@@ -2834,6 +3340,11 @@ const calcular = ()=>{
     setCustom("");
     setObs("");
   }, [IDUSER, FECHA]);
+
+  //La continuación local solo vive mientras se trabaja la fecha actual.
+  useEffect(() => {
+    setContinuacion([]);
+  }, [iduser, fechaPlaner]);
 
   //La selección solo tiene sentido sobre el stack manual
   useEffect(() => {
@@ -2867,6 +3378,19 @@ const calcular = ()=>{
     if (showNotas) recargarNotations();
   }, [showNotas]);
 
+  //Cerrar la matriz completa con la tecla Escape
+  useEffect(() => {
+    if (!showMatrizCompleta) return undefined;
+
+    const alPresionarTecla = (evento) => {
+      if (evento.key === "Escape") setShowMatrizCompleta(false);
+    };
+
+    window.addEventListener("keydown", alPresionarTecla);
+
+    return () => window.removeEventListener("keydown", alPresionarTecla);
+  }, [showMatrizCompleta]);
+
   //Cerrar el panel de notas con la tecla Escape
   useEffect(() => {
     if (!showNotas) return undefined;
@@ -2882,12 +3406,121 @@ const calcular = ()=>{
 
   //Al cerrar el modal, el panel de notas también se cierra
   useEffect(() => {
-    if (!estado) setShowNotas(false);
+    if (!estado) {
+      setShowNotas(false);
+      setShowMatrizCompleta(false);
+    }
   }, [estado]);
 
 
 
  
+
+  //Matriz de horas reutilizada en el footer y en la modal completa.
+  const renderMatrizInferior = () => (
+    <div className="inspectorContainer">
+      <ul>
+        <li className='liInspector2' key={iduser}>
+          <span className='nameUS'></span>
+          <div className="cajaNumero">
+            {data2.map((rules_Dia) => createArray(rules_Dia.Dia))}
+
+            {diasBalance.map((dia) => (
+              <div
+                className="cuadro201"
+                key={dia.iso}
+                style={{
+                  background:
+                    dia.mes === diasBalance[0]?.mes ? "#EB464B" : "#701CF5",
+                }}
+              >
+                {dia.dia}
+                <p className='p_cuadro'>
+                  {convertir(dia.dia, dia.mes, dia.anio)}
+                </p>
+              </div>
+            ))}
+
+            <div className="cuadroTotalHeader">
+              TOTAL
+              <p className='p_cuadro'>Lab / Proy</p>
+            </div>
+
+            <div className="cuadroDifHeader">
+              POR PROG.
+              <p className='p_cuadro'>Proy − Lab</p>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      {data8?.map((item) => {
+        if (item.grupo != gp) return null;
+
+        const balance = balancePorUsuario.get(String(item._id));
+        const esActual = nombres == item.nombres + " " + item.apellidos;
+
+        if (!balance) return null;
+
+        return (
+          <ul className='Separador' key={item._id}>
+            <li className={`liInspector${esActual ? " liInspectorActual" : ""}`}>
+              <span className={esActual ? 'nameUSActual' : 'nameUS'}>
+                {item.nombres + " " + item.apellidos}
+              </span>
+              <div className="cajaNumero">
+                {balance.filas.map((fila) => (
+                  <div
+                    className="cuadro20"
+                    key={fila.iso}
+                    title={`${fila.dia}/${fila.mes + 1}: Laboradas ${formatearHorasBalance(fila.laboradas)} h`}
+                  >
+                    {formatearHorasBalance(fila.laboradas, 1)}
+                  </div>
+                ))}
+
+                <div className="cuadroTotal" title="Total laboradas del período">
+                  <span className="celda-lab">
+                    {formatearHorasBalance(balance.laboradas)}
+                  </span>
+                </div>
+
+                <div
+                  className={`cuadroDif ${balance.diferencia > 0 ? "pendiente" : "excedido"}`}
+                  title="Horas por programar = Proyectadas − Laboradas"
+                >
+                  {formatearHorasBalance(balance.diferencia)}
+                </div>
+              </div>
+            </li>
+
+            <li className={`liInspector liInspectorProy${esActual ? " liInspectorProyActual" : ""}`}>
+              <span className='nameUS nameUSProy'>Proy.</span>
+              <div className="cajaNumero">
+                {balance.filas.map((fila) => (
+                  <div
+                    className="cuadro20 cuadro20Proy"
+                    key={fila.iso}
+                    title={`${fila.dia}/${fila.mes + 1}: Proyectadas ${formatearHorasBalance(fila.proyectadas)} h`}
+                  >
+                    {formatearHorasBalance(fila.proyectadas, 1)}
+                  </div>
+                ))}
+
+                <div className="cuadroTotal cuadroTotalProy" title="Total proyectadas del período">
+                  <span className="celda-proy">
+                    {formatearHorasBalance(balance.proyectadas)}
+                  </span>
+                </div>
+
+                <div className="cuadroDifVacio" aria-hidden="true"></div>
+              </div>
+            </li>
+          </ul>
+        );
+      })}
+    </div>
+  );
 
   return (
     <>
@@ -3087,9 +3720,9 @@ const calcular = ()=>{
                         <li className={nombres == item.nombres + " " + item.apellidos ? 'liListaItemActual' : 'liListaItem'} key={item._id}>
                           {item.nombres + "  " + item.apellidos} 
                           <span className='indicador'>
-                            {exist2(item._id,item.grupo,"-",item.nombres,item.apellidos)}
+                            {formatearHorasBalance(horasPeriodo(item._id), 1)}
                           </span>                                                                      
-                          <progress value={exist2(item._id,item.grupo,"-",item.nombres,item.apellidos)} max={Number(regla?.Horas) || 1} className='progress'/>
+                          <progress value={horasPeriodo(item._id)} max={Number(regla?.Horas) || 1} className='progress'/>
                         </li>
                         :
                         null
@@ -3325,27 +3958,15 @@ const calcular = ()=>{
               </div>
 
 
-                <div className="acciones-hibrido">
-                  {estadoDia === "vacio" && !sinRotacion && (
-                    <div
-                      className="containerSingleButtom-agendado"
-                      title="Aceptar el turno sugerido según rotación"
-                      onClick={ok}
-                    >
-                      <img src={Ok} alt="Aceptar turno sugerido" className='img-butons'/>
-                    </div>
-                  )}
-
-                  {(estadoDia === "vacio" || estadoDia === "manual" || estadoDia === "mixto") && (
-                    <div
-                      className="containerSingleButtom-open"
-                      title={showRight ? "Cerrar turnos especiales" : "Abrir turnos especiales"}
-                      onClick={openRight}
-                    >
-                      <img src={flechaLeft} alt="Turnos especiales" className='img-butons'/>
-                    </div>
-                  )}
-                </div>
+                {(estadoDia === "vacio" || estadoDia === "manual" || estadoDia === "mixto") && (
+                  <div
+                    className="containerSingleButtom-open"
+                    title={showRight ? "Cerrar turnos especiales" : "Abrir turnos especiales"}
+                    onClick={openRight}
+                  >
+                    <img src={flechaLeft} alt="Turnos especiales" className='img-butons'/>
+                  </div>
+                )}
                 
               
                 
@@ -3355,15 +3976,24 @@ const calcular = ()=>{
 
            
 
-            <div className="list-turnos">
+            <div className={`list-turnos${esTurnoAnterior ? " list-turnos--anterior" : ""}`}>
               <div className="titulo">
                 <h2>TURNO SEGUN ROTACION</h2>
                 
                 <p className='name-turno-rotacion'>{Pronostico(iduser)}</p>
-                <span className={`estado-dia estado-${estadoDia}`}>{etiquetaEstado()}</span>
+                <span className={`estado-dia estado-${estadoDia}${esTurnoAnterior ? " estado-anterior" : ""}`}>{etiquetaEstado()}</span>
               </div>
 
-              {estadoDia === "vacio" && !sinRotacion && (
+              {estadoDia === "vacio" && esTurnoAnterior && (
+                <ul className="ulLista-rotation-anterior-vacia">
+                  <li className="mensaje-turno-anterior">
+                    <strong>No hay turno guardado para esta fecha.</strong>
+                    <span>Esta fecha es anterior a la rotación del trabajador.</span>
+                  </li>
+                </ul>
+              )}
+
+              {estadoDia === "vacio" && !sinRotacion && !esTurnoAnterior && (
                 <ul className="ulLista-rotation">
                   <span className='horaIN' key={data1.length}>
                     {devolverIN() == "Invalid Date" ? "--:--:--" : devolverIN()}
@@ -3400,36 +4030,70 @@ const calcular = ()=>{
               )}
 
               {(estadoDia === "manual" || estadoDia === "sugeridoGuardado" || estadoDia === "mixto") && (
-                <ul className={`${estadoDia === "sugeridoGuardado" ? "ulLista-rotation-ok" : "ulLista-rotation-saved"}${estadoDia === "manual" ? " ulLista-editable" : ""}`}>
+                <ul className={`${estadoDia === "sugeridoGuardado" ? "ulLista-rotation-ok" : "ulLista-rotation-saved"}${estadoDia === "manual" ? " ulLista-editable" : ""}${esTurnoAnterior ? " ulLista-rotation-anterior" : ""}`}>
                   {estadoDia === "mixto" && (
                     <li className="aviso-mixto">
                       Hay un stack manual y un turno sugerido guardado en esta fecha. Limpie el día para continuar.
                     </li>
                   )}
 
-                  <span className='horaIN'>
-                    {cadenaGuardada.inicio ? formatearHora(cadenaGuardada.inicio) : "--:--:--"}
-                  </span>
+                  {gruposCadena.map((grupo, indiceGrupo) => (
+                    <Fragment key={grupo.clave}>
+                      {indiceGrupo > 0 && (
+                        <li className="separador-dia-stack">
+                          Nuevo día ·{" "}
+                          {grupo.dia.toLocaleDateString("es-CO", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </li>
+                      )}
 
-                  {cadenaGuardada.filas.map((fila) => (
-                    <li
-                      className={`liItem-rotation${
-                        estadoDia === "manual" &&
-                        String(turnoSeleccionado) === String(fila.item?._id)
-                          ? " liItem-rotation--activo"
-                          : ""
-                      }`}
-                      key={fila.item?._id ?? fila.orden}
-                      onClick={() => seleccionarTurno(fila.item)}
-                      title={estadoDia === "manual" ? "Clic para seleccionar el turno (la caneca lo elimina)" : undefined}
-                    >
-                      {textoDeTurno(fila.item, fila.duracionMin)}
-                    </li>
+                      <span className='horaIN'>
+                        {grupo.inicio ? formatearHora(grupo.inicio) : "--:--:--"}
+                      </span>
+
+                      {grupo.filas.map((fila) => (
+                        <li
+                          className={`liItem-rotation${
+                            estadoDia === "manual" &&
+                            !fila.item?.EsContinuacion &&
+                            String(turnoSeleccionado) === String(fila.item?._id)
+                              ? " liItem-rotation--activo"
+                              : ""
+                          }${fila.item?.EsContinuacion ? " liItem-rotation--continuacion" : ""}`}
+                          key={fila.item?._id ?? `${grupo.clave}-${fila.orden}`}
+                          onClick={
+                            estadoDia === "manual" && !fila.item?.EsContinuacion
+                              ? () => seleccionarTurno(fila.item)
+                              : undefined
+                          }
+                          title={
+                            estadoDia === "manual" && !fila.item?.EsContinuacion
+                              ? "Clic para seleccionar el turno (la caneca lo elimina)"
+                              : "Este evento pertenece al día siguiente"
+                          }
+                        >
+                          <span className="turno-titulo">
+                            {textoDeTurno(fila.item, fila.duracionMin)}
+                          </span>
+
+                          {estadoDia === "manual" &&
+                            fila.item?.Observacion &&
+                            fila.item.Observacion !== "-----" && (
+                              <span className="turno-observacion">
+                                {fila.item.Observacion}
+                              </span>
+                            )}
+                        </li>
+                      ))}
+
+                      <span className='horaOUT'>
+                        {grupo.fin ? formatearHora(grupo.fin) : "--:--:--"}
+                      </span>
+                    </Fragment>
                   ))}
-
-                  <span className='horaOUT'>
-                    {cadenaGuardada.fin ? formatearHora(cadenaGuardada.fin) : "--:--:--"}
-                  </span>
                 </ul>
               )}
     
@@ -3483,7 +4147,7 @@ const calcular = ()=>{
            </div>
            <div className="aux1_label">
            {
-              calcular()
+              formatearHorasBalance(calcular(), 1)
            }
            <span className='aux_label-1'>Horas</span>
            </div>
@@ -3513,56 +4177,19 @@ const calcular = ()=>{
          
 
           <div className="barraButom">
-           <div className="inspectorContainer">
+            <button
+              type="button"
+              className="btn-expandir-matriz"
+              title="Ver matriz completa"
+              aria-label="Ver matriz completa"
+              onClick={() => setShowMatrizCompleta(true)}
+            >
+              <FiMaximize2 />
+            </button>
 
-                  <ul>
-                    <li className='liInspector2' key={iduser}>
-                      <span className='nameUS'></span>
-                      <div className="cajaNumero">
-                       
-                       { 
-                         data2.map((rules_Dia)=>(
-                          createArray(rules_Dia.Dia)
-                        ))
-                        
-                       }
-
-                       {
-                        
-                          numDias2?.map((item,index)=>(
-                            <div className="cuadro201" key={index}>
-                              {item.dia}
-                              <p className='p_cuadro'>{convertir(item.dia,item.mes,item.año)}</p>
-                            </div>
-                          ))
-                          
-                       }
-                      </div>
-                    </li>
-                  </ul>
-
-                  {
-                    data8?.map((item)=>(
-                      item.grupo == gp &&  
-                      
-                      <ul className='Separador' key={item._id}>
-                        <li className='liInspector'>
-                          <span className={nombres == item.nombres + " " + item.apellidos ? 'nameUSActual' : 'nameUS'}>{item.nombres + " " + item.apellidos}</span>
-                          <div className="cajaNumero">
-                            
-                            {
-                              exist(item._id,item.grupo,"group.nombre",item.nombres,item.apellidos)
-                            }
-                          </div>
-                        </li>
-                     </ul>
-                      
-                      
-                    ))
-                    
-                  }
-                
-           </div>
+            <div className="matrizScroll">
+              {renderMatrizInferior()}
+            </div>
           </div>
 
 
@@ -3660,6 +4287,39 @@ const calcular = ()=>{
                 </div>
          </div>
       }
+
+      {showMatrizCompleta &&
+        createPortal(
+          <div
+            className="matriz-overlay"
+            onClick={(evento) => {
+              if (evento.target === evento.currentTarget) {
+                setShowMatrizCompleta(false);
+              }
+            }}
+          >
+            <div className="matriz-modal">
+              <div className="matriz-modal-header">
+                <h2>Balancer · Matriz de horas</h2>
+
+                <button
+                  type="button"
+                  className="btn-cerrar-matriz"
+                  title="Cerrar matriz"
+                  aria-label="Cerrar matriz"
+                  onClick={() => setShowMatrizCompleta(false)}
+                >
+                  <FiX />
+                </button>
+              </div>
+
+              <div className="matriz-modal-body">
+                {renderMatrizInferior()}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
             
     </>
   );

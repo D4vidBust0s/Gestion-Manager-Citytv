@@ -84,6 +84,17 @@
             
         }
 
+        .substitution-icon{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: .25rem;
+            font-size: .95rem;
+            line-height: 1;
+            vertical-align: middle;
+            filter: drop-shadow(0 0 1px rgba(255,255,255,.85));
+        }
+
         .liMain2{
             width: 100%;
             border-bottom: 1px solid #545454;

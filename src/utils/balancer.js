@@ -7,6 +7,8 @@
  * ni de la API se pueden probar con datos reales de forma aislada.
  */
 
+import { duracionDeTurno } from "./plannerStack";
+
 const MESES = [
   "Enero",
   "Febrero",
@@ -160,66 +162,47 @@ export const calcularRango = (rules) => {
 
 /**
  * Minutos por trabajador y día, indexados una sola vez por carga.
- * Réplica de operarMatrizDias / extraerHorasCustom / extraerHorasProgram:
- * se conserva incluso la aritmética original (NaN de programas inválidos).
+ * Usa la duración real del turno (Custom/TimeOut/Programmer con sus horas)
+ * y lo cuenta en el día en que realmente empieza (Inicio_main).
  */
 export const indexarHorasPorUsuario = (shifts, stacks, programs) => {
   const indice = new Map();
 
-  const stacksCustom = (Array.isArray(stacks) ? stacks : []).filter(
-    (stack) => stack?.Type === "Custom"
-  );
+  const fechaInicioTurno = (turno) => {
+    //La fecha del registro manda: es la misma que usa el MainPlanner para
+    //decidir en qué día aparece el turno.
+    const registro = new Date(turno?.Fecha_clave);
 
-  const programasPorId = new Map();
-  (Array.isArray(programs) ? programs : []).forEach((programa) => {
-    if (programa?._id !== undefined) {
-      programasPorId.set(String(programa._id), programa);
+    if (!Number.isNaN(registro.getTime())) {
+      registro.setHours(0, 0, 0, 0);
+      return registro.toISOString();
     }
-  });
 
-  const minutosCustom = (idStack) => {
-    let respuesta = 0;
-    stacksCustom.forEach((stack) => {
-      if (stack.ID_esquema == idStack) {
-        respuesta = stack.Duration;
-      }
-    });
-    return respuesta;
-  };
+    //Respaldo para turnos antiguos sin Fecha_clave válida.
+    const inicio = new Date(turno?.Inicio_main);
 
-  const minutosPrograma = (idPrograma) => {
-    const programa =
-      idPrograma !== undefined
-        ? programasPorId.get(String(idPrograma))
-        : undefined;
-    const timeIn = new Date(programa?.Start);
-    const timeOut = new Date(programa?.End);
-    return Math.round((timeOut.getTime() - timeIn.getTime()) / (1000 * 60));
-  };
-
-  const minutosTurno = (turno) => {
-    if (turno.Type === "Null") return 30;
-    if (turno.Type === "Custom") return minutosCustom(turno.Id_Schema);
-    if (
-      turno.Type === "Programa" ||
-      turno.Type === "Secondary" ||
-      turno.Type === "Requerimiento"
-    ) {
-      return minutosPrograma(turno.Event_name);
+    if (!Number.isNaN(inicio.getTime()) && inicio.getFullYear() >= 2000) {
+      inicio.setHours(0, 0, 0, 0);
+      return inicio.toISOString();
     }
-    if (turno.Type === "Programmer") return minutosCustom(undefined);
-    return 0;
+
+    return "";
   };
 
   (Array.isArray(shifts) ? shifts : []).forEach((turno) => {
     if (!turno) return;
 
     const usuario = String(turno.ID_user ?? "");
-    const fecha = String(turno.Fecha_clave ?? "");
+    const fecha = fechaInicioTurno(turno);
     if (!usuario || !fecha) return;
 
+    const minutos = duracionDeTurno(turno, {
+      programs: Array.isArray(programs) ? programs : [],
+      stacks: Array.isArray(stacks) ? stacks : [],
+    });
+
     const porFecha = indice.get(usuario) ?? new Map();
-    porFecha.set(fecha, (porFecha.get(fecha) ?? 0) + minutosTurno(turno));
+    porFecha.set(fecha, (porFecha.get(fecha) ?? 0) + minutos);
     indice.set(usuario, porFecha);
   });
 

@@ -1,0 +1,178 @@
+/* ============================================================
+   Periodo de evaluación en el Top (Fase 1 visual)
+   Datos de ejemplo: no consulta /rules todavía.
+   ============================================================ */
+
+.evaluation-period {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 160px;
+  margin-top: 1px;
+  margin-bottom: 4px;
+  color: var(--Base2, #dadada);
+  font-weight: 600;
+  line-height: 1;
+  user-select: none;
+}
+
+.evaluation-period__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.evaluation-period__label {
+  overflow: hidden;
+  color: rgba(218, 218, 218, 0.76);
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.evaluation-period__pct {
+  flex: 0 0 auto;
+  color: var(--Especial, #7ed957);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.evaluation-period__line {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.evaluation-period__date {
+  color: var(--Base2, #dadada);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.evaluation-period__track {
+  position: relative;
+  width: 100%;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.25);
+}
+
+.evaluation-period__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #e9bd1a 0%, #7ed957 100%);
+  box-shadow: 0 0 6px rgba(126, 217, 87, 0.35);
+}
+
+.evaluation-period__marker {
+  position: absolute;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 2px rgba(126, 217, 87, 0.35),
+    0 0 6px rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+}
+
+.evaluation-period--cargando {
+  opacity: 0.7;
+}
+
+.evaluation-period--proximo .evaluation-period__pct {
+  color: #e9bd1a;
+}
+
+.evaluation-period--proximo .evaluation-period__fill,
+.evaluation-period--proximo .evaluation-period__marker {
+  display: none;
+}
+
+.evaluation-period--finalizado .evaluation-period__pct {
+  color: var(--Especial, #7ed957);
+}
+
+.evaluation-period--finalizado .evaluation-period__fill {
+  background: var(--Especial, #7ed957);
+}
+
+.evaluation-period--finalizado .evaluation-period__marker,
+.evaluation-period--sin-configuracion .evaluation-period__marker {
+  display: none;
+}
+
+.evaluation-period--sin-configuracion .evaluation-period__pct {
+  color: rgba(218, 218, 218, 0.55);
+}
+
+.evaluation-period--sin-configuracion .evaluation-period__date {
+  color: rgba(218, 218, 218, 0.55);
+}
+
+.evaluation-period--sin-configuracion .evaluation-period__fill {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .evaluation-period {
+    width: 130px;
+  }
+
+  .evaluation-period__label {
+    font-size: 0.49rem;
+    letter-spacing: 0.06em;
+  }
+
+  .evaluation-period__date {
+    font-size: 0.5rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .evaluation-period {
+    width: 108px;
+  }
+
+  .evaluation-period__label {
+    display: none;
+  }
+
+  .evaluation-period__head {
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 640px) {
+  .evaluation-period {
+    width: 82px;
+  }
+
+  .evaluation-period__line {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .evaluation-period__date {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .evaluation-period,
+  .evaluation-period__fill,
+  .evaluation-period__marker {
+    transition: none;
+  }
+}

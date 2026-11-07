@@ -2,15 +2,19 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import PropTypes from 'prop-types';
+import { useLocation } from 'react-router-dom';
 import menu from '../../../assets/menu.svg';
 import defaultAvatar from '../../../assets/Ana-Brenda.jpg';
 import { useUserActivity, DEFAULT_IDLE_TIMEOUT_MS } from '../../../hooks/useUserActivity';
+import PlannerStatus from './PlannerStatus/PlannerStatus';
+import EvaluationPeriod from './EvaluationPeriod/EvaluationPeriod';
 import "./Top.css";
 
 function Top({ sidebarCollapsed = false, onToggleSidebar, idleTimeoutMs = DEFAULT_IDLE_TIMEOUT_MS }) {
   const [clockState, setClockState] = useState();
   const [dateState, setDateState] = useState();
   const isActive = useUserActivity(idleTimeoutMs);
+  const { pathname } = useLocation();
 
   const [userData, setUserData] = useState({
     id: '',
@@ -130,10 +134,12 @@ function Top({ sidebarCollapsed = false, onToggleSidebar, idleTimeoutMs = DEFAUL
             className={`menu${sidebarCollapsed ? ' menu--collapsed' : ''}`}
           />
         </button>
+        {pathname.startsWith('/mainplanner') && <PlannerStatus />}
         <span className="fecha">
           {dateState}
           <br />
           <h5>{clockState}</h5>
+          <EvaluationPeriod />
         </span>
        <h3 className="nombre">
     {`${userData.nombres} ${userData.apellidos}`}

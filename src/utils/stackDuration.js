@@ -60,7 +60,9 @@ export const duracionItemStack = (item, programas = []) => {
   }
 
   if (item.Type === "Programa" || item.Type === "Secondary") {
-    const programa = (programas ?? []).find((p) => p._id === item.ID_programa);
+    const programa = (programas ?? []).find(
+      (p) => String(p?._id) === String(item.ID_programa)
+    );
     return duracionPrograma(programa);
   }
 

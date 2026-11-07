@@ -11,6 +11,7 @@ import { payrollApi } from "../api/payroll";
 import { permissionsApi } from "../api/permissions";
 import { programmerApi } from "../api/programmer";
 import { programsApi } from "../api/programs";
+import { projectionsApi } from "../api/projections";
 import { recessApi } from "../api/recess";
 import { rotationsApi } from "../api/rotations";
 import { rotationsManagerApi } from "../api/rotationsManager";
@@ -94,6 +95,7 @@ export const usePlannerData = ({
   const [savedStacks, setSavedStacks] = useState([]);
   const [shiftsDay, setShiftsDay] = useState([]);
   const [compensatorios, setCompensatorios] = useState([]);
+  const [projections, setProjections] = useState([]);
 
   /* CANCELACIÓN */
   const controladoresRef = useRef(new Map());
@@ -175,6 +177,17 @@ export const usePlannerData = ({
         (signal) => compensatoriesApi.getAll({ signal }),
         setCompensatorios,
         "Error al cargar los compensatorios"
+      ),
+    [cargarRecurso]
+  );
+
+  const cargarProjections = useCallback(
+    () =>
+      cargarRecurso(
+        "projections",
+        (signal) => projectionsApi.getAll({ signal }),
+        setProjections,
+        "Error al cargar las proyecciones"
       ),
     [cargarRecurso]
   );
@@ -426,7 +439,8 @@ export const usePlannerData = ({
       setSubstitutions,
       "Error al cargar las sustituciones"
     );
-  }, [cargarRecurso]);
+    cargarProjections();
+  }, [cargarRecurso, cargarProjections]);
 
   /* EFECTOS */
 
@@ -594,6 +608,60 @@ export const usePlannerData = ({
     [iduser, fechaPlaner, recargarTurnos, cargarTurnosDia]
   );
 
+  /**
+   * Reemplaza varias fechas a la vez: limpia los turnos del trabajador en cada
+   * fecha tocada por el stack y crea todos los payloads. Se usa cuando un stack
+   * manual cruza la medianoche y sus eventos pertenecen a días distintos.
+   */
+  const reemplazarTurnosDeFechas = useCallback(
+    async (payloads = [], { userId = iduser, fechas = [fechaPlaner] } = {}) => {
+      const lista = Array.isArray(payloads) ? payloads : [];
+
+      const aIso = (valor) => {
+        const fecha = new Date(valor);
+        return Number.isNaN(fecha.getTime()) ? null : fecha.toISOString();
+      };
+
+      const fechasUnicas = [
+        ...new Set(
+          [
+            ...(Array.isArray(fechas) ? fechas : []).map(aIso),
+            ...lista.map((payload) => aIso(payload?.fechaClave)),
+          ].filter(Boolean)
+        ),
+      ];
+
+      try {
+        for (const fch of fechasUnicas) {
+          await shiftsApi.update({ ids: userId, fch });
+        }
+
+        for (const payload of lista) {
+          await shiftsApi.create(payload);
+        }
+
+        await Promise.all([recargarTurnos(), cargarTurnosDia()]);
+        return true;
+      } catch (error) {
+        console.error("Error al reemplazar los turnos de las fechas:", error);
+        toast.error(error?.message || "No se pudo reemplazar el stack del día");
+
+        // No dejar ninguna fecha a medias.
+        try {
+          for (const fch of fechasUnicas) {
+            await shiftsApi.update({ ids: userId, fch });
+          }
+          await Promise.all([recargarTurnos(), cargarTurnosDia()]);
+        } catch (limpiezaError) {
+          console.error("Error al limpiar el stack a medias:", limpiezaError);
+        }
+
+        return false;
+      }
+    },
+    [iduser, fechaPlaner, recargarTurnos, cargarTurnosDia]
+  );
+
   /** Trae las filas de un stack guardado sin tocar los turnos del día. */
   const obtenerStackGuardado = useCallback(async (nombre) => {
     if (!nombre) return null;
@@ -691,6 +759,7 @@ export const usePlannerData = ({
     savedStacks,
     shiftsDay,
     compensatorios,
+    projections,
 
     /* lecturas bajo demanda */
     recargarTurnos,
@@ -704,11 +773,13 @@ export const usePlannerData = ({
     recargarBreaks: cargarBreaks,
     recargarProgrammers: cargarProgrammers,
     recargarNotations: cargarNotations,
+    recargarProjections: cargarProjections,
 
     /* escrituras */
     guardarTurno,
     crearTurnosEnBloque,
     reemplazarTurnosDeFecha,
+    reemplazarTurnosDeFechas,
     guardarStackGuardado,
     limpiarTurnos,
     eliminarTurno,

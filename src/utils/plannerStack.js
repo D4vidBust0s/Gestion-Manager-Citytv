@@ -241,8 +241,9 @@ export const duracionDeTurno = (
   if (tipo === "Null" || turno.Event_name === "Null-30") return 30;
 
   if (tipo === "Programa" || tipo === "Secondary" || tipo === "Requerimiento") {
+    const idPrograma = turno.Event_name ?? turno.ID_programa;
     const programa = (Array.isArray(programs) ? programs : []).find(
-      (item) => String(item?._id) === String(turno.Event_name)
+      (item) => String(item?._id) === String(idPrograma)
     );
     const minutos = duracionPrograma(programa);
     if (minutos > 0) return minutos;
@@ -258,7 +259,7 @@ export const duracionDeTurno = (
 
     const programmer = buscarProgrammer(
       programmers,
-      turno.ID_event ?? turno.Event_name
+      turno.ID_event ?? turno.Event_name ?? turno.ID_programa
     );
     const minutos = minutosEntreFechas(programmer?.Time_in, programmer?.Time_out);
     if (minutos && minutos > 0) return minutos;

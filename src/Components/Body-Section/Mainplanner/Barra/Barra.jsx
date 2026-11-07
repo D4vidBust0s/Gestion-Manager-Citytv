@@ -22,11 +22,15 @@ import DatePicker from 'react-datepicker';
 /* COMPONENTES MODALES*/
 import ModalPlanner1 from "../../../Modals/ModalPlanner1";
 import ModalPlanner3 from "../../../Modals/ModalPlanner3";
+import ModalSustitucion from "../../../Modals/ModalSustitucion";
 import toast from 'react-hot-toast';
 import { FechaBarraContext } from '../../../../context/FechaBarraProvider';
 import { AuxSustitutions} from '../../../../context/AuxSustitutionsProvider';
 import { PronosticoContext } from '../../../../context/PronosticoTurnosProvider';
-import { isBalancerName } from '../../../../api/payroll';
+import { isBalancerName, isBalancerUser } from '../../../../api/payroll';
+import { FiRepeat } from 'react-icons/fi';
+import { mismoDia } from '../../../../utils/plannerStack';
+import { obtenerEstadoAusencia } from '../../../../utils/absenceStatus';
 
 
 
@@ -85,6 +89,8 @@ export default function Barra() {
 //estado para la ventana modal1 
  const [modal1, setModal1] = useState(false); 
  const [modal2, setModal2] = useState(false); 
+ const [modalSustitucion, setModalSustitucion] = useState(false);
+ const [sustitucionesModal, setSustitucionesModal] = useState([]);
 
  //Estados para la Data de groups
  const [startDate, setStartDate] = useState(new Date(fechaBarra));
@@ -520,6 +526,45 @@ const noExist = () =>{
 
  }
 
+  const estadoAusenciaSustituido = (idUsuario) =>
+    obtenerEstadoAusencia({
+      id: idUsuario,
+      fecha: fechaBarra,
+      ausencias: {
+        permissions: data2,
+        incapacitys: data3,
+        recess: data4,
+        licenses: data5,
+        breaks: data6,
+        compensatories: data13,
+      },
+    });
+
+  const sustitucionesDe = (idUsuario) =>
+    (Array.isArray(data8) ? data8 : []).filter(
+      (sustitucion) =>
+        String(sustitucion?.ID_user_sustituto) === String(idUsuario) &&
+        mismoDia(sustitucion?.Fecha_dia, fechaBarra)
+    );
+
+  const manejarClickUsuario = (
+    pid,
+    pn,
+    pa,
+    subgrupo,
+    cargo,
+    pg,
+    grupoid,
+    sustituciones
+  ) => {
+    if (sustituciones.length > 0) {
+      setSustitucionesModal(sustituciones);
+      setModalSustitucion(true);
+    }
+
+    verificar(pid, pn, pa, subgrupo, cargo, pg, grupoid);
+  };
+
 
 
   const exist = (pid,pg,gn,pn,cargo,pa,subgrupo,grupoid) =>{
@@ -531,8 +576,72 @@ const noExist = () =>{
     testBreaks(pid)
     testCompensatory(pid);
 
+    const sustitucionesPersona = sustitucionesDe(pid);
+    const primeraSustitucion = sustitucionesPersona[0] ?? null;
+    const estadoSustituido = primeraSustitucion
+      ? estadoAusenciaSustituido(primeraSustitucion.ID_user_main)
+      : null;
+    const esUserBalancerSustituido = sustitucionesPersona.some(
+      (sustitucion) => {
+        const persona = data1?.find(
+          (item) =>
+            String(item?._id ?? item?.id) ===
+            String(sustitucion.ID_user_main)
+        );
+
+        return (
+          isBalancerName(sustitucion.NombreRight) ||
+          isBalancerUser(persona)
+        );
+      }
+    );
+    const etiquetaSustituido = esUserBalancerSustituido
+      ? "UserBalancer"
+      : estadoSustituido?.label;
+    const nombresSustituidos = [
+      ...new Set(
+        sustitucionesPersona
+          .map((sustitucion) => sustitucion.NombreRight)
+          .filter(Boolean)
+      ),
+    ].join(", ");
+    const areaSustituida = primeraSustitucion
+      ? data?.find(
+          (grupo) =>
+            String(grupo?._id) === String(primeraSustitucion.ID_grupo_der)
+        )?.nombre
+      : null;
+    const tituloSustitucion = primeraSustitucion
+      ? `Sustituye a ${nombresSustituidos || "un trabajador"}${
+          areaSustituida ? ` · ${areaSustituida}` : ""
+        }${etiquetaSustituido ? ` · ${etiquetaSustituido}` : ""}`
+      : "";
+    const colorSustitucion = esUserBalancerSustituido
+      ? "#641212"
+      : estadoSustituido?.color ?? "#DADADA";
+    const iconoSustitucion = sustitucionesPersona.length > 0 ? (
+      <span
+        className="substitution-icon"
+        role="img"
+        aria-label={tituloSustitucion}
+        title={tituloSustitucion}
+      >
+        <FiRepeat
+          aria-hidden="true"
+          style={{ color: colorSustitucion }}
+        />
+      </span>
+    ) : null;
+
+    const contenidoNombre = (
+      <>
+        {iconoSustitucion}
+        {pn + " " + pa + traerRemplazo(pid, grupoid, pn)}
+      </>
+    );
+
     return <ul className="ulMain" key={pid}>
-      <li className={permissions == 1 ? "liMain-var1" :  incapacitado == 1 ? "liMain-var2" : licensia == 1 ? "liMain-var3" : vacaciones == 1 ? "liMain-var4" : breaks == 1 ? "liMain-var5" : compensatorio == 1 ? "liMain-var7" : cargo == "USERBALANCER" ? "liMain-var6": "liMain"} key={pid}  onClick={() => verificar(pid,pn,pa,subgrupo,cargo,pg,grupoid) }>
+      <li className={permissions == 1 ? "liMain-var1" :  incapacitado == 1 ? "liMain-var2" : licensia == 1 ? "liMain-var3" : vacaciones == 1 ? "liMain-var4" : breaks == 1 ? "liMain-var5" : compensatorio == 1 ? "liMain-var7" : cargo == "USERBALANCER" ? "liMain-var6": "liMain"} key={pid}  onClick={() => manejarClickUsuario(pid,pn,pa,subgrupo,cargo,pg,grupoid,sustitucionesPersona) }>
         {
           data7?.map((rm)=>(
             rm.userId == pid && rm.fijo == true 
@@ -549,11 +658,11 @@ const noExist = () =>{
             comprobarAlert(rules.DiasAlert,rules.DiasPeriodo,pid) == 1
             ?
               <div className='bye' key={rules._id}>
-                { pn +" "+pa + traerRemplazo(pid,grupoid,pn)}
+                {contenidoNombre}
               </div> 
             :
                <div key={rules._id}>
-                { pn +" "+pa + traerRemplazo(pid,grupoid,pn)}
+                {contenidoNombre}
               </div> 
           ))
         }
@@ -778,6 +887,21 @@ const noExist = () =>{
     getSubstitutions();
   },[Aux])
 
+  useEffect(() => {
+    if (!modalSustitucion) return;
+
+    const ids = new Set(
+      sustitucionesModal.map((sustitucion) => sustitucion?._id).filter(Boolean)
+    );
+    const siguenVigentes = (Array.isArray(data8) ? data8 : []).some(
+      (sustitucion) =>
+        ids.has(sustitucion?._id) &&
+        mismoDia(sustitucion?.Fecha_dia, fechaBarra)
+    );
+
+    if (!siguenVigentes) setModalSustitucion(false);
+  }, [data8, fechaBarra, modalSustitucion, sustitucionesModal]);
+
   useEffect(()=>{
     obtenerListadoTurnos();
     IDNOTAGLOBAL= "";
@@ -820,6 +944,26 @@ const noExist = () =>{
         <ModalPlanner3 estado={modal2} cambiarEstado={setModal2} nombres={nombre} cargo={cargo} fechaPlaner={startDate} iduser={idUser} subGrupo={subGrupo} color={colorBorder} gp={grupo} tipo ={tipoEvento} />,
         document.querySelector("#portal")
       )} 
+
+      {createPortal(
+        <ModalSustitucion
+          estado={modalSustitucion}
+          cambiarEstado={setModalSustitucion}
+          sustituciones={sustitucionesModal}
+          grupos={data}
+          payroll={data1}
+          ausencias={{
+            permissions: data2,
+            incapacitys: data3,
+            recess: data4,
+            licenses: data5,
+            breaks: data6,
+            compensatories: data13,
+          }}
+          fecha={fechaBarra}
+        />,
+        document.querySelector("#portal")
+      )}
 
         
       <div className="barra">

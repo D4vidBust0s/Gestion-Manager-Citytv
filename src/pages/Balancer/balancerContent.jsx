@@ -3,8 +3,11 @@ import './balancer.css';
 
 /* DEPENDENCIAS */
 import DatePicker from 'react-datepicker';
-import { useState } from 'react';
+import { useContext, useLayoutEffect, useRef, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
+
+/* CONTEXTOS */
+import { PronosticoContext } from '../../context/PronosticoTurnosProvider';
 
 /* HOOKS */
 import { useBalancerData } from '../../Custom_Hooks/useBalancerData';
@@ -24,6 +27,8 @@ import Calendar from '../../assets/calendar.webp';
 export default function ProjectionContent() {
 
     const [startDate, setStartDate] = useState(new Date());
+    const containerRef = useRef(null);
+    const [auxiliar] = useContext(PronosticoContext) ?? [];
 
     const {
         groups,
@@ -35,7 +40,51 @@ export default function ProjectionContent() {
         horasPorUsuarioDia,
         intensidadDefecto,
         setProyeccion,
-    } = useBalancerData();
+    } = useBalancerData(auxiliar);
+
+    // La cabecera y las filas usan bases distintas (22% vs. 100vh + 22%).
+    // Medimos la posición real de la primera fila para que la cabecera
+    // siempre quede alineada, incluso al colapsar el sidebar.
+    useLayoutEffect(() => {
+        const contenedor = containerRef.current;
+        if (!contenedor) return;
+
+        let frame = 0;
+
+        const medir = () => {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(() => {
+                const primeraFila = contenedor.querySelector(".pr");
+                if (!primeraFila) return;
+
+                const offset =
+                    primeraFila.getBoundingClientRect().left -
+                    contenedor.getBoundingClientRect().left;
+
+                if (!Number.isFinite(offset) || offset < 0) return;
+
+                contenedor.style.setProperty(
+                    "--balancer-left-offset",
+                    `${Math.round(offset)}px`
+                );
+            });
+        };
+
+        medir();
+
+        const observer =
+            typeof ResizeObserver !== "undefined"
+                ? new ResizeObserver(medir)
+                : null;
+        observer?.observe(contenedor);
+        window.addEventListener("resize", medir);
+
+        return () => {
+            cancelAnimationFrame(frame);
+            observer?.disconnect();
+            window.removeEventListener("resize", medir);
+        };
+    }, [payroll, dias]);
 
     // RENDERIZADO CON TOTALES INDEPENDIENTES, VALOR POR DEFECTO DE RULES Y CAMBIO DE COLOR CONDICIONAL
     const exist = (payrollId, payrollGrupo, payrollNombres, payrollApellidos) => {
@@ -151,7 +200,7 @@ export default function ProjectionContent() {
            />
         </div>
 
-        <div className="containerMain">
+        <div className="containerMain" ref={containerRef}>
           <div className="date">
             <img src={Calendar} alt="calendarLog" className='calendarLog'/>
             {rules?.map((item) => (
