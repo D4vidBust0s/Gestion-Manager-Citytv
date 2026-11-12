@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Login from "./pages/Login/Login"; 
 import MainPage from "./pages/MainPage/MainPage"; 
+import TaskReminderProvider from "./context/TaskReminderProvider";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -22,8 +23,10 @@ export default function App() {
   return (
     <>
       {isLoggedIn ? (
-        // Renderizamos el componente MainPage y le pasamos la función para cerrar sesión
-        <MainPage onLogout={handleLogout} />
+        // El proveedor conserva los recordatorios pendientes y alimenta el aviso superior
+        <TaskReminderProvider>
+          <MainPage onLogout={handleLogout} />
+        </TaskReminderProvider>
       ) : (
         // Pantalla de Login si no hay sesión activa
         <Login onLoginSuccess={() => setIsLoggedIn(true)} />

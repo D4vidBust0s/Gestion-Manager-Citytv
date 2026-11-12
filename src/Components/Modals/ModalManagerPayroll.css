@@ -107,6 +107,14 @@
         padding:.4rem;
     }
 
+    .input-checkbox{
+        width: 1.2rem;
+        height: 1.2rem;
+        margin: .2rem 0 0 .4rem;
+        accent-color: #701CF5;
+        cursor: pointer;
+    }
+
     .input-normal2{
         width: 100%;
         background: #545454;

@@ -80,7 +80,7 @@
             width: 100%;
             font-weight: 500;
             color: #aa0117;
-            animation: latido 1.4s infinite ease-in-out;
+            animation: latido var(--latido-duration, 1.4s) infinite ease-in-out;
             
         }
 
@@ -290,6 +290,15 @@
     margin-bottom: 2px;
     margin-top: -80px;
     padding-bottom: 39.5px;
+    /* La caja del calendario es más alta que el input (padding inferior) y
+       queda sobre el checkbox de estados de ausencia: que no capture esos
+       clics; solo el input y el popup del DatePicker son interactivos. */
+    pointer-events: none;
+  }
+
+  .calendar .react-datepicker-wrapper,
+  .calendar .react-datepicker-popper{
+    pointer-events: auto;
   }
 
   .picker{
@@ -300,11 +309,37 @@
    
   }
 
-  .showestados{
+  .showestadosWrap{
     position: absolute;
+    left: 0;
+    right: 0;
     margin-top: -12%;
-    z-index: 1000;
+    /* .calendar usa z-index 1000: la etiqueta debe quedar debajo para que
+       el calendario emergente la tape en lugar de superponerse. */
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    pointer-events: none;
+  }
+
+  .showestados{
+    margin-top: 0;
     border: 5px solid #6b000e;
+    pointer-events: auto;
+  }
+
+  .showestadosLabel{
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: .55rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: .02em;
+    color: var(--Base);
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
   }
 
   /* ==========================================================================
@@ -728,3 +763,10 @@
                 transform: scale(1);
             }
         }
+
+/* Accesibilidad: conserva el color de alerta sin latido */
+@media (prefers-reduced-motion: reduce){
+  .barra .content-listado .bye{
+    animation: none;
+  }
+}

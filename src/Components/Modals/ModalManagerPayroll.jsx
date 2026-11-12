@@ -18,7 +18,13 @@ import Save from "../../assets/bxs-save.svg";
 import { useState, useRef, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import { Toaster, toast } from "react-hot-toast";
-import axios from "axios";
+import { esTemporal } from "../../utils/contractAlert";
+import { groupsApi } from "../../api/groups";
+import { payrollApi } from "../../api/payroll";
+import {
+  rotationsManagerApi,
+  rotationsManagerFsApi,
+} from "../../api/rotationsManager";
 
 export default function ModalManagerPayroll({ id, op, idGrupo }) {
   /* Estados para los DatePickers */
@@ -31,6 +37,9 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
 
   /* Estado para la palabra activo o inactivo según el estado */
   const [estado, setEstado] = useState(true);
+
+  /* Bandera de contrato temporal para la alerta de fin de contrato */
+  const [temporal, setTemporal] = useState(false);
 
   /* Estado para la foto de perfil (Base64 o imagen por defecto) */
   const [foto, setFoto] = useState(Annita);
@@ -67,20 +76,22 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
 
   const obtenerListadoGrupos = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/api/groups");
-      setData(response.data);
+      const data = await groupsApi.getAll();
+      setData(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error al obtener grupos:", error);
+      toast.error("No se pudieron cargar los grupos");
     }
   };
 
   const obtenerSinglePayroll = async () => {
     if (!id) return;
     try {
-      const response = await axios.get(`http://localhost:3000/api/payroll/${id}`);
-      setDataDos(response.data);
+      const data = await payrollApi.getById(id);
+      setDataDos(data ?? {});
     } catch (error) {
       console.error("Error al obtener datos del usuario:", error);
+      toast.error("No se pudo cargar la información del trabajador");
     }
   };
 
@@ -101,7 +112,7 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
   };
 
   const enviar = async (usNombre, usApellido, userId, grupo, grupoId, scName, scID, ts, tg, ac) => {
-    await axios.post("http://localhost:3000/api/rotationsmanager/", {
+    await rotationsManagerApi.create({
       nombreusuario: `${usNombre} ${usApellido}`.trim(),
       userid: userId,
       groupname: grupo,
@@ -116,7 +127,7 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
   };
 
   const enviarFS = async (usNombre, usApellido, userId, grupo, grupoId, scName, scID, ts, tg, ac) => {
-    await axios.post("http://localhost:3000/api/rotationsmanager-fs/", {
+    await rotationsManagerFsApi.create({
       nombreusuario: `${usNombre} ${usApellido}`.trim(),
       userid: userId,
       groupname: grupo,
@@ -131,7 +142,7 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
   };
 
   const actualizar = async () => {
-    return await axios.put(`http://localhost:3000/api/rotationsmanager/payroll/${id}`, {
+    return await rotationsManagerApi.updatePayroll(id, {
       username: `${nombresRef.current.value} ${apellidosRef.current.value}`.trim(),
       groupname: grupoRef.current.value,
       groupid: grupoRef.current.value,
@@ -139,7 +150,7 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
   };
 
   const actualizarFS = async () => {
-    return await axios.put(`http://localhost:3000/api/rotationsmanager-fs/payroll/${id}`, {
+    return await rotationsManagerFsApi.updatePayroll(id, {
       username: `${nombresRef.current.value} ${apellidosRef.current.value}`.trim(),
       groupname: grupoRef.current.value,
       groupid: grupoRef.current.value,
@@ -217,7 +228,7 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
     else {
       try {
         if (op == 0) {
-          const response = await axios.post("http://localhost:3000/api/payroll/", {
+          const response = await payrollApi.create({
             Nombres: nombresRef.current.value,
             Apellidos: apellidosRef.current.value,
             Edad: edadRef.current.value,
@@ -242,16 +253,22 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
             Activo: estadoRef.current.value === "true",
             Mainplanner: mainplannerRef.current.value,
             SubGrupo: parseInt(sbRef.current.value) || 1,
+            Temporal: temporal,
             foto: foto === Annita ? "" : foto, // Guardamos la foto si se seleccionó una
           });
 
-          const newUserId = response.data._id;
+          const newUserId = response?._id;
+
+          if (!newUserId) {
+            throw new Error("La API no devolvió el identificador del trabajador");
+          }
+
           await enviar(nombresRef.current.value, apellidosRef.current.value, newUserId, grupoRef.current.value, grupoRef.current.value, "------------", "------------", 0, 0, 0);
           await enviarFS(nombresRef.current.value, apellidosRef.current.value, newUserId, grupoRef.current.value, grupoRef.current.value, "------------", "------------", 0, 0, 0);
           
           toast.success("Nuevo trabajador agregado al sistema correctamente");
         } else if (op == 1) {
-          await axios.put(`http://localhost:3000/api/payroll/${id}`, {
+          await payrollApi.update(id, {
             Nombres: nombresRef.current.value,
             Apellidos: apellidosRef.current.value,
             Edad: edadRef.current.value,
@@ -276,6 +293,7 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
             Activo: estadoRef.current.value === "true",
             Mainplanner: mainplannerRef.current.value,
             SubGrupo: parseInt(sbRef.current.value) || 1,
+            Temporal: temporal,
             foto: foto === Annita ? "" : foto,
           });
 
@@ -286,7 +304,7 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
         }
       } catch (error) {
         console.error("Error al procesar el formulario:", error);
-        toast.error("Hubo un error al procesar la información");
+        toast.error(error?.message || "Hubo un error al procesar la información");
       }
     }
   };
@@ -346,8 +364,13 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
       }
 
       setEstado(Boolean(dataDos.activo));
+      setTemporal(esTemporal(dataDos.temporal));
     }
   }, [dataDos, op, idGrupo]);
+
+  useEffect(() => {
+    if (op === 0) setTemporal(false);
+  }, [op]);
 
   return (
     <>
@@ -389,6 +412,7 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
                   selected={startDateNacimiento}
                   onChange={(date) => setStartDateNacimiento(date)}
                   showYearDropdown
+                  dateFormat="dd/MM/yyyy"
                   dateFormatCalendar="MMMM"
                   yearDropdownItemNumber={50}
                   scrollableYearDropdown
@@ -526,12 +550,26 @@ export default function ModalManagerPayroll({ id, op, idGrupo }) {
                   selected={startDateIngreso}
                   onChange={(date) => setStartDateIngreso(date)}
                   showYearDropdown
+                  dateFormat="dd/MM/yyyy"
                   dateFormatCalendar="MMMM"
                   yearDropdownItemNumber={50}
                   scrollableYearDropdown
                   ref={ingresoRef}
                 />
                 <img src={Calendar} alt="Calendar" className="img-Calendar" />
+              </div>
+            </div>
+
+            <div className="row">
+              <div className="columA">Temporal</div>
+              <div className="columB">
+                <input
+                  type="checkbox"
+                  name="temporal"
+                  className="input-checkbox"
+                  checked={temporal}
+                  onChange={(event) => setTemporal(event.target.checked)}
+                />
               </div>
             </div>
 

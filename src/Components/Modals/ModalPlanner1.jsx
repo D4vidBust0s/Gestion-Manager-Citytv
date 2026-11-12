@@ -42,6 +42,8 @@ import {Toaster, toast} from 'react-hot-toast';
 import { FechaBarraContext } from '../../context/FechaBarraProvider';
 import { PronosticoContext } from '../../context/PronosticoTurnosProvider'
 import { usePlannerData } from '../../Custom_Hooks/usePlannerData';
+import { isBalancerName, isBalancerUser } from '../../api/payroll';
+import { obtenerEstadoAusencia } from '../../utils/absenceStatus';
 import {
   clasificarDia,
   estadoDelDia,
@@ -55,6 +57,7 @@ import {
   duracionDeElemento,
   aFecha,
   normalizarHoraDelDia,
+  mismoDia,
 } from '../../utils/plannerStack';
 import { construirDias, indexarHorasPorUsuario } from '../../utils/balancer';
 
@@ -118,6 +121,13 @@ let mensaje = "-------";
 
 
 let ax;
+
+const acortarNombreBalancer = (nombre) => {
+  if (!isBalancerName(nombre)) return nombre;
+
+  const coincidencia = String(nombre).trim().match(/-(\d+)$/);
+  return coincidencia ? `UB-${coincidencia[1]}` : "UB";
+};
 
 
 
@@ -2017,16 +2027,91 @@ const transformarGenericIn = ()=>{
   }
    
   
-  const traerSustituto = () =>{
+  const sustitucionesComoSustituto = useMemo(() => {
+    const lista = Array.isArray(data13) ? data13 : [];
 
+    return lista.filter(
+      (sustitucion) =>
+        String(sustitucion?.ID_user_sustituto ?? "").trim() ===
+          String(iduser ?? "").trim() &&
+        mismoDia(sustitucion?.Fecha_dia, fechaPlaner)
+    );
+  }, [data13, iduser, fechaPlaner]);
+
+  const infoSustituciones = useMemo(() => {
+    const ausencias = {
+      permissions: data3,
+      incapacitys: data5,
+      recess: data6,
+      licenses: data7,
+      breaks: data4,
+      compensatories: data18,
+    };
+
+    return sustitucionesComoSustituto.map((sustitucion) => {
+      const personaSustituida = (Array.isArray(data8) ? data8 : []).find(
+        (persona) =>
+          String(persona?._id ?? persona?.id ?? "").trim() ===
+          String(sustitucion.ID_user_main ?? "").trim()
+      );
+
+      const esBalancer =
+        isBalancerName(sustitucion.NombreRight) ||
+        isBalancerUser(personaSustituida);
+
+      const estado = esBalancer
+        ? null
+        : obtenerEstadoAusencia({
+            id: sustitucion.ID_user_main,
+            fecha: sustitucion.Fecha_dia ?? fechaPlaner,
+            ausencias,
+          });
+
+      return {
+        id:
+          sustitucion._id ??
+          `${sustitucion.ID_user_main}-${sustitucion.Fecha_dia}`,
+        nombre: acortarNombreBalancer(
+          sustitucion.NombreRight || "Trabajador"
+        ),
+        motivo: esBalancer
+          ? "UB"
+          : estado?.label ?? "Sin ausencia registrada",
+        color: esBalancer ? "#641212" : estado?.color ?? "#545454",
+        textColor: esBalancer
+          ? "#DADADA"
+          : estado?.textColor ?? "#DADADA",
+      };
+    });
+  }, [
+    sustitucionesComoSustituto,
+    data3,
+    data4,
+    data5,
+    data6,
+    data7,
+    data8,
+    data18,
+    fechaPlaner,
+  ]);
+
+  const traerSustituto = () => {
     let respuesta = "";
 
-    data13?.map((substitution)=>(
-      substitution.ID_user_main == iduser && substitution.Fecha_dia == new Date(fechaPlaner).toISOString()  ? ( respuesta = " / " + substitution.NombreLeft) : null
-    ))
+    data13?.forEach((substitution) => {
+      if (
+        String(substitution.ID_user_main ?? "").trim() ===
+          String(iduser ?? "").trim() &&
+        mismoDia(substitution.Fecha_dia, fechaPlaner)
+      ) {
+        respuesta =
+          " / " +
+          acortarNombreBalancer(substitution.NombreLeft ?? "");
+      }
+    });
 
     return respuesta;
-  }
+  };
 
 
 
@@ -3534,9 +3619,31 @@ const calcular = ()=>{
             
             <img src={Anita} alt="anita" className="img-Profile" />
             <h3 className="nombre">
-              {nombres + traerSustituto()}
+              {acortarNombreBalancer(nombres) + traerSustituto()}
               <br />
               <span className="roll">{cargo}</span>
+
+              {infoSustituciones.length > 0 && (
+                <span className="sustitucion">
+                  Sustituye a{" "}
+                  {infoSustituciones.map((info, index) => (
+                    <Fragment key={info.id}>
+                      {index > 0 ? ", " : ""}
+                      <strong>{info.nombre}</strong>
+                      {" · "}
+                      <span
+                        className="sustitucion__motivo"
+                        style={{
+                          backgroundColor: info.color,
+                          color: info.textColor,
+                        }}
+                      >
+                        {info.motivo}
+                      </span>
+                    </Fragment>
+                  ))}
+                </span>
+              )}
             </h3>
 
             <h2 className="fecha">{fechaPlaner.toDateString()}</h2>

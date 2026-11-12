@@ -2,7 +2,50 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
+import {
+  DIAS_RECORDATORIO,
+  aFechaSoloDia,
+  diaSemanaDeFecha,
+  formatearFechaHora,
+  formatearHorario,
+  normalizarDias,
+  normalizarHoras,
+  proximaOcurrencia,
+  textoPreviewRecordatorio,
+} from '../../utils/taskReminders';
 import './TasksContent.css';
+
+const RECORDATORIO_INICIAL = {
+  esRecordatorio: false,
+  recordatorioDias: [],
+  recordatorioHoras: []
+};
+
+const renderBadgeRecordatorio = (task) => {
+  if (!task.esRecordatorio) {
+    return <span className="no-reminder">—</span>;
+  }
+
+  const horario = formatearHorario(task);
+  const proxima = task.completada ? null : proximaOcurrencia(task);
+  const detalle = [
+    horario || "Sin días u horas configurados",
+    task.completada
+      ? "Inactivo (tarea completada)"
+      : proxima
+        ? `Próximo: ${formatearFechaHora(proxima)}`
+        : "Sin próxima ocurrencia"
+  ].join(" · ");
+
+  return (
+    <span
+      className={`reminder-badge ${task.completada ? 'reminder-badge--inactive' : ''}`}
+      title={detalle}
+    >
+      ⏰ {horario || 'Configurar'}
+    </span>
+  );
+};
 
 export default function TasksContent() {
   const [tasks, setTasks] = useState([]);
@@ -29,7 +72,8 @@ export default function TasksContent() {
     descripcion: '',
     prioridad: 'Media',
     categoria: categories[0] || 'General',
-    fechaVencimiento: ''
+    fechaVencimiento: '',
+    ...RECORDATORIO_INICIAL
   });
 
   useEffect(() => {
@@ -75,23 +119,94 @@ export default function TasksContent() {
       descripcion: '',
       prioridad: 'Media',
       categoria: categories[0] || 'General',
-      fechaVencimiento: ''
+      fechaVencimiento: '',
+      ...RECORDATORIO_INICIAL
     });
     setShowCategoryManager(false);
     setShowModal(true);
   };
 
   const handleOpenEditModal = (task) => {
+    const horasRecordatorio = normalizarHoras(task.recordatorioHoras);
+
     setEditingTaskId(task._id);
     setFormData({
       titulo: task.titulo || '',
       descripcion: task.descripcion || '',
       prioridad: task.prioridad || 'Media',
       categoria: task.categoria || (categories[0] || 'General'),
-      fechaVencimiento: task.fechaVencimiento ? getLocalDateString(task.fechaVencimiento) : ''
+      fechaVencimiento: task.fechaVencimiento ? getLocalDateString(task.fechaVencimiento) : '',
+      esRecordatorio: Boolean(task.esRecordatorio),
+      recordatorioDias: normalizarDias(task.recordatorioDias),
+      recordatorioHoras: horasRecordatorio.length
+        ? horasRecordatorio
+        : (task.esRecordatorio ? ['08:00'] : [])
     });
     setShowCategoryManager(false);
     setShowModal(true);
+  };
+
+  // Funciones para configurar el recordatorio semanal
+  const handleToggleRecordatorio = (activar) => {
+    setFormData((prev) => {
+      if (!activar) {
+        return { ...prev, ...RECORDATORIO_INICIAL };
+      }
+
+      const fecha = aFechaSoloDia(prev.fechaVencimiento);
+      const diaInicial = fecha ? diaSemanaDeFecha(fecha) : new Date().getDay();
+
+      return {
+        ...prev,
+        esRecordatorio: true,
+        recordatorioDias: prev.recordatorioDias.length
+          ? prev.recordatorioDias
+          : [diaInicial],
+        recordatorioHoras: prev.recordatorioHoras.length
+          ? prev.recordatorioHoras
+          : ['08:00']
+      };
+    });
+  };
+
+  const handleToggleDiaRecordatorio = (dia) => {
+    setFormData((prev) => {
+      const dias = prev.recordatorioDias.includes(dia)
+        ? prev.recordatorioDias.filter((valor) => valor !== dia)
+        : [...prev.recordatorioDias, dia];
+
+      return { ...prev, recordatorioDias: normalizarDias(dias) };
+    });
+  };
+
+  const handleHoraRecordatorioChange = (index, valor) => {
+    setFormData((prev) => {
+      const horas = [...prev.recordatorioHoras];
+      horas[index] = valor;
+      return { ...prev, recordatorioHoras: horas };
+    });
+  };
+
+  const handleAgregarHoraRecordatorio = () => {
+    setFormData((prev) => {
+      const existentes = new Set(prev.recordatorioHoras);
+
+      for (let hora = 8; hora <= 23; hora += 1) {
+        const candidata = `${String(hora).padStart(2, '0')}:00`;
+        if (!existentes.has(candidata)) {
+          return { ...prev, recordatorioHoras: [...prev.recordatorioHoras, candidata] };
+        }
+      }
+
+      return prev;
+    });
+  };
+
+  const handleEliminarHoraRecordatorio = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      recordatorioHoras: prev.recordatorioHoras.filter((_, posicion) => posicion !== index)
+    }));
   };
 
   // Funciones para gestionar Categorías
@@ -132,15 +247,48 @@ export default function TasksContent() {
       return;
     }
 
+    // Validación del recordatorio semanal
+    if (formData.esRecordatorio) {
+      if (normalizarDias(formData.recordatorioDias).length === 0) {
+        toast.error("Selecciona al menos un día para el recordatorio");
+        return;
+      }
+
+      if (formData.recordatorioHoras.length === 0) {
+        toast.error("Selecciona al menos una hora para el recordatorio");
+        return;
+      }
+
+      const horaValida = /^([01]\d|2[0-3]):[0-5]\d$/;
+      if (formData.recordatorioHoras.some((hora) => !horaValida.test(hora))) {
+        toast.error("Completa todas las horas del recordatorio o elimina las vacías");
+        return;
+      }
+
+      if (new Set(formData.recordatorioHoras).size !== formData.recordatorioHoras.length) {
+        toast.error("No puedes repetir la misma hora en el recordatorio");
+        return;
+      }
+    }
+
     const userId = currentUser.id || currentUser._id;
+    const payload = {
+      ...formData,
+      recordatorioDias: formData.esRecordatorio
+        ? normalizarDias(formData.recordatorioDias)
+        : [],
+      recordatorioHoras: formData.esRecordatorio
+        ? normalizarHoras(formData.recordatorioHoras)
+        : []
+    };
 
     try {
       if (editingTaskId) {
-        await axios.put(`http://localhost:3000/api/tasks/${editingTaskId}`, formData);
+        await axios.put(`http://localhost:3000/api/tasks/${editingTaskId}`, payload);
         toast.success("Tarea actualizada exitosamente");
       } else {
         await axios.post('http://localhost:3000/api/tasks', {
-          ...formData,
+          ...payload,
           userId
         });
         toast.success("Tarea creada exitosamente");
@@ -151,7 +299,8 @@ export default function TasksContent() {
         descripcion: '',
         prioridad: 'Media',
         categoria: categories[0] || 'General',
-        fechaVencimiento: ''
+        fechaVencimiento: '',
+        ...RECORDATORIO_INICIAL
       });
       setEditingTaskId(null);
       setShowModal(false);
@@ -429,6 +578,7 @@ export default function TasksContent() {
                   <th>Prioridad</th>
                   <th>Categoría</th>
                   <th>Fecha Límite</th>
+                  <th>Recordatorio</th>
                   <th style={{ textAlign: 'center' }}>Acciones</th>
                 </tr>
               </thead>
@@ -461,6 +611,9 @@ export default function TasksContent() {
                       <td className="task-date-cell">
                         {formatDisplayDate(task.fechaVencimiento)}
                       </td>
+                      <td className="task-reminder-cell">
+                        {renderBadgeRecordatorio(task)}
+                      </td>
                       <td style={{ textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center' }}>
                         <button className="btn-edit" onClick={() => handleOpenEditModal(task)} title="Editar tarea">
                           ✏️
@@ -473,7 +626,7 @@ export default function TasksContent() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="no-data-row">
+                    <td colSpan="7" className="no-data-row">
                       No hay tareas registradas en este filtro o fecha.
                     </td>
                   </tr>
@@ -595,6 +748,72 @@ export default function TasksContent() {
                   value={formData.fechaVencimiento}
                   onChange={(e) => setFormData({ ...formData, fechaVencimiento: e.target.value })}
                 />
+              </div>
+
+              <div className="form-group">
+                <label className="reminder-toggle">
+                  <input
+                    type="checkbox"
+                    checked={formData.esRecordatorio}
+                    onChange={(e) => handleToggleRecordatorio(e.target.checked)}
+                  />
+                  <span>⏰ Recordar esta tarea</span>
+                </label>
+
+                {formData.esRecordatorio && (
+                  <div className="reminder-panel">
+                    <div className="reminder-field">
+                      <span className="reminder-label">Días de la semana</span>
+                      <div className="reminder-days-grid">
+                        {DIAS_RECORDATORIO.map((dia) => (
+                          <button
+                            key={dia.valor}
+                            type="button"
+                            className={`reminder-day-chip ${formData.recordatorioDias.includes(dia.valor) ? 'active' : ''}`}
+                            onClick={() => handleToggleDiaRecordatorio(dia.valor)}
+                            title={dia.nombre}
+                          >
+                            {dia.corto}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="reminder-field">
+                      <span className="reminder-label">Horas del recordatorio</span>
+                      <div className="reminder-times-list">
+                        {formData.recordatorioHoras.map((hora, index) => (
+                          <div className="reminder-time-row" key={`hora-recordatorio-${index}`}>
+                            <input
+                              type="time"
+                              value={hora}
+                              onChange={(e) => handleHoraRecordatorioChange(index, e.target.value)}
+                            />
+                            {formData.recordatorioHoras.length > 1 && (
+                              <button
+                                type="button"
+                                className="btn-remove-time"
+                                onClick={() => handleEliminarHoraRecordatorio(index)}
+                                title="Quitar hora"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-add-time"
+                        onClick={handleAgregarHoraRecordatorio}
+                      >
+                        + Añadir hora
+                      </button>
+                    </div>
+
+                    <p className="reminder-preview">{textoPreviewRecordatorio(formData)}</p>
+                  </div>
+                )}
               </div>
 
               <div className="modal-actions">

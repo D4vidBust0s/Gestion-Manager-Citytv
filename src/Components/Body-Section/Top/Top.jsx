@@ -8,6 +8,7 @@ import defaultAvatar from '../../../assets/Ana-Brenda.jpg';
 import { useUserActivity, DEFAULT_IDLE_TIMEOUT_MS } from '../../../hooks/useUserActivity';
 import PlannerStatus from './PlannerStatus/PlannerStatus';
 import EvaluationPeriod from './EvaluationPeriod/EvaluationPeriod';
+import TaskReminderIndicator from './TaskReminderIndicator';
 import "./Top.css";
 
 function Top({ sidebarCollapsed = false, onToggleSidebar, idleTimeoutMs = DEFAULT_IDLE_TIMEOUT_MS }) {
@@ -134,6 +135,7 @@ function Top({ sidebarCollapsed = false, onToggleSidebar, idleTimeoutMs = DEFAUL
             className={`menu${sidebarCollapsed ? ' menu--collapsed' : ''}`}
           />
         </button>
+        <TaskReminderIndicator />
         {pathname.startsWith('/mainplanner') && <PlannerStatus />}
         <span className="fecha">
           {dateState}

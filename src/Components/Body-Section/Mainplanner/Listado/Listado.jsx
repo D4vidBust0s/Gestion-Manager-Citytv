@@ -27,6 +27,7 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { shiftsApi } from '../../../../api/shifts';
 import { substitutionsApi } from '../../../../api/substitutions';
+import { isBalancerUser } from '../../../../api/payroll';
 import { mismoDia } from '../../../../utils/plannerStack';
 import { useAbsencePeriods } from '../../../../Custom_Hooks/useAbsencePeriods';
 import { obtenerEstadoAusencia } from '../../../../utils/absenceStatus';
@@ -2506,7 +2507,7 @@ const limpiarDiaActual = async () => {
                 const estadoAusencia = propsEstadoAusencia(payroll);
                 const yaAsignado = estaAsignadoComoSustituto(payroll._id);
 
-                return payroll.cargo != "USERBALANCER" ? (
+                return !isBalancerUser(payroll) ? (
                   <li className="sb" key={payroll._id || index}>
                     <div className="subGrupo">{payroll.subGrupo}</div>
                     <div
@@ -2553,16 +2554,13 @@ const limpiarDiaActual = async () => {
             {
                data12.map((payroll,index)=>{
                 const estadoAusencia = propsEstadoAusencia(payroll);
+                const esBalancer = isBalancerUser(payroll);
 
-                return payroll.cargo ? (
+                return (
                   <li className="sb" key={payroll._id || index}>
                     <div className="subGrupo">{payroll.subGrupo}</div>
                     <div
-                      className={
-                        payroll.cargo == "USERBALANCER"
-                          ? 'balancer'
-                          : 'ListLI22'
-                      }
+                      className={esBalancer ? 'balancer' : 'ListLI22'}
                       style={estadoAusencia.style}
                       title={estadoAusencia.title}
                       onClick={(e) =>
@@ -2578,7 +2576,7 @@ const limpiarDiaActual = async () => {
                       {payroll.nombres} {payroll.apellidos}
                     </div>
                   </li>
-                ) : null;
+                );
                })
             } 
           </ul>

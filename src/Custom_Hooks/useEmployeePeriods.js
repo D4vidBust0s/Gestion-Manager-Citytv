@@ -304,6 +304,8 @@ export const useEmployeePeriods = ({
         title: "Las fechas se cruzan con otro registro",
         html: buildConflictsHtml(conflicts),
         confirmButtonText: "Corregir fechas",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
         footer: "<h6>Gestión Manager Citytv</h6>",
       });
       return false;

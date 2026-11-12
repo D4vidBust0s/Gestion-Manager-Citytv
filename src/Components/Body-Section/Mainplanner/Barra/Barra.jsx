@@ -31,6 +31,7 @@ import { isBalancerName, isBalancerUser } from '../../../../api/payroll';
 import { FiRepeat } from 'react-icons/fi';
 import { mismoDia } from '../../../../utils/plannerStack';
 import { obtenerEstadoAusencia } from '../../../../utils/absenceStatus';
+import { calcularAlertaContrato } from '../../../../utils/contractAlert';
 
 
 
@@ -71,6 +72,25 @@ let aux = "";
 
 let vAño = 0;
 let bye = 0;
+
+// Los usuarios virtuales de balanceo se muestran abreviados en la barra.
+// UserBalancer-1 -> UB-1, UserBalancer -> UB.
+const acortarNombreBalancer = (nombre) => {
+  if (!isBalancerName(nombre)) return nombre;
+
+  const coincidencia = String(nombre).trim().match(/-(\d+)$/);
+  return coincidencia ? `UB-${coincidencia[1]}` : "UB";
+};
+
+const nombreVisible = (nombres, apellidos) =>
+  [acortarNombreBalancer(nombres), apellidos]
+    .filter(
+      (parte) =>
+        parte !== null &&
+        parte !== undefined &&
+        String(parte).trim() !== ""
+    )
+    .join(" ");
 
 export default function Barra() {
 
@@ -122,6 +142,10 @@ export default function Barra() {
  const [isChecked, setIsChecked] = useState(false);
 
  const [nombreUserLista, setNombreUserLista] = useState("------");
+
+ // Regla vigente para la alerta de fin de contrato temporal.
+ // Rules solo mantiene un registro; se usa el último igual que evaluationPeriod.js.
+ const reglaAlerta = data12?.[data12.length - 1];
  
 /* Referencias */
 const groupsRef = useRef();
@@ -234,31 +258,12 @@ const traerHolidays = async ()=>{
       item.userId == ID_Usuario && 
         
       //Valido si se ha asiganado turno en rotations o no
-      item.totalGrupo == 0 && item.userId == ID_Usuario && toast.error("Para " + Nombre + " " +Apellido +" no se ha definido una rotación actual en ROTATIONS")
+      item.totalGrupo == 0 && item.userId == ID_Usuario && toast.error("Para " + nombreVisible(Nombre, Apellido) + " no se ha definido una rotación actual en ROTATIONS")
 
     ))
 
   }
 
-
-  const comprobarAlert = (diasRules,diasPeriodo,idUser)=>{
-    let respuesta = 0;
-    //let fechaMenos = new Date(fechaBarra).setDate(new Date(fechaBarra).getDate()-diasRules)
-
-    //Traemos la fecha de ingreso del trabajador
-    data1?.map((payroll)=>(
-      payroll._id == idUser && payroll.estadoCivil == "Casado"
-
-       //payroll._id == idUser && new Date(new Date(payroll.fechaIngreso).setHours(0,0,0,0)).toISOString()
-
-      ?
-         respuesta = 1
-
-      : null
-    ))
-
-     return respuesta;
-  }
 
   const verificar = (pid,pn,pa,subgrupo,cargo,pg,gid)=>{
 
@@ -513,7 +518,7 @@ const noExist = () =>{
   if(permissions == 1 || breaks == 1 || incapacitado == 1 || licensia == 1 || vacaciones == 1 || compensatorio == 1 || isBalancerName(pNombre))
   {
     data8?.map((sustituciones)=>(
-      sustituciones.ID_grupo_der == grupoid && new Date(fechaBarra).toISOString() == sustituciones.Fecha_dia && sustituciones.ID_user_main == pid ? respuesta = " / " +sustituciones.NombreLeft : null)
+      sustituciones.ID_grupo_der == grupoid && new Date(fechaBarra).toISOString() == sustituciones.Fecha_dia && sustituciones.ID_user_main == pid ? respuesta = " / " + acortarNombreBalancer(sustituciones.NombreLeft) : null)
       )
   } 
 
@@ -567,7 +572,7 @@ const noExist = () =>{
 
 
 
-  const exist = (pid,pg,gn,pn,cargo,pa,subgrupo,grupoid) =>{
+  const exist = (pid,pg,gn,pn,cargo,pa,subgrupo,grupoid,payrollPersona) =>{
     
     testPermissions(pid)
     testIncapacitys(pid)
@@ -596,12 +601,12 @@ const noExist = () =>{
       }
     );
     const etiquetaSustituido = esUserBalancerSustituido
-      ? "UserBalancer"
+      ? "UB"
       : estadoSustituido?.label;
     const nombresSustituidos = [
       ...new Set(
         sustitucionesPersona
-          .map((sustitucion) => sustitucion.NombreRight)
+          .map((sustitucion) => acortarNombreBalancer(sustitucion.NombreRight))
           .filter(Boolean)
       ),
     ].join(", ");
@@ -636,9 +641,17 @@ const noExist = () =>{
     const contenidoNombre = (
       <>
         {iconoSustitucion}
-        {pn + " " + pa + traerRemplazo(pid, grupoid, pn)}
+        {nombreVisible(pn, pa) + traerRemplazo(pid, grupoid, pn)}
       </>
     );
+
+    const alertaFinContrato = calcularAlertaContrato({
+      fechaReferencia: fechaBarra,
+      fechaIngreso: payrollPersona?.fechaIngreso,
+      temporal: payrollPersona?.temporal,
+      diasAlerta: reglaAlerta?.DiasAlert,
+      diasPeriodo: reglaAlerta?.DiasPeriodo,
+    });
 
     return <ul className="ulMain" key={pid}>
       <li className={permissions == 1 ? "liMain-var1" :  incapacitado == 1 ? "liMain-var2" : licensia == 1 ? "liMain-var3" : vacaciones == 1 ? "liMain-var4" : breaks == 1 ? "liMain-var5" : compensatorio == 1 ? "liMain-var7" : cargo == "USERBALANCER" ? "liMain-var6": "liMain"} key={pid}  onClick={() => manejarClickUsuario(pid,pn,pa,subgrupo,cargo,pg,grupoid,sustitucionesPersona) }>
@@ -653,19 +666,16 @@ const noExist = () =>{
           ))
         }
         
-        {
-          data12?.map((rules)=>(
-            comprobarAlert(rules.DiasAlert,rules.DiasPeriodo,pid) == 1
-            ?
-              <div className='bye' key={rules._id}>
-                {contenidoNombre}
-              </div> 
-            :
-               <div key={rules._id}>
-                {contenidoNombre}
-              </div> 
-          ))
-        }
+        <div
+          className={alertaFinContrato.activa ? "bye" : undefined}
+          style={
+            alertaFinContrato.activa
+              ? { "--latido-duration": `${alertaFinContrato.duracion}s` }
+              : undefined
+          }
+        >
+          {contenidoNombre}
+        </div>
       </li>
     </ul>
   }
@@ -739,7 +749,7 @@ const noExist = () =>{
   const clicItem = (id,nombres,apellidos,e)=>{
       IDUSERGLOBAL = id;
       NOMBRETRABAJADORGLOBAL = nombres + " " +apellidos;
-      setNombreUserLista(NOMBRETRABAJADORGLOBAL);
+      setNombreUserLista(nombreVisible(nombres, apellidos));
       obtenerListadoTurnos();
       descripcionRef.current.value = "";
 
@@ -976,10 +986,20 @@ const noExist = () =>{
           selected={startDate}
           onChange={(date) => setStartDate(date) + setFechaBarra(new Date(date).toDateString())}
           showMonthDropdown
+          dateFormat="dd/MM/yyyy"
         />
       </div>
 
-        <input type="checkbox" className='showestados' checked={isChecked} onChange={() => setIsChecked(!isChecked) + (isChecked == false ? toast.success("Activa o desactiva esta opción si deseas ver en detalle información de los estados de ausencia") : null)}/>
+        <div className="showestadosWrap">
+          <input
+            type="checkbox"
+            className='showestados'
+            aria-label="Estados de ausencia"
+            checked={isChecked}
+            onChange={() => setIsChecked(!isChecked) + (isChecked == false ? toast.success("Activa o desactiva esta opción si deseas ver en detalle información de los estados de ausencia") : null)}
+          />
+          <span className="showestadosLabel">Estados de ausencia</span>
+        </div>
       
   
           {
@@ -997,7 +1017,7 @@ const noExist = () =>{
                     <div className="hol" key={payroll._id}>
                       {
                              
-                           payroll.grupoID == group._id && payroll.activo == true ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres,payroll.cargo,payroll.apellidos,payroll.subGrupo,payroll.grupoID) : noExist()
+                           payroll.grupoID == group._id && payroll.activo == true ?  exist(payroll._id,payroll.grupo,group.nombre,payroll.nombres,payroll.cargo,payroll.apellidos,payroll.subGrupo,payroll.grupoID,payroll) : noExist()
                           
                       }
                        
@@ -1071,7 +1091,7 @@ const noExist = () =>{
                         className={peoleOfGroup.cargo=="USERBALANCER" ? "usersRotations3":"usersRotations"}
                         onClick={(e) => clicItem(peoleOfGroup._id,peoleOfGroup.nombres,peoleOfGroup.apellidos,e)}
                       >
-                        {"- " + peoleOfGroup.nombres + " " + peoleOfGroup.apellidos}
+                        {"- " + nombreVisible(peoleOfGroup.nombres, peoleOfGroup.apellidos)}
                       </span>
                     </div>
                   ))

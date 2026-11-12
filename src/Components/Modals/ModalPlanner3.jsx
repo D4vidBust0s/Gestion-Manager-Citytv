@@ -10,6 +10,7 @@ import imagenBreaks from '../../assets/break2.jpg';
 import imagenIncapacity from '../../assets/Incapacity1.jpg';
 import imagenRecess from '../../assets/recess1.jpg';
 import imagenLicense from '../../assets/license1.jpg';
+import imagenCompensatorio from '../../assets/Cafecito.png';
 
 
 
@@ -17,6 +18,7 @@ import imagenLicense from '../../assets/license1.jpg';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
+import { compensatoriesApi } from '../../api/compensatories';
 
 
 
@@ -31,6 +33,7 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,co
   const [data4, setData4] = useState([]);
   const [data5, setData5] = useState([]);
   const [data6, setData6] = useState([]);
+  const [data7, setData7] = useState([]);
  
   const[startDate1,setStartDate1] = useState(new Date());
 
@@ -68,6 +71,11 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,co
     return await axios
     .get("http://localhost:3000/api/breaks")
     .then((response) => setData6(response.data));
+  }
+
+  const getCompensatorios = async ()=>{
+    const data = await compensatoriesApi.getAll();
+    setData7(Array.isArray(data) ? data : []);
   }
 
 
@@ -110,6 +118,10 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,co
    else if(tipo=="DESCANSO")
    {
     getBreaks();
+   }
+   else if(tipo=="COMPENSATORIO")
+   {
+    getCompensatorios();
    }
    
   }, [tipo]);
@@ -197,6 +209,16 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,co
 
                             
                         :
+
+                        tipo=="COMPENSATORIO"
+                        ?
+                        data7?.map((compensatorio)=>(
+
+                          compensatorio.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(compensatorio.FechaInicio).setHours(0,0,0,0)  &&
+                          new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(compensatorio.FechaFinal).setHours(0,0,0,0)  ?
+                            <span key={compensatorio._id} className='tituloP'>{compensatorio.Nombre}</span>:null) )
+
+                        :
                         
                         <span>NO ES NINGUN TIPO</span>
                         
@@ -215,7 +237,7 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,co
                 <div className="body-left">
                     <h4 className='body_left_title'>{tipo}</h4>
         
-                    <img src={tipo=="PERMISO"?imagenPermissions:tipo=="INCAPACIDAD"?imagenIncapacity:tipo=="VACACIONES"?imagenRecess:tipo=="LICENSIA"?imagenLicense:tipo=="DESCANSO"?imagenBreaks:null} alt="" />
+                    <img src={tipo=="PERMISO"?imagenPermissions:tipo=="INCAPACIDAD"?imagenIncapacity:tipo=="VACACIONES"?imagenRecess:tipo=="LICENSIA"?imagenLicense:tipo=="DESCANSO"?imagenBreaks:tipo=="COMPENSATORIO"?imagenCompensatorio:null} alt="" />
 
                     <DatePicker
                          className='inputIn'
@@ -282,6 +304,14 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,co
                         new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
                         <span key={incapacidad._id} className='tituloP'>{incapacidad.Observacion}</span>:null))
                       :
+
+                      tipo=="COMPENSATORIO"
+                      ?
+                      data7?.map((compensatorio)=>( 
+                        compensatorio.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(compensatorio.FechaInicio).setHours(0,0,0,0)  &&
+                        new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(compensatorio.FechaFinal).setHours(0,0,0,0)  ? 
+                        <span key={compensatorio._id} className='tituloP'>{compensatorio.Observacion}</span>:null))
+                      :
                         
                         <span>NO ES NINGUN TIPO</span>
 
@@ -329,6 +359,14 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,co
                         incapacidad.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(incapacidad.FechaInicio).setHours(0,0,0,0)  &&
                         new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
                           <span key={incapacidad._id} className='tituloP'>{new Date(incapacidad.FechaInicio).toDateString()}</span>:null))
+                      :
+
+                      tipo=="COMPENSATORIO"
+                      ?
+                      data7?.map((compensatorio)=>( 
+                        compensatorio.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(compensatorio.FechaInicio).setHours(0,0,0,0)  &&
+                        new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(compensatorio.FechaFinal).setHours(0,0,0,0)  ? 
+                          <span key={compensatorio._id} className='tituloP'>{new Date(compensatorio.FechaInicio).toDateString()}</span>:null))
                       :
                         
                         
@@ -378,6 +416,14 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,co
                        new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
                          <span key={incapacidad._id} className='tituloP'>{new Date(incapacidad.FechaFinal).toDateString()}</span>:null))
                      :
+
+                     tipo=="COMPENSATORIO"
+                     ?
+                     data7?.map((compensatorio)=>( 
+                       compensatorio.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(compensatorio.FechaInicio).setHours(0,0,0,0)  &&
+                      new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(compensatorio.FechaFinal).setHours(0,0,0,0)  ? 
+                        <span key={compensatorio._id} className='tituloP'>{new Date(compensatorio.FechaFinal).toDateString()}</span>:null))
+                    :
                        
                        
                        
@@ -428,6 +474,14 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,co
                        new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(incapacidad.FechaFinal).setHours(0,0,0,0)  ? 
                          <span key={incapacidad._id} className='tituloP'>{incapacidad.NombreEmpleado}</span>:null))
                      :
+
+                     tipo=="COMPENSATORIO" 
+                      ?
+                      data7?.map((compensatorio)=>( 
+                        compensatorio.Id_Empleado==iduser && new Date(fechaPlaner).setHours(0,0,0,0) >= new Date(compensatorio.FechaInicio).setHours(0,0,0,0)  &&
+                       new Date(fechaPlaner).setHours(0,0,0,0) <= new Date(compensatorio.FechaFinal).setHours(0,0,0,0)  ? 
+                         <span key={compensatorio._id} className='tituloP'>{compensatorio.NombreEmpleado}</span>:null))
+                     :
                        
                                     
                        <span>NO ES NINGUN TIPO</span>
@@ -435,7 +489,7 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,co
                        }
                     </p>
 
-                    <h4 className='body-right-description'>{tipo == "PERMISO" ? "Permisos" : tipo == "INCAPACIDAD" ? "Incapacidades" :  tipo == "VACACIONES" ? "Vacaciones" : tipo == "LICENSIA" ? "Licensias" : null} en este año:</h4>
+                    <h4 className='body-right-description'>{tipo == "PERMISO" ? "Permisos" : tipo == "INCAPACIDAD" ? "Incapacidades" :  tipo == "VACACIONES" ? "Vacaciones" : tipo == "LICENSIA" ? "Licensias" : tipo == "COMPENSATORIO" ? "Compensatorios" : null} en este año:</h4>
                    <ul className='ulListado'>
 
 
@@ -472,6 +526,13 @@ function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,co
                         data6?.map((incapacidad)=>( 
                          incapacidad.Id_Empleado==iduser && incapacidad.Año == new Date(fechaPlaner).getFullYear() ? 
                          <li key={incapacidad._id} className='liListado'>- {incapacidad.Nombre} - <span className='item-li'>fecha inicio:</span> {new Date(incapacidad.FechaInicio).toDateString()} <span className='item-li'>---- Fecha final:</span> {new Date(incapacidad.FechaFinal).toDateString()}</li>:null))
+                       :
+
+                       tipo=="COMPENSATORIO" 
+                        ?
+                        data7?.map((compensatorio)=>( 
+                         compensatorio.Id_Empleado==iduser && compensatorio.Año == new Date(fechaPlaner).getFullYear() ? 
+                         <li key={compensatorio._id} className='liListado'>- {compensatorio.Nombre} - <span className='item-li'>fecha inicio:</span> {new Date(compensatorio.FechaInicio).toDateString()} <span className='item-li'>---- Fecha final:</span> {new Date(compensatorio.FechaFinal).toDateString()}</li>:null))
                        :
 
 
