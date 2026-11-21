@@ -35,6 +35,7 @@ import { createPortal } from 'react-dom';
 import { FiMaximize2, FiX } from 'react-icons/fi';
 import DatePicker from 'react-datepicker';
 import {Toaster, toast} from 'react-hot-toast';
+import Swal from 'sweetalert2';
 
 
 
@@ -51,6 +52,7 @@ import {
   rangoCubreFecha,
   cadenaDeTurnos,
   formatearHora,
+  formatearMinutos,
   horaInicioSchema,
   construirCadena,
   duracionDeTurno,
@@ -58,8 +60,16 @@ import {
   aFecha,
   normalizarHoraDelDia,
   mismoDia,
+  mismasFirmasTurnos,
 } from '../../utils/plannerStack';
+import { validarTurnosParaConsolidar } from '../../utils/consolidation';
+import { minutosEntreFechas } from '../../utils/stackDuration';
+import { idProgrammerDeTurno } from '../../utils/programmerTurno';
+import { normalizarRequerimiento } from '../../pages/Programmer/programmerView';
+import PlannerProgrammerStatus from './PlannerProgrammerStatus';
+import { getCurrentUser, getCurrentUserName } from '../../utils/currentUser';
 import { construirDias, indexarHorasPorUsuario } from '../../utils/balancer';
+import ConsolidationShiftEditor from './ConsolidationShiftEditor';
 
 /* VARIABLES */
 let fullPermisions = 0;
@@ -132,7 +142,7 @@ const acortarNombreBalancer = (nombre) => {
 
 
 
-export default function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color,gp,gpid,holy,datos}) {
+export default function ModalPlanner1({estado,cambiarEstado,nombres,cargo,fechaPlaner,iduser,subGrupo,color,gp,gpid,holy,datos,modoConsolidacion = false,turnosIniciales = [],estadoInicial = "Validado",observacionInicial = ""}) {
 
 /* CONTEXTOS*/
 const [fechaBarra,setFechaBarra] = useContext(FechaBarraContext);  //Define un estado para la fecha de la barra
@@ -152,6 +162,7 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [IDUSER, setIDUSER] = useState();
   const [FECHA, setFECHA] = useState();
   const [EVENTO, SETEVENTO] = useState("---------------------------------");
+  const [programadorSeleccionadoId, setProgramadorSeleccionadoId] = useState("");
 
   /* Estados para el datepicker */
   /* Estados para los controles del formulario de acciones */
@@ -161,11 +172,14 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   const [obs, setObs] = useState("");
 
   const [pr,setPr]= useState(0);
-  const [showRight,setShowRight]= useState(false);
+  const [showRight,setShowRight]= useState(Boolean(modoConsolidacion));
   const [continuacion, setContinuacion] = useState([]);
   const [showMatrizCompleta, setShowMatrizCompleta] = useState(false);
   const [stackSeleccionado, setStackSeleccionado] = useState("");
   const [filasStackSeleccionado, setFilasStackSeleccionado] = useState([]);
+  const [estadoConsolidacion, setEstadoConsolidacion] = useState(estadoInicial);
+  const [observacionConsolidacion, setObservacionConsolidacion] = useState(observacionInicial);
+  const [consolidando, setConsolidando] = useState(false);
 
   //Datos del planificador: única conversación con la API (Custom_Hooks/usePlannerData).
   //Los alias conservan los nombres históricos del componente (data, data1, ...).
@@ -191,6 +205,7 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
     compensatorios: data18,
     projections: data19,
     recargarTurnos,
+    recargarTurnosUsuario,
     recargarShiftsFull,
     recargarShiftsDay,
     recargarCompensatorios: obtenerCompensatorios,
@@ -203,9 +218,16 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
     guardarTurno,
     guardarStackGuardado,
     limpiarTurnos,
+    eliminarTurno,
     reemplazarTurnosDeFecha,
     reemplazarTurnosDeFechas,
     crearCompensatorio,
+    crearDescanso,
+    actualizarTurnoExistente,
+    consolidarTurnos,
+    marcarDiaPendiente,
+    planificarActualizacionExistentes,
+    actualizarTurnosExistentes,
     cargarStackCorto,
     obtenerStackGuardado,
     renombrarStackGuardado,
@@ -213,13 +235,31 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
     vaciarStacks,
     vaciarRotations,
     vaciarTurnos,
-  } = usePlannerData({ iduser, fechaPlaner, auxiliar, showRight });
+  } = usePlannerData({
+    iduser,
+    fechaPlaner,
+    auxiliar,
+    showRight,
+    modoConsolidacion,
+    incluirBalancer: !modoConsolidacion,
+  });
 
   const regla = data2?.[0];
 
   const [alerta, setAlerta] = useState(null);
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
   const [validaColor,setValidaColor]= useState(false);
+
+  const programadorSeleccionadoActual = useMemo(() => {
+    if (!programadorSeleccionadoId) return null;
+
+    const registro = data14?.find(
+      (item) =>
+        String(item?._id ?? item?.id) === String(programadorSeleccionadoId)
+    );
+
+    return registro ? normalizarRequerimiento(registro) : null;
+  }, [data14, programadorSeleccionadoId]);
   
 
 
@@ -246,6 +286,13 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
   //(Custom_Hooks/usePlannerData.js); aquí solo se arman los payloads.
 
   const crear = async (IDUSER,NOMBRES,INDEX,IDPROGRAMA,EVENT_ID,COLOR,OBSERVACION,FECHA_CLAVE,ID_SCHEMA,INICIO_MAIN,OUT,TIPO)=>{
+
+    if (modoConsolidacion) {
+      toast.error(
+        "No se pueden crear turnos nuevos desde la consolidación. Actualice el turno programado."
+      );
+      return false;
+    }
 
     await guardarTurno({
       idUser: IDUSER,
@@ -318,6 +365,70 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
     toast.success("Limpieza de lista ejecutado correctamente");
   }
 
+  /**
+   * En modo consolidación reemplaza la programación sin duplicar el turno
+   * programado: primero actualiza los existentes, elimina sobrantes y crea
+   * únicamente los adicionales necesarios, con confirmación.
+   */
+  const reemplazarConConfirmacion = async (payloads = [], options = {}) => {
+    if (!modoConsolidacion) {
+      if (options.fechas) {
+        return reemplazarTurnosDeFechas(payloads, options);
+      }
+
+      return reemplazarTurnosDeFecha(payloads, options);
+    }
+
+    const opciones = {
+      ...options,
+      fechas:
+        options.fechas ??
+        (options.fecha ? [options.fecha] : [fechaPlaner]),
+    };
+
+    const plan = await planificarActualizacionExistentes(payloads, opciones);
+
+    if (!plan) return false;
+
+    const total =
+      plan.actualizaciones + plan.eliminaciones + plan.creaciones;
+
+    if (total === 0) {
+      toast.info("No hay turnos programados para actualizar.");
+      return false;
+    }
+
+    if (plan.eliminaciones > 0 || plan.creaciones > 0) {
+      const confirmacion = await Swal.fire({
+        icon: "warning",
+        title: "Actualizar turno programado",
+        html: `<p style="text-align:left;margin:0 0 .5rem">Se conservan los turnos programados y se reutilizan primero.</p><ul style="text-align:left;margin:0"><li><b>${plan.actualizaciones}</b> turno(s) se actualizarán.</li><li><b>${plan.eliminaciones}</b> turno(s) sobrantes se eliminarán.</li><li><b>${plan.creaciones}</b> turno(s) adicionales se crearán.</li></ul>`,
+        showCancelButton: true,
+        confirmButtonText: "Sí, actualizar",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#00094B",
+        cancelButtonColor: "#EB464B",
+        reverseButtons: true,
+        footer: "<h6>Gestión Manager Citytv</h6>",
+      });
+
+      if (!confirmacion.isConfirmed) return false;
+    }
+
+    const resultado = await actualizarTurnosExistentes(payloads, {
+      ...opciones,
+      confirmarCreacion: true,
+    });
+
+    if (!resultado) return false;
+
+    toast.success(
+      `Turnos programados: ${resultado.actualizados} actualizados, ${resultado.eliminados} eliminados, ${resultado.creados} creados`
+    );
+
+    return true;
+  };
+
   const getNameProgram = (idEvento,tipo,ID_event) =>{
 
     let nombre;
@@ -359,12 +470,19 @@ const [auxiliar,setAuxiliar] = useContext(PronosticoContext); //
        nombre = idEvento;
      }
 
-      //Custom
+      //Programmer
       else if(tipo=="Programmer")
       {
+        const idProgrammer = idProgrammerDeTurno({
+          Event_name: idEvento,
+          ID_event,
+        });
+
         data14?.map((programmers)=>(
-          programmers._id == idEvento && (nombre = programmers.Nombre) 
+          String(programmers._id) === String(idProgrammer) && (nombre = programmers.Nombre) 
         ))
+
+        if(!nombre) nombre = "Programmer";
       }
 
     return  nombre;
@@ -620,9 +738,14 @@ const transformarGenericIn = ()=>{
             return;
           }
 
+          const programadorDraft = data14?.find(
+            (item) => String(item?._id) === String(idProgrammer)
+          );
+
           borrador = {
             Type: "Programmer",
             Event_name: idProgrammer,
+            NombreEvento: programadorDraft?.Nombre ?? "",
             ID_event: "------",
             Inicio_main: inicio,
             Out: fin.toISOString(),
@@ -750,6 +873,39 @@ const transformarGenericIn = ()=>{
 
   const del = ()=>{
 
+   if (modoConsolidacion) {
+      const seleccionado = turnoSeleccionadoData;
+
+      if (!seleccionado) {
+        toast.error(
+          "Seleccione un turno programado en la lista central o en el panel derecho para eliminarlo."
+        );
+        return;
+      }
+
+      confirmarAccion({
+        titulo: "¿Eliminar el turno programado?",
+        contenido:
+          "Se eliminará este registro del día. Los demás turnos quedarán pendientes de consolidar. No se crea otro turno.",
+        textoConfirmar: "Sí, eliminar",
+        accion: async () => {
+          const eliminado = await eliminarTurno(seleccionado._id);
+
+          if (eliminado) {
+            const restantes = (data1 ?? []).filter(
+              (turno) => String(turno?._id) !== String(seleccionado._id)
+            );
+
+            await marcarDiaPendiente(restantes.map((turno) => turno._id));
+            setTurnoSeleccionado(null);
+            IDITEMGLOBAL = "";
+            toast.success("Turno programado eliminado");
+          }
+        },
+      });
+      return;
+    }
+
    if(estadoDia !== "manual")
    {
       toast.error("Solo se puede eliminar un elemento de un stack manual");
@@ -865,6 +1021,11 @@ const transformarGenericIn = ()=>{
     }
 
    const resetPROGRAMMER = () =>{
+
+    const idSeleccionado = pgmRef.current?.value;
+    setProgramadorSeleccionadoId(
+      idSeleccionado && idSeleccionado !== "none" ? String(idSeleccionado) : ""
+    );
 
     toast.success("Información Horaria Actualizada"),
      EVENTO == "programmer" ? eventProgrammer() : null
@@ -1495,6 +1656,13 @@ const transformarGenericIn = ()=>{
 
     //Respaldo: conserva el guardado anterior si la cadena no se puede calcular.
     const guardarSugeridoAnterior = async () => {
+      if (modoConsolidacion) {
+        toast.error(
+          "No se pudo calcular la cadena del turno sugerido. Ajuste el turno programado manualmente; no se crearán registros nuevos."
+        );
+        return false;
+      }
+
       const promesas = (data11 ?? []).map((stacks, index) => {
         if (String(stacks.ID_esquema) === String(IDSCHEMAGLOBAL)) {
           return crear(
@@ -1588,7 +1756,7 @@ const transformarGenericIn = ()=>{
     });
 
     //Reemplaza el día completo para no dejar turnos a medias si algo falla.
-    const guardado = await reemplazarTurnosDeFecha(payloads, {
+    const guardado = await reemplazarConConfirmacion(payloads, {
       userId: iduser,
       fecha: fechaPlaner,
     });
@@ -1602,7 +1770,7 @@ const transformarGenericIn = ()=>{
       recargarShiftsDay(),
     ]);
     setAuxiliar(!auxiliar);
-    toast.success("Stack sugerido agregado correctamente");
+    if (!modoConsolidacion) toast.success("Stack sugerido agregado correctamente");
   }
 
   const ok = () => {
@@ -1621,6 +1789,26 @@ const transformarGenericIn = ()=>{
     if(estadoDia === "descanso")
     {
       toast.error("El trabajador ya tiene asignado un descanso, para asignar un turno primero elimine el descanso asignado");
+      return;
+    }
+
+    if (modoConsolidacion) {
+      if (sinRotacion) {
+        toast.error("El trabajador no tiene una rotación configurada; no hay turno sugerido para aplicar.");
+        return;
+      }
+
+      if (!IDSCHEMAGLOBAL) {
+        toast.error("El trabajador no tiene un turno según rotación configurado para esta fecha.");
+        return;
+      }
+
+      if (!(data11 ?? []).some((stack) => String(stack.ID_esquema) === String(IDSCHEMAGLOBAL))) {
+        toast.error("No hay un stack sugerido configurado para el turno de este trabajador.");
+        return;
+      }
+
+      ejecutarOk();
       return;
     }
 
@@ -1755,6 +1943,58 @@ const transformarGenericIn = ()=>{
       console.error("Error al procesar el compensatorio:", error);
       toast.error("Error al registrar el compensatorio");
     }
+  };
+
+  const darDescanso = async () => {
+    if (!modoConsolidacion) return;
+
+    if ((data1 ?? []).length > 0 || rangoCubreFecha(data12, iduser, fechaPlaner)) {
+      toast.error(
+        "El trabajador tiene turnos programados para esta fecha. Elimine primero los turnos para asignar un descanso."
+      );
+      return;
+    }
+
+    if (rangoCubreFecha(data4, iduser, fechaPlaner)) {
+      toast.error("El trabajador ya tiene un descanso asignado para esta fecha.");
+      return;
+    }
+
+    if (compensatorioEnFecha(data18, iduser, fechaPlaner)) {
+      toast.error(
+        "El trabajador ya tiene un compensatorio asignado para esta fecha."
+      );
+      return;
+    }
+
+    const nombreUsuario = getCurrentUserName("Administrador");
+    const observacion =
+      observationRef.current?.value?.trim() ||
+      "Descanso asignado desde consolidación";
+
+    confirmarAccion({
+      titulo: "¿Asignar un descanso al trabajador?",
+      contenido:
+        "Se registrará un descanso para la fecha seleccionada. Es un registro de ausencia, no un turno.",
+      textoConfirmar: "Sí, asignar",
+      accion: async () => {
+        const creado = await crearDescanso({
+          nombre: "Descanso",
+          año: new Date(fechaPlaner).getFullYear().toString(),
+          fechainicio: new Date(fechaPlaner).toISOString(),
+          fechafinal: new Date(fechaPlaner).toISOString(),
+          observacion,
+          estado: true,
+          nombreempleado: nombreUsuario,
+          idempleado: iduser,
+        });
+
+        if (creado) {
+          setAuxiliar(!auxiliar);
+          toast.success("Descanso asignado al trabajador");
+        }
+      },
+    });
   };
 
   const clean = ()=>{
@@ -2117,7 +2357,12 @@ const transformarGenericIn = ()=>{
 
   const selectEvent = () =>{
     recargarProgrammers();
-    SETEVENTO(mainEventRef.current.value);
+    const nuevoEvento = mainEventRef.current.value;
+    SETEVENTO(nuevoEvento);
+
+    if (nuevoEvento !== "programmer") {
+      setProgramadorSeleccionadoId("");
+    }
   }
 
   const limpiar = ()=>{
@@ -2429,6 +2674,14 @@ const operarItem = (iditem,e)=>{
 
   IDITEMGLOBAL = iditem;
 
+  if (modoConsolidacion && iditem) {
+    const turno = (data1 ?? []).find(
+      (registro) => String(registro?._id) === String(iditem)
+    );
+
+    if (turno) seleccionarTurno(turno);
+  }
+
    //Aqui lo que hago es cambiar los estilos para el iems seleccionado;
    if (e.target.classList=="center") 
    {
@@ -2571,7 +2824,7 @@ const aplicarStack = async ()=>{
     };
   });
 
-  const guardado = await reemplazarTurnosDeFechas(payloads, {
+  const guardado = await reemplazarConConfirmacion(payloads, {
     userId: iduser,
     fechas: [diaPlaner, ...payloads.map((payload) => payload.fechaClave)],
   });
@@ -2583,7 +2836,7 @@ const aplicarStack = async ()=>{
   saveStackRef.current.value = "";
   setValidaColor(false);
   setAuxiliar(!auxiliar);
-  toast.success("Stack aplicado correctamente");
+  if (!modoConsolidacion) toast.success("Stack aplicado correctamente");
 }
 
  //Funcion que agrega un cero si el numero recibido es de 0 a 9
@@ -3015,6 +3268,195 @@ const calcular = ()=>{
       ],
     });
 
+  const minutosConsolidadosDelTurno = (turno, estado) => {
+    if (estado === "NoLaborado") return 0;
+
+    const reales = minutosEntreFechas(turno?.Inicio_main, turno?.Out);
+
+    if (estado === "Ajustado" && reales > 0) return reales;
+
+    return (
+      duracionDeTurno(turno, {
+        programs: data,
+        programmers: data14,
+        stacks: data11,
+      }) || 0
+    );
+  };
+
+  const handleConsolidar = async () => {
+    if (!modoConsolidacion || consolidando) return;
+
+    const turnosActuales = await recargarTurnosUsuario();
+
+    if (!Array.isArray(turnosActuales)) return;
+
+    if (turnosActuales.length === 0) {
+      toast.error(
+        "No hay turnos programados para consolidar. Si el día no se laboró, ajuste un turno antes de eliminarlo."
+      );
+      return;
+    }
+
+    const huboCambios = !mismasFirmasTurnos(
+      turnosIniciales,
+      turnosActuales
+    );
+
+    let estadoFinal = estadoConsolidacion;
+
+    if (huboCambios && estadoFinal === "Validado") {
+      setEstadoConsolidacion("Ajustado");
+      toast.error(
+        "Se detectaron cambios en la programación. Registre una observación y guarde como Ajustado."
+      );
+      return;
+    }
+
+    if (
+      (estadoFinal === "Ajustado" || estadoFinal === "NoLaborado") &&
+      !observacionConsolidacion.trim()
+    ) {
+      toast.error("Registre la observación de consolidación.");
+      return;
+    }
+
+    const errorValidacion = validarTurnosParaConsolidar(
+      turnosActuales,
+      { programs: data, programmers: data14, stacks: data11 },
+      estadoFinal
+    );
+
+    if (errorValidacion) {
+      toast.error(errorValidacion);
+      return;
+    }
+
+    const usuario = getCurrentUser();
+    const nombreUsuario = getCurrentUserName("Administrador");
+
+    const updates = turnosActuales.map((turno) => ({
+      id: turno._id,
+      estadoConsolidacion: estadoFinal,
+      observacionConsolidacion: observacionConsolidacion.trim(),
+      consolidadoPor: nombreUsuario,
+      consolidadoPorId: usuario?.id ?? "",
+      minutosConsolidados: minutosConsolidadosDelTurno(turno, estadoFinal),
+    }));
+
+    if (
+      estadoFinal !== "NoLaborado" &&
+      updates.some((update) => !(update.minutosConsolidados > 0))
+    ) {
+      toast.error(
+        "Hay turnos sin una duración válida. Ajuste sus horas antes de consolidar."
+      );
+      return;
+    }
+
+    setConsolidando(true);
+
+    try {
+      const respuesta = await consolidarTurnos(updates);
+
+      if (!respuesta) return;
+
+      const fallidos = Array.isArray(respuesta.fallidos)
+        ? respuesta.fallidos
+        : [];
+
+      if (fallidos.length > 0) {
+        await Swal.fire({
+          icon: "warning",
+          title: "Consolidación incompleta",
+          html: `<p style="text-align:left">Se actualizaron <b>${respuesta.actualizados ?? 0}</b> turnos. Los siguientes no pudieron guardarse:</p><ul style="text-align:left">${fallidos
+            .slice(0, 12)
+            .map(
+              (fallido) =>
+                `<li>${String(fallido.id || "Turno")}: ${String(
+                  fallido.mensaje || "No se pudo actualizar"
+                )}</li>`
+            )
+            .join("")}</ul>`,
+          confirmButtonText: "Entendido",
+          confirmButtonColor: "#00094B",
+          footer: "<h6>Gestión Manager Citytv</h6>",
+        });
+        return;
+      }
+
+      toast.success(
+        estadoFinal === "NoLaborado"
+          ? "Día consolidado como No laborado"
+          : estadoFinal === "Ajustado"
+            ? "Día consolidado con ajustes"
+            : "Día consolidado sin novedad"
+      );
+
+      setAuxiliar(!auxiliar);
+      cambiarEstado(false);
+    } finally {
+      setConsolidando(false);
+    }
+  };
+
+  const handleReabrir = async () => {
+    if (!modoConsolidacion || consolidando) return;
+
+    const ids = (data1 ?? []).map((turno) => turno._id).filter(Boolean);
+
+    if (ids.length === 0) {
+      toast.error("No hay turnos para reabrir.");
+      return;
+    }
+
+    confirmarAccion({
+      titulo: "¿Reabrir la consolidación del día?",
+      contenido:
+        "Los turnos volverán a Pendiente y se limpiará la auditoría de consolidación. La programación se conserva.",
+      textoConfirmar: "Sí, reabrir",
+      accion: async () => {
+        setConsolidando(true);
+
+        try {
+          const reabierto = await marcarDiaPendiente(ids);
+
+          if (reabierto) {
+            toast.success("Día reabierto; los turnos quedaron pendientes.");
+            setAuxiliar(!auxiliar);
+            cambiarEstado(false);
+          }
+        } finally {
+          setConsolidando(false);
+        }
+      },
+    });
+  };
+
+  const handleCancelar = () => {
+    if (!modoConsolidacion) {
+      cambiarEstado(false);
+      return;
+    }
+
+    if (consolidando) return;
+
+    const huboCambios = !mismasFirmasTurnos(turnosIniciales, data1 ?? []);
+
+    if (huboCambios) {
+      confirmarAccion({
+        titulo: "¿Cerrar sin consolidar?",
+        contenido:
+          "La programación ya está guardada, pero el día quedará Pendiente de consolidación.",
+        textoConfirmar: "Sí, cerrar",
+        accion: () => cambiarEstado(false),
+      });
+      return;
+    }
+
+    cambiarEstado(false);
+  };
+
   const etiquetaEstado = () => {
     if (esTurnoAnterior) {
       return estadoDia === "vacio"
@@ -3023,7 +3465,21 @@ const calcular = ()=>{
     }
 
     if (estadoDia === "vacio") return "Sugerido según rotación";
-    if (estadoDia === "manual") return `Stack manual (${clasificacion.manuales.length + continuacion.length})`;
+    if (estadoDia === "manual") {
+      const directos = clasificacion.manuales.filter(
+        (turno) => turno?.Origen === "programmer-directo"
+      );
+
+      if (
+        directos.length > 0 &&
+        directos.length === clasificacion.manuales.length &&
+        continuacion.length === 0
+      ) {
+        return `Programación directa (${directos.length})`;
+      }
+
+      return `Stack manual (${clasificacion.manuales.length + continuacion.length})`;
+    }
     if (estadoDia === "sugeridoGuardado") return "Sugerido guardado";
     if (estadoDia === "mixto") return "Mixto: requiere limpieza";
     if (estadoDia === "compensatorio") return "Compensatorio";
@@ -3052,12 +3508,18 @@ const calcular = ()=>{
     }
 
     if (item.Type === "Programmer") {
+      const idProgrammer = idProgrammerDeTurno(item);
       const programmer = data14?.find(
-        (programa) => String(programa?._id) === String(item.ID_event ?? item.Event_name)
+        (programa) => String(programa?._id) === String(idProgrammer)
       );
+      const nombreProgrammer =
+        programmer?.Nombre ||
+        item.NombreEvento ||
+        (idProgrammer ? "Programmer" : "Evento programado");
+
       return (
         <span className='TProgram'>
-          {programmer?.Nombre ?? item.Event_name}
+          {nombreProgrammer}
           <span className='pgmDuration'>{` (${duracionMin} Minutos)`}</span>
         </span>
       );
@@ -3076,7 +3538,7 @@ const calcular = ()=>{
   };
 
   const seleccionarTurno = (item) => {
-    if (estadoDia !== "manual" || !item?._id) return;
+    if ((estadoDia !== "manual" && !modoConsolidacion) || !item?._id) return;
 
     const id = String(item._id);
     const esElMismo = String(turnoSeleccionado) === id;
@@ -3255,7 +3717,7 @@ const calcular = ()=>{
       ...payloads.map((payload) => payload.fechaClave),
     ];
 
-    const guardado = await reemplazarTurnosDeFechas(payloads, {
+    const guardado = await reemplazarConConfirmacion(payloads, {
       userId: iduser,
       fechas,
     });
@@ -3610,9 +4072,9 @@ const calcular = ()=>{
   return (
     <>
     
-    <Toaster />
+    {!modoConsolidacion && <Toaster />}
       {estado && (
-        <div className="container-modal1">
+        <div className={`container-modal1${modoConsolidacion ? " container-modal1--consolidate" : ""}${showRight ? " container-modal1--right-open" : ""}`}>
           
           {/*CABECERA */}
           <div className="cabecera">
@@ -3648,6 +4110,18 @@ const calcular = ()=>{
 
             <h2 className="fecha">{fechaPlaner.toDateString()}</h2>
             <img src={Calendar} alt="calendar" className="img-calendar"/>
+
+            {modoConsolidacion && (
+              <button
+                type="button"
+                className="consolidation-close"
+                onClick={handleCancelar}
+                title="Cerrar consolidación"
+                aria-label="Cerrar consolidación"
+              >
+                <FiX />
+              </button>
+            )}
           </div>
 
           <div className="actividad">
@@ -3810,7 +4284,7 @@ const calcular = ()=>{
 
          
           {/*SECCION # 1*/}
-            <div className="list-turnos">
+            <div className="list-turnos list-turnos--info">
               <div className="titulo">
                 <h2>INFORMACION</h2>
               </div>
@@ -3880,8 +4354,25 @@ const calcular = ()=>{
             <div className="acciones">
 
               <div className="titulo">
-                <h2>ACCIONES</h2>
+                <h2>{modoConsolidacion ? "EDITAR TURNO" : "ACCIONES"}</h2>
               </div>
+
+              {modoConsolidacion && (
+                <ConsolidationShiftEditor
+                  turno={turnoSeleccionadoData}
+                  programs={data}
+                  programmers={data14}
+                  stacks={data11}
+                  fecha={fechaPlaner}
+                  guardando={consolidando}
+                  onActualizar={async (id, payload) =>
+                    actualizarTurnoExistente(id, payload)
+                  }
+                  onEliminar={async () => {
+                    del();
+                  }}
+                />
+              )}
 
 
               {
@@ -3997,6 +4488,10 @@ const calcular = ()=>{
                  }
                  
                </select>
+
+               {programadorSeleccionadoActual ? (
+                 <PlannerProgrammerStatus programmer={programadorSeleccionadoActual} />
+               ) : null}
                </>
 
 
@@ -4065,7 +4560,7 @@ const calcular = ()=>{
               </div>
 
 
-                {(estadoDia === "vacio" || estadoDia === "manual" || estadoDia === "mixto") && (
+                {(modoConsolidacion || estadoDia === "vacio" || estadoDia === "manual" || estadoDia === "mixto") && (
                   <div
                     className="containerSingleButtom-open"
                     title={showRight ? "Cerrar turnos especiales" : "Abrir turnos especiales"}
@@ -4085,7 +4580,7 @@ const calcular = ()=>{
 
             <div className={`list-turnos${esTurnoAnterior ? " list-turnos--anterior" : ""}`}>
               <div className="titulo">
-                <h2>TURNO SEGUN ROTACION</h2>
+                <h2>{modoConsolidacion ? "TURNOS PROGRAMADOS" : "TURNO SEGUN ROTACION"}</h2>
                 
                 <p className='name-turno-rotacion'>{Pronostico(iduser)}</p>
                 <span className={`estado-dia estado-${estadoDia}${esTurnoAnterior ? " estado-anterior" : ""}`}>{etiquetaEstado()}</span>
@@ -4137,7 +4632,7 @@ const calcular = ()=>{
               )}
 
               {(estadoDia === "manual" || estadoDia === "sugeridoGuardado" || estadoDia === "mixto") && (
-                <ul className={`${estadoDia === "sugeridoGuardado" ? "ulLista-rotation-ok" : "ulLista-rotation-saved"}${estadoDia === "manual" ? " ulLista-editable" : ""}${esTurnoAnterior ? " ulLista-rotation-anterior" : ""}`}>
+                <ul className={`${estadoDia === "sugeridoGuardado" ? "ulLista-rotation-ok" : "ulLista-rotation-saved"}${estadoDia === "manual" || modoConsolidacion ? " ulLista-editable" : ""}${esTurnoAnterior ? " ulLista-rotation-anterior" : ""}`}>
                   {estadoDia === "mixto" && (
                     <li className="aviso-mixto">
                       Hay un stack manual y un turno sugerido guardado en esta fecha. Limpie el día para continuar.
@@ -4164,7 +4659,7 @@ const calcular = ()=>{
                       {grupo.filas.map((fila) => (
                         <li
                           className={`liItem-rotation${
-                            estadoDia === "manual" &&
+                            (estadoDia === "manual" || modoConsolidacion) &&
                             !fila.item?.EsContinuacion &&
                             String(turnoSeleccionado) === String(fila.item?._id)
                               ? " liItem-rotation--activo"
@@ -4172,12 +4667,14 @@ const calcular = ()=>{
                           }${fila.item?.EsContinuacion ? " liItem-rotation--continuacion" : ""}`}
                           key={fila.item?._id ?? `${grupo.clave}-${fila.orden}`}
                           onClick={
-                            estadoDia === "manual" && !fila.item?.EsContinuacion
+                            (estadoDia === "manual" || modoConsolidacion) &&
+                            !fila.item?.EsContinuacion
                               ? () => seleccionarTurno(fila.item)
                               : undefined
                           }
                           title={
-                            estadoDia === "manual" && !fila.item?.EsContinuacion
+                            (estadoDia === "manual" || modoConsolidacion) &&
+                            !fila.item?.EsContinuacion
                               ? "Clic para seleccionar el turno (la caneca lo elimina)"
                               : "Este evento pertenece al día siguiente"
                           }
@@ -4186,7 +4683,7 @@ const calcular = ()=>{
                             {textoDeTurno(fila.item, fila.duracionMin)}
                           </span>
 
-                          {estadoDia === "manual" &&
+                          {(estadoDia === "manual" || modoConsolidacion) &&
                             fila.item?.Observacion &&
                             fila.item.Observacion !== "-----" && (
                               <span className="turno-observacion">
@@ -4242,6 +4739,17 @@ const calcular = ()=>{
                 <div className="containerSingleButtom">
                  <img src={cafe} alt="plus" className='img-butons' onClick={regalo}/>
                 </div>
+                {modoConsolidacion && (
+                  <div className="containerSingleButtom" title="Asignar descanso">
+                    <img
+                      src={less}
+                      alt="Descanso"
+                      title="Asignar descanso"
+                      className='img-butons'
+                      onClick={darDescanso}
+                    />
+                  </div>
+                )}
                 <div className="containerSingleButtomDel">
                  <img src={Clean} alt="trash" className='img-butons' onClick={clean}/>
                 </div>
@@ -4310,14 +4818,102 @@ const calcular = ()=>{
 
 
           
+          {modoConsolidacion && (
+            <div className="modalplanner-consolidate-footer">
+              <div className="modalplanner-consolidate-footer__summary">
+                <strong>{data1?.length ?? 0} turnos programados</strong>
+                <span>
+                  {(data1 ?? []).reduce(
+                    (total, turno) =>
+                      total +
+                      (duracionDeTurno(turno, {
+                        programs: data,
+                        programmers: data14,
+                        stacks: data11,
+                      }) || 0),
+                    0
+                  ) > 0
+                    ? formatearMinutos(
+                        (data1 ?? []).reduce(
+                          (total, turno) =>
+                            total +
+                            (duracionDeTurno(turno, {
+                              programs: data,
+                              programmers: data14,
+                              stacks: data11,
+                            }) || 0),
+                          0
+                        )
+                      )
+                    : "Sin horas programadas"}
+                </span>
+              </div>
+
+              <label className="modalplanner-consolidate-footer__field">
+                <span>Estado de consolidación</span>
+                <select
+                  value={estadoConsolidacion}
+                  onChange={(evento) =>
+                    setEstadoConsolidacion(evento.target.value)
+                  }
+                  disabled={consolidando}
+                >
+                  <option value="Validado">Validado (sin novedad)</option>
+                  <option value="Ajustado">Ajustado (con novedad)</option>
+                  <option value="NoLaborado">No laborado</option>
+                </select>
+              </label>
+
+              <label className="modalplanner-consolidate-footer__observation">
+                <span>Observación de consolidación</span>
+                <input
+                  type="text"
+                  value={observacionConsolidacion}
+                  onChange={(evento) =>
+                    setObservacionConsolidacion(evento.target.value)
+                  }
+                  placeholder="Obligatoria para Ajustado o No laborado"
+                  disabled={consolidando}
+                />
+              </label>
+
+              <div className="modalplanner-consolidate-footer__actions">
+                <button
+                  type="button"
+                  className="modalplanner-consolidate-btn modalplanner-consolidate-btn--ghost"
+                  onClick={handleReabrir}
+                  disabled={consolidando || (data1 ?? []).length === 0}
+                >
+                  Reabrir
+                </button>
+                <button
+                  type="button"
+                  className="modalplanner-consolidate-btn modalplanner-consolidate-btn--ghost"
+                  onClick={handleCancelar}
+                  disabled={consolidando}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="modalplanner-consolidate-btn modalplanner-consolidate-btn--primary"
+                  onClick={handleConsolidar}
+                  disabled={consolidando || (data1 ?? []).length === 0}
+                >
+                  {consolidando ? "Consolidando..." : "Consolidar"}
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
 
       )}
 
-      {
-         <div className={showRight==true ? "content_principal_custom" : "hideRight"} >
+      {estado && (
+         <div className={`${showRight == true ? "content_principal_custom" : "hideRight"}${modoConsolidacion ? " content_principal_custom--consolidate" : ""}`} >
                 <div className="titulo-custom1">
-                  <h2>Stack de turnos especiales</h2>
+                  <h2>{modoConsolidacion ? "Turnos y stacks" : "Stack de turnos especiales"}</h2>
                 </div>
 
                 <div className="cuerpoStackTurnos">
@@ -4393,7 +4989,7 @@ const calcular = ()=>{
                   </div>
                 </div>
          </div>
-      }
+      )}
 
       {showMatrizCompleta &&
         createPortal(

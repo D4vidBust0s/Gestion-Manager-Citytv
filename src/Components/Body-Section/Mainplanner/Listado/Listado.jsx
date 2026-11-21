@@ -22,6 +22,7 @@ import {toast} from 'react-hot-toast'
 import { FechaBarraContext } from '../../../../context/FechaBarraProvider';
 import { PronosticoContext } from '../../../../context/PronosticoTurnosProvider';
 import { AuxSustitutions } from '../../../../context/AuxSustitutionsProvider';
+import { realtimeSocket } from '../../../../api/realtime';
 import Swal from "sweetalert2";
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -308,6 +309,7 @@ const getProgrammers = async () => {
     {
       params:{
         fecha: fechaBarra,
+        soloAprobados: true,
       }
     })
     .then((response) => setData15(response.data));
@@ -2330,6 +2332,15 @@ const limpiarDiaActual = async () => {
 
   useEffect(() => {
     getProgrammers();
+  }, [fechaBarra]);
+
+  useEffect(() => {
+    const alCambiarProgrammer = () => getProgrammers();
+
+    realtimeSocket.on("programmer:changed", alCambiarProgrammer);
+    return () => {
+      realtimeSocket.off("programmer:changed", alCambiarProgrammer);
+    };
   }, [fechaBarra]);
 
 

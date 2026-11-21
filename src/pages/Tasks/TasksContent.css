@@ -15,31 +15,7 @@
   gap: 2rem;
 }
 
-/* Hero Banner estilizado como PayrollMain */
-.tasks-hero-banner {
-  background: linear-gradient(135deg, #00094B 0%, #1a2570 100%);
-  color: #FFFFFF;
-  padding: 1.8rem 2rem;
-  border-radius: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 4px 15px rgba(0, 9, 75, 0.15);
-}
-
-.tasks-hero-banner .hero-text h2 {
-  margin: 0 0 0.4rem 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.tasks-hero-banner .hero-text p {
-  margin: 0;
-  color: #cbd5e1;
-  font-size: 0.95rem;
-}
-
+/* Botón principal de creación */
 .btn-add-task {
   background: #EB464B;
   color: #FFFFFF;
@@ -144,6 +120,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .tasks-section-header h3 {
@@ -181,6 +159,45 @@
   color: #FFFFFF;
   box-shadow: 0 4px 10px rgba(0, 9, 75, 0.2);
 }
+
+/* Filtro por prioridad */
+.priority-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: #f1f5f9;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.priority-filter-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.priority-filter--active {
+  background: #e8edf9;
+  border-color: #00094B;
+  box-shadow: 0 4px 10px rgba(0, 9, 75, 0.12);
+}
+
+.priority-filter-select {
+  border: none;
+  background: transparent;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #00094B;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+}
+
+.priority-filter-select--alta { color: #dc2626; }
+.priority-filter-select--media { color: #b45309; }
+.priority-filter-select--baja { color: #2563eb; }
 
 /* Tabla de Tareas */
 .tasks-table-container {
@@ -483,7 +500,7 @@
   border: 1px solid #e2e8f0;
   width: 280px;
   padding: 1rem;
-  z-index: 100;
+  z-index: 1500;
 }
 
 .calendar-header-nav {
@@ -751,4 +768,420 @@
   color: #3730a3;
   font-size: 0.78rem;
   line-height: 1.35;
+}/* =========================================================
+   ADJUNTOS DE LA NOTA
+   ========================================================= */
+.adjuntos-acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.btn-adjuntar {
+  background: #f1f5f9;
+  border: 1px dashed #94a3b8;
+  color: #334155;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-adjuntar:hover {
+  border-color: var(--PrimaryColor);
+  color: var(--PrimaryColor);
+  background: #fff;
+}
+
+.adjuntos-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.adjunto-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 100%;
+  padding: 0.35rem 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: #334155;
+}
+
+.adjunto-thumb {
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.adjunto-icono {
+  font-size: 1.1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.adjunto-nombre {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.adjunto-peso {
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.adjunto-quitar {
+  border: none;
+  background: transparent;
+  color: #b91c1c;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.adjunto-quitar:hover {
+  color: #7f1d1d;
+}
+
+/* =========================================================
+   MODAL DE DETALLE DE LA NOTA
+   ========================================================= */
+.tasks-detail-modal {
+  width: 620px;
+}
+
+.task-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.task-detail-head h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1f1f1f;
+  line-height: 1.3;
+}
+
+.badge-estado {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge-estado--ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge-estado--pendiente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.task-detail-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.task-detail-meta {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.task-detail-reminder {
+  margin: 0 0 0.9rem 0;
+  padding: 0.5rem 0.7rem;
+  border-left: 3px solid var(--PrimaryColor);
+  background: #fafafa;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.8rem;
+  color: #334155;
+}
+
+.task-detail-block {
+  margin-bottom: 1rem;
+}
+
+.task-detail-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 0.3rem;
+}
+
+.task-detail-descripcion {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #1f2937;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.task-detail-vacio {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.adjuntos-grid--detalle {
+  gap: 0.7rem;
+}
+
+.adjunto-detalle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 8.5rem;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  text-decoration: none;
+  color: #334155;
+  font-size: 0.72rem;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.adjunto-detalle:hover {
+  border-color: var(--PrimaryColor);
+  transform: translateY(-2px);
+}
+
+.adjunto-thumb--grande {
+  width: 100%;
+  height: 5.5rem;
+  border-radius: 8px;
+}
+
+.adjunto-icono--grande {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+/* El listado muestra solo un extracto; el texto completo va en la modal */
+.task-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Fila del listado: el doble clic abre el detalle completo */
+.task-row {
+  cursor: pointer;
+}
+
+.task-adjuntos-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+/* =========================================================
+   VISTA PREVIA DE ADJUNTOS
+   ========================================================= */
+button.adjunto-detalle {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.adjunto-ver {
+  margin-top: 2px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--PrimaryColor);
+}
+
+.task-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(9, 9, 11, 0.82);
+}
+
+.task-preview-content {
+  width: min(920px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.task-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #ececec;
+}
+
+.task-preview-head strong {
+  font-size: 0.9rem;
+  color: #1f1f1f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-preview-cerrar {
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: #555;
+  cursor: pointer;
+}
+
+.task-preview-cerrar:hover {
+  color: var(--PrimaryColor);
+}
+
+.task-preview-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: #f7f7f8;
+  overflow: auto;
+}
+
+.task-preview-img {
+  max-width: 100%;
+  max-height: 66vh;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.task-preview-pdf {
+  width: 100%;
+  height: 66vh;
+  border: none;
+  background: #ffffff;
+}
+
+.task-preview-texto {
+  margin: 0;
+  width: 100%;
+  max-height: 66vh;
+  overflow: auto;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f2937;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.task-preview-aviso {
+  margin: 1rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+.task-preview-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem;
+  border-top: 1px solid #ececec;
+}
+
+.task-preview-acciones .btn-submit {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+/* Botón de eliminar dentro de la tarjeta de adjunto (modal de detalle) */
+.adjunto-detalle {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+
+.adjunto-preview-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.adjunto-eliminar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.adjunto-eliminar:hover {
+  background: #b91c1c;
 }

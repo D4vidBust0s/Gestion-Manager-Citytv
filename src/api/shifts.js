@@ -40,6 +40,18 @@ export const shiftsApi = {
   update: (payload, config) =>
     api.put("/shifts", payload, config).then((r) => r.data),
 
+  /** Actualiza un turno existente (consolidación, sin crear registros) */
+  updateConsolidation: (id, payload, config) =>
+    api
+      .put(`/shifts/consolidation/${id}`, payload, config)
+      .then((r) => r.data),
+
+  /** Actualiza varios turnos existentes en una sola llamada */
+  consolidateBulk: (updates, config) =>
+    api
+      .put("/shifts/consolidation", { updates }, config)
+      .then((r) => r.data),
+
   /** Elimina un turno concreto: /shifts/single/:id */
   remove: (id, config) =>
     api.delete(`/shifts/single/${id}`, config).then((r) => r.data),

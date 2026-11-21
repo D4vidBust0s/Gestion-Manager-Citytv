@@ -27,6 +27,34 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+/**
+ * Identidad de la sesión para las operaciones que el backend restringe por
+ * rol. El backend vuelve a consultar el usuario en la base de datos; el header
+ * no sustituye un token firmado, pero evita que la interfaz opere sin sesión.
+ */
+api.interceptors.request.use((config) => {
+  try {
+    const guardado = localStorage.getItem("userAuth");
+    if (!guardado) return config;
+
+    const usuario = JSON.parse(guardado);
+    const id = usuario?.id ?? usuario?._id ?? usuario?.uid;
+    const nombre = [usuario?.nombres, usuario?.apellidos]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    config.headers = config.headers ?? {};
+    if (id) config.headers["x-user-id"] = String(id);
+    if (nombre) config.headers["x-user-name"] = nombre;
+    if (usuario?.rol) config.headers["x-user-role"] = String(usuario.rol);
+  } catch {
+    /* Sin sesión legible: la petición sigue sin headers de identidad */
+  }
+
+  return config;
+});
+
 export const isCanceled = (error) =>
   axios.isCancel(error) || error?.code === "ERR_CANCELED";
 

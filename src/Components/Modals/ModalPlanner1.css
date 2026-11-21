@@ -2073,7 +2073,7 @@
 }
 
 /* ==========================================================================
-   ETAPA 2: estado del día y controles híbridos (manita / triángulo)
+   ETAPA 2: estado del dÃ­a y controles hÃ­bridos (manita / triÃ¡ngulo)
    ========================================================================== */
 
 .estado-dia{
@@ -2110,7 +2110,7 @@
 }
 
 /* ==========================================================================
-   SELECCIÓN DEL STACK (panel derecho): hover, cursor y elemento activo
+   SELECCIÃ“N DEL STACK (panel derecho): hover, cursor y elemento activo
    ========================================================================== */
 
 .container-modal1 .cuerpoModal .ulLista-editable .liItem-rotation{
@@ -2179,5 +2179,773 @@
 
 .notas-vacio p{
     margin: 0;
+}
+
+
+/* ============================================================
+   MODO CONSOLIDACIÃ“N (ModalPlanner1)
+   Todas las reglas estÃ¡n limitadas a container-modal1--consolidate
+   para no alterar el planificador normal.
+   ============================================================ */
+
+.container-modal1.container-modal1.container-modal1--consolidate {
+  justify-content: flex-start;
+  align-items: stretch;
+  padding: 0;
+}
+
+.container-modal1.container-modal1--consolidate .cabecera {
+  width: 100%;
+  height: 5.5rem;
+  min-height: 5.5rem;
+  margin-bottom: 0;
+  border-radius: 0;
+  flex-shrink: 0;
+}
+
+.container-modal1.container-modal1--consolidate .cabecera .img-Profile {
+  height: 4.5rem;
+  width: 4.5rem;
+  margin-left: 0.5rem;
+}
+
+.container-modal1.container-modal1--consolidate .cabecera .nombre {
+  left: 6rem;
+}
+
+.container-modal1.container-modal1--consolidate .cabecera .img-calendar {
+  height: 3rem;
+  width: 3rem;
+  right: 5.5rem;
+}
+
+.container-modal1.container-modal1--consolidate .cabecera .fecha {
+  padding-right: 10rem;
+  font-size: 0.95rem;
+}
+
+.consolidation-close {
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  background: #eb464b;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  z-index: 200;
+}
+
+.consolidation-close:hover {
+  transform: translateY(-50%) scale(1.06);
+}
+
+.container-modal1.container-modal1--consolidate .actividad,
+.container-modal1.container-modal1--consolidate .list-turnos--info,
+.container-modal1.container-modal1--consolidate .barraButom,
+.container-modal1.container-modal1--consolidate .aux1,
+.container-modal1.container-modal1--consolidate .aux2,
+.container-modal1.container-modal1--consolidate .close2,
+.container-modal1.container-modal1--consolidate .matriz-overlay {
+  display: none !important;
+}
+
+.container-modal1.container-modal1--consolidate .cuerpoModal {
+  width: 100%;
+  height: auto;
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.container-modal1.container-modal1--consolidate.container-modal1--right-open .cuerpoModal {
+  padding-right: 37%;
+}
+
+.container-modal1.container-modal1--consolidate .cuerpoModal .acciones {
+  width: 55%;
+  margin-top: 0;
+  overflow-y: auto;
+  padding-bottom: 1rem;
+  box-sizing: border-box;
+}
+
+.container-modal1.container-modal1--consolidate .cuerpoModal .list-turnos {
+  width: 45%;
+  margin-top: 0;
+}
+
+.container-modal1.container-modal1--consolidate .cuerpoModal .acciones .mainContainer {
+  width: 100%;
+  height: auto;
+  min-height: 60%;
+  margin-top: 0.75rem;
+}
+
+.container-modal1.container-modal1--consolidate .cuerpoModal .list-turnos .ulLista-rotation,
+.container-modal1.container-modal1--consolidate .cuerpoModal .list-turnos .ulLista-rotation-ok,
+.container-modal1.container-modal1--consolidate .cuerpoModal .list-turnos .ulLista-rotation-saved {
+  height: 70%;
+  margin-top: 0.75rem;
+}
+
+.container-modal1.container-modal1--consolidate .cuerpoModal .seccionButons2 {
+  margin-top: 0.5rem;
+}
+
+/* Pie de consolidaciÃ³n */
+.modalplanner-consolidate-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  width: 100%;
+  min-height: 5rem;
+  flex-shrink: 0;
+  padding: 0.6rem 1rem;
+  background: #0b1230;
+  color: #ffffff;
+  border-top: 2px solid #eb464b;
+  box-sizing: border-box;
+  z-index: 2200;
+}
+
+.modalplanner-consolidate-footer__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 8rem;
+}
+
+.modalplanner-consolidate-footer__summary strong {
+  font-size: 0.8rem;
+  color: #ffffff;
+}
+
+.modalplanner-consolidate-footer__summary span {
+  font-size: 0.7rem;
+  color: #c7d2fe;
+}
+
+.modalplanner-consolidate-footer__field,
+.modalplanner-consolidate-footer__observation {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.modalplanner-consolidate-footer__field {
+  flex: 0 1 12rem;
+}
+
+.modalplanner-consolidate-footer__observation {
+  flex: 1 1 18rem;
+}
+
+.modalplanner-consolidate-footer__field span,
+.modalplanner-consolidate-footer__observation span {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #c7d2fe;
+}
+
+.modalplanner-consolidate-footer__field select,
+.modalplanner-consolidate-footer__observation input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #475569;
+  border-radius: 0.45rem;
+  background: #ffffff;
+  color: #1e293b;
+  font-family: inherit;
+  font-size: 0.76rem;
+  padding: 0.42rem 0.5rem;
+  outline: none;
+}
+
+.modalplanner-consolidate-footer__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.modalplanner-consolidate-btn {
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  padding: 0.48rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.modalplanner-consolidate-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.modalplanner-consolidate-btn--ghost {
+  background: transparent;
+  color: #e2e8f0;
+  border-color: #64748b;
+}
+
+.modalplanner-consolidate-btn--ghost:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.modalplanner-consolidate-btn--primary {
+  background: #7ed957;
+  color: #07330b;
+}
+
+.modalplanner-consolidate-btn--primary:not(:disabled):hover {
+  background: #6cc946;
+}
+
+/* Panel derecho en modo consolidaciÃ³n */
+.content_principal_custom.content_principal_custom--consolidate {
+  position: fixed;
+  top: 5.5rem;
+  right: 0;
+  bottom: 5rem;
+  left: auto;
+  width: 36%;
+  height: auto;
+  border: 0;
+  border-left: 4px solid #eb464b;
+  border-radius: 0;
+  padding: 0.8rem;
+  animation: none;
+  z-index: 2100;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .titulo-custom1,
+.content_principal_custom.content_principal_custom--consolidate .titulo-custom2 {
+  width: 100%;
+  margin-top: 0.35rem;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .titulo-custom2 {
+  margin-top: 0.75rem;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .cuerpoStackTurnos {
+  height: 38%;
+  margin-top: 0.5rem;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .cuerpoStackGuardados {
+  height: 30%;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 1200px) {
+  .content_principal_custom.content_principal_custom--consolidate {
+    width: 42%;
+  }
+
+  .container-modal1.container-modal1--consolidate.container-modal1--right-open .cuerpoModal {
+    padding-right: 43%;
+  }
+}
+
+@media (max-width: 1000px) {
+  .container-modal1.container-modal1--consolidate.container-modal1--right-open .cuerpoModal {
+    padding-right: 1rem;
+  }
+
+  .content_principal_custom.content_principal_custom--consolidate {
+    width: 48%;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35);
+  }
+}
+
+@media (max-width: 860px) {
+  .container-modal1.container-modal1--consolidate .cabecera {
+    height: auto;
+    min-height: 5.5rem;
+  }
+
+  .container-modal1.container-modal1--consolidate .cuerpoModal {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .container-modal1.container-modal1--consolidate .cuerpoModal .acciones,
+  .container-modal1.container-modal1--consolidate .cuerpoModal .list-turnos {
+    width: 100%;
+  }
+
+  .container-modal1.container-modal1--consolidate .cuerpoModal .acciones {
+    overflow-y: visible;
+  }
+
+  .container-modal1.container-modal1--consolidate .cuerpoModal .list-turnos .ulLista-rotation,
+  .container-modal1.container-modal1--consolidate .cuerpoModal .list-turnos .ulLista-rotation-ok,
+  .container-modal1.container-modal1--consolidate .cuerpoModal .list-turnos .ulLista-rotation-saved {
+    height: 28rem;
+  }
+
+  .content_principal_custom.content_principal_custom--consolidate {
+    top: 5.5rem;
+    bottom: 7.5rem;
+    width: 90%;
+  }
+
+  .modalplanner-consolidate-footer {
+    align-items: stretch;
+  }
+
+  .modalplanner-consolidate-footer__field,
+  .modalplanner-consolidate-footer__observation {
+    flex: 1 1 100%;
+  }
+
+  .modalplanner-consolidate-footer__actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .modalplanner-consolidate-footer__actions .modalplanner-consolidate-btn {
+    flex: 1 1 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consolidation-close,
+  .modalplanner-consolidate-btn {
+    transition: none !important;
+  }
+}
+
+/* Ajustes especÃ­ficos del panel derecho de consolidaciÃ³n */
+.container-modal1.container-modal1--consolidate .cabecera {
+  background: #d9d9d9;
+}
+
+.content_principal_custom.content_principal_custom--consolidate {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
+  overflow: hidden;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .titulo-custom1,
+.content_principal_custom.content_principal_custom--consolidate .titulo-custom2 {
+  flex-shrink: 0;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .cuerpoStackTurnos {
+  flex: 1 1 45%;
+  min-height: 0;
+  height: auto;
+  margin-top: 0;
+  padding: 0.5rem;
+  overflow-y: auto;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .cuerpoStackGuardados {
+  flex: 1 1 45%;
+  min-height: 0;
+  height: auto;
+  margin-top: 0;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .guardadosLeft {
+  width: 100%;
+  height: 8.5rem;
+  flex-shrink: 0;
+  padding: 0.5rem;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .guardadosRight {
+  width: 100%;
+  top: auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .contenControls {
+  width: 100%;
+  height: auto;
+  padding: 0.5rem;
+  gap: 0.45rem;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .controsName {
+  width: 100%;
+  margin: 0.25rem 0;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .contenControls .seccionButonsNew {
+  justify-content: flex-start;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .containerSingleButtomAply {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.content_principal_custom.content_principal_custom--consolidate .timeIn,
+.content_principal_custom.content_principal_custom--consolidate .timeOut,
+.content_principal_custom.content_principal_custom--consolidate .timeAcu,
+.content_principal_custom.content_principal_custom--consolidate .cleanButom,
+.content_principal_custom.content_principal_custom--consolidate .cleanButomFull {
+  display: none !important;
+}
+
+
+/* ============================================================
+   PROPORCIÓN Y MÁRGENES DEL MODO CONSOLIDACIÓN
+   Se conserva el ancho grande, pero con el mismo lenguaje visual
+   del planeador normal: cabecera y cuerpo inset, bordes redondeados
+   y separación del borde de la pantalla.
+   ============================================================ */
+
+.container-modal1.container-modal1--consolidate {
+  background: #0b0b0b;
+}
+
+.container-modal1.container-modal1--consolidate .cabecera {
+  width: calc(100% - 4rem);
+  margin: 2rem auto 0.75rem;
+  border-radius: 1rem 2rem 2rem 1rem;
+  background: #d9d9d9;
+}
+
+.container-modal1.container-modal1--consolidate .cuerpoModal {
+  width: calc(100% - 4rem);
+  margin: 0 auto 0.75rem;
+  border: 2px solid #d9d9d9;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  overflow: hidden;
+}
+
+.container-modal1.container-modal1--consolidate .cuerpoModal .acciones,
+.container-modal1.container-modal1--consolidate .cuerpoModal > .list-turnos:not(.list-turnos--info) {
+  margin-top: 2rem;
+}
+
+.container-modal1.container-modal1--consolidate.container-modal1--right-open .cuerpoModal {
+  padding-right: 37%;
+}
+
+.container-modal1.container-modal1--consolidate .modalplanner-consolidate-footer {
+  width: calc(100% - 4rem);
+  margin: 0 auto 2rem;
+  border-radius: 0.75rem;
+  border-top: 2px solid #eb464b;
+}
+
+.content_principal_custom.content_principal_custom--consolidate {
+  top: calc(2rem + 5.5rem + 0.75rem);
+  right: 2rem;
+  bottom: calc(2rem + 5rem + 0.75rem);
+  width: calc((100vw - 4rem) * 0.36);
+  border-radius: 0 0.75rem 0.75rem 0;
+  border-left: 2px solid #eb464b;
+}
+
+@media (max-width: 1200px) {
+  .content_principal_custom.content_principal_custom--consolidate {
+    width: calc((100vw - 4rem) * 0.42);
+  }
+
+  .container-modal1.container-modal1--consolidate.container-modal1--right-open .cuerpoModal {
+    padding-right: 43%;
+  }
+}
+
+@media (max-width: 1000px) {
+  .content_principal_custom.content_principal_custom--consolidate {
+    width: calc((100vw - 4rem) * 0.48);
+  }
+
+  .container-modal1.container-modal1--consolidate.container-modal1--right-open .cuerpoModal {
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 860px) {
+  .container-modal1.container-modal1--consolidate .cabecera {
+    width: calc(100% - 2rem);
+    margin: 1rem auto 0.5rem;
+  }
+
+  .container-modal1.container-modal1--consolidate .cuerpoModal {
+    width: calc(100% - 2rem);
+    margin: 0 auto 0.5rem;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 0.75rem;
+  }
+
+  .container-modal1.container-modal1--consolidate .cuerpoModal .acciones,
+  .container-modal1.container-modal1--consolidate .cuerpoModal > .list-turnos:not(.list-turnos--info) {
+    margin-top: 1.5rem;
+    width: 100%;
+  }
+
+  .container-modal1.container-modal1--consolidate .cuerpoModal .acciones {
+    overflow-y: visible;
+  }
+
+  .container-modal1.container-modal1--consolidate .cuerpoModal > .list-turnos:not(.list-turnos--info) .ulLista-rotation,
+  .container-modal1.container-modal1--consolidate .cuerpoModal > .list-turnos:not(.list-turnos--info) .ulLista-rotation-ok,
+  .container-modal1.container-modal1--consolidate .cuerpoModal > .list-turnos:not(.list-turnos--info) .ulLista-rotation-saved {
+    height: 28rem;
+  }
+
+  .container-modal1.container-modal1--consolidate .modalplanner-consolidate-footer {
+    width: calc(100% - 2rem);
+    margin: 0 auto 1rem;
+    align-items: stretch;
+  }
+
+  .content_principal_custom.content_principal_custom--consolidate {
+    top: 6rem;
+    right: 1rem;
+    bottom: 8rem;
+    width: 90%;
+    border-radius: 0.75rem;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35);
+  }
+}
+
+/* ============================================================
+   EQUILIBRIO DE COLUMNAS Y BOTÓN DE ABRIR PANEL
+   ============================================================ */
+
+.container-modal1.container-modal1--consolidate.container-modal1--right-open .cuerpoModal {
+  padding-right: 31%;
+}
+
+.container-modal1.container-modal1--consolidate .cuerpoModal .acciones {
+  width: 50%;
+}
+
+.container-modal1.container-modal1--consolidate .cuerpoModal > .list-turnos:not(.list-turnos--info) {
+  width: 50%;
+}
+
+.container-modal1.container-modal1--consolidate .cuerpoModal .acciones > .consolidation-editor,
+.container-modal1.container-modal1--consolidate .cuerpoModal .acciones .mainContainer {
+  width: calc(100% - 4rem);
+  align-self: flex-start;
+}
+
+.container-modal1.container-modal1--consolidate .cuerpoModal .acciones .containerSingleButtom-open {
+  right: 0.2rem;
+  top: 42%;
+  padding: 0.2rem;
+  z-index: 20;
+}
+
+.container-modal1.container-modal1--consolidate .cuerpoModal .acciones .containerSingleButtom-open .img-butons {
+  width: 2.8rem;
+  height: 2.2rem;
+}
+
+.content_principal_custom.content_principal_custom--consolidate {
+  width: calc((100vw - 4rem) * 0.30);
+}
+
+@media (max-width: 1200px) {
+  .container-modal1.container-modal1--consolidate.container-modal1--right-open .cuerpoModal {
+    padding-right: 36%;
+  }
+
+  .content_principal_custom.content_principal_custom--consolidate {
+    width: calc((100vw - 4rem) * 0.35);
+  }
+}
+
+@media (max-width: 1000px) {
+  .container-modal1.container-modal1--consolidate.container-modal1--right-open .cuerpoModal {
+    padding-right: 1rem;
+  }
+
+  .content_principal_custom.content_principal_custom--consolidate {
+    width: calc((100vw - 4rem) * 0.42);
+  }
+}
+
+@media (max-width: 860px) {
+  .container-modal1.container-modal1--consolidate .cuerpoModal .acciones,
+  .container-modal1.container-modal1--consolidate .cuerpoModal > .list-turnos:not(.list-turnos--info) {
+    width: 100%;
+  }
+
+  .container-modal1.container-modal1--consolidate .cuerpoModal .acciones > .consolidation-editor,
+  .container-modal1.container-modal1--consolidate .cuerpoModal .acciones .mainContainer {
+    width: calc(100% - 3.5rem);
+  }
+
+  .content_principal_custom.content_principal_custom--consolidate {
+    width: 90%;
+  }
+}
+
+/* Estado del personal del Programmer seleccionado (ModalPlanner1).
+   Tarjeta compacta y aislada para no alterar el layout del modal. */
+.planner-programmer-status {
+  width: 100%;
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid rgba(0, 9, 75, 0.18);
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.82);
+  color: #1e293b;
+  font-family: inherit;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  max-height: 7.5rem;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.planner-programmer-status__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.3rem;
+}
+
+.planner-programmer-status__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  overflow: hidden;
+  color: #00094b;
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planner-programmer-status__badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.planner-programmer-status__badge {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 0.12rem 0.4rem;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.planner-programmer-status__badge.is-ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.planner-programmer-status__badge.is-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.planner-programmer-status__badge.is-off {
+  background: #e2e8f0;
+  color: #64748b;
+}
+
+.planner-programmer-status__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  margin: 0 0 0.3rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: 0.35rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+}
+
+.planner-programmer-status__notice svg {
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
+.planner-programmer-status__notice.is-pending {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.planner-programmer-status__notice.is-ok {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.planner-programmer-status__notice.is-neutral {
+  background: #f8fafc;
+  color: #475569;
+}
+
+.planner-programmer-status__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.planner-programmer-status__list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.15rem 0.25rem;
+  border-radius: 0.3rem;
+}
+
+.planner-programmer-status__list li.is-ok {
+  color: #166534;
+}
+
+.planner-programmer-status__list li.is-pending {
+  color: #92400e;
+}
+
+.planner-programmer-status__list strong {
+  font-size: 0.6rem;
 }
 

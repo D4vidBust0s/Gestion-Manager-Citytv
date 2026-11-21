@@ -251,5 +251,58 @@ DESPUES DE LA SOCIALIZACION CON EDWIN SE LLEGO A LAS SIGUIENTES MODIFICACIONES
 
    creo que es todo. se deberia pasar a la implemtecion de notas y las otras herramientas del sistema
 
+   --------------------------------------------------------------------------------------------------------------------------------
+   CONSOLIDATE (JOURNAL)
+   --------------------------------------------------------------------------------------------------------------------------------
+   Estado actual: NUEVA MODAL DE STACKS FUNCIONAL.
+   - Interfaz `ConsolidateStackModal` con resumen del stack, validación,
+     edición de eventos, carga de stacks guardados reales, ventana inicio/fin,
+     previsualización y cierre.
+   - Avatar real del trabajador (`payroll.foto`) con imagen por defecto.
+   - Modal al 94% del viewport, layout adaptable.
+   - Validación de coherencia horaria: cada Programa, Secondary o Programmer
+     empieza donde termina el evento anterior. La hora fin esperada debe
+     coincidir con el fin calculado; si no, se bloquea la actualización y se
+     ofrece "Usar fin calculado".
+   - Validación de la hora real del evento: un Programa, Secondary,
+     Requerimiento o Programmer solo se agrega si su hora de inicio real
+     coincide con el tramo del stack. Si no coincide, se rechaza la selección
+     y se bloquea la actualización.
+   - Actualización real del stack: reutiliza los turnos existentes, crea solo
+     los adicionales y elimina los sobrantes con confirmación.
+   - Consolidación real con estado Validado/Ajustado/NoLaborado, observación,
+     auditoría y minutos.
+   - Sin guardado de stacks nuevos desde la modal.
+
+   Objetivo funcional (siguiente fase):
+   Pantalla /consolidate para validar y ajustar la programacion de dias anteriores
+   de MainPlanner y MainPlanner + usando una modal propia de stacks.
+
+   - Sidebar Journal -> Consolidate.
+   - Fecha por defecto: ayer; se puede cambiar a cualquier dia no futuro.
+   - Filtros por planner, grupo, estado y busqueda.
+   - Validacion rapida por trabajador o en bloque; cierre del dia.
+   - Doble clic abre la modal del stack programado.
+   - Un turno = conjunto de shifts del stack, no un bloque aislado.
+   - El administrador puede validar el stack o modificarlo:
+       * hora inicio y hora fin;
+       * crear un stack nuevo con eventos y duraciones;
+       * cargar un stack guardado existente (no se guarda uno nuevo);
+       * previsualizar los shifts generados.
+   - Actualizacion del stack programado:
+       * se actualizan primero los turnos existentes;
+       * se crean solo los adicionales y se eliminan los sobrantes, con confirmacion;
+       * no se duplica el stack.
+   - Cierre con estado Validado, Ajustado o No laborado, observacion y auditoria.
+   - Persistencia en los MISMOS registros de shifts:
+       EstadoConsolidacion, Consolidado, ConsolidadoPor, ConsolidadoPorId,
+       ConsolidadoEn, ObservacionConsolidacion y MinutosConsolidados.
+   - Toda modificacion de programacion deja los turnos en Pendiente y limpia la
+     auditoria/minutos anteriores.
+   - Si se reprograma el dia desde MainPlanner, la consolidacion se pierde y
+     debe repetirse.
+   --------------------------------------------------------------------------------------------------------------------------------
+
+
 
 

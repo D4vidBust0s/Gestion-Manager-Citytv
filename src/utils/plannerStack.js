@@ -17,6 +17,7 @@ import {
   duracionPrograma,
   duracionItemStack,
 } from "./stackDuration";
+import { idProgrammerDeTurno } from "./programmerTurno";
 
 /* ==========================================
    FECHAS
@@ -259,7 +260,7 @@ export const duracionDeTurno = (
 
     const programmer = buscarProgrammer(
       programmers,
-      turno.ID_event ?? turno.Event_name ?? turno.ID_programa
+      idProgrammerDeTurno(turno)
     );
     const minutos = minutosEntreFechas(programmer?.Time_in, programmer?.Time_out);
     if (minutos && minutos > 0) return minutos;
@@ -388,3 +389,33 @@ export const horaInicioSchema = (rotations, schemaId) => {
   );
   return schema?.HoraInicio ?? schema?.horaInicio ?? null;
 };
+
+/* ==========================================
+   FIRMA DEL DÍA PROGRAMADO
+   ========================================== */
+
+/**
+ * Firma estable de los turnos guardados. Sirve para detectar si el
+ * administrador modificó la programación durante una consolidación.
+ */
+export const firmaTurnos = (turnos = []) =>
+  (Array.isArray(turnos) ? turnos : [])
+    .map((turno) =>
+      [
+        turno?._id,
+        turno?.Index,
+        turno?.Event_name,
+        turno?.Type,
+        turno?.Inicio_main,
+        turno?.Out,
+        turno?.Id_Schema,
+        turno?.Color,
+        turno?.Observacion,
+      ]
+        .map((valor) => String(valor ?? ""))
+        .join("|")
+    )
+    .sort()
+    .join("||");
+
+export const mismasFirmasTurnos = (a, b) => firmaTurnos(a) === firmaTurnos(b);

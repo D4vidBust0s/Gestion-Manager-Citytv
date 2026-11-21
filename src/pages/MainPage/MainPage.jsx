@@ -30,12 +30,15 @@ import Breaks from '../../pages/Breaks/breaks';
 import Balancer from '../../pages/Balancer/balancer';
 import UserBalancer from '../../pages/UserBalancers/userBalancer';
 import Programmer from '../../pages/Programmer/programmer';
+import Consolidate from '../../pages/Consolidate/Consolidate';
+import Requirements from '../../pages/Requirements/Requirements';
 import Cv from '../../pages/Cv/cv';
 import Pm from '../../pages/PayrollMain/pmMain';
 import GroupNoveltiesPage from '../../pages/GroupNovelties/GroupNoveltiesPage';
 import Tasks from '../../pages/Tasks/Task';
 import Compensatory from '../../pages/Compensatory/Compensatory';
 import Rutas from '../../pages/Routes/Routes';
+import Activos from '../../pages/Activos/ActivosPage';
 
 /* Dependencias */
 import axios from "axios";
@@ -47,6 +50,7 @@ import { FechaBarraProvider } from '../../context/FechaBarraProvider';
 import { PronosticoTurnosProvider } from '../../context/PronosticoTurnosProvider';
 import { AuxSustitutionsProvider } from '../../context/AuxSustitutionsProvider';
 import { ChatProvider } from '../../context/ChatContext';
+import { RequirementsProvider } from '../../context/RequirementsProvider';
 
 /* Variables */
 
@@ -288,6 +292,7 @@ useEffect(()=>{
     <PronosticoTurnosProvider>
     <FechaBarraProvider>
     <ChatProvider>
+    <RequirementsProvider>
     <BrowserRouter>
       <div className={`Container${sidebarCollapsed ? ' Container--sidebar-collapsed' : ''}`}>
         <Sidebar
@@ -318,6 +323,9 @@ useEffect(()=>{
             <Route path="/balancer" element={<Balancer />} />
             <Route path="/user-balancers" element={<UserBalancer />} />
             <Route path="/programmer" element={<Programmer />} />
+            <Route path="/consolidate" element={<Consolidate />} />
+            <Route path="/requirements" element={<Requirements />} />
+            <Route path="/activos/*" element={<Activos />} />
             <Route path="/cv" element={<Cv />} />
             <Route path="/payroll-main" element={<Pm />} />
             <Route path="/routes" element={<Rutas />} />
@@ -328,6 +336,7 @@ useEffect(()=>{
         </div>
       </div>
     </BrowserRouter>
+    </RequirementsProvider>
     </ChatProvider>
     </FechaBarraProvider>
     </PronosticoTurnosProvider>

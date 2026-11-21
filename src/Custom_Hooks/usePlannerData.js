@@ -10,6 +10,7 @@ import { licensesApi } from "../api/licenses";
 import { payrollApi } from "../api/payroll";
 import { permissionsApi } from "../api/permissions";
 import { programmerApi } from "../api/programmer";
+import { useRealtimeEvent } from "./useRealtimeEvent";
 import { programsApi } from "../api/programs";
 import { projectionsApi } from "../api/projections";
 import { recessApi } from "../api/recess";
@@ -26,6 +27,68 @@ import { substitutionsApi } from "../api/substitutions";
 // de Rules, así que se reutiliza la fórmula ya verificada.
 import { calcularRango } from "../utils/balancer";
 import { mismoDia } from "../utils/plannerStack";
+import { claveDiaLocal, isoInicioDiaLocal } from "../utils/plannerCoverage";
+
+/** Fecha ISO válida o null. */
+const aIso = (valor) => {
+  if (valor === null || valor === undefined || valor === "") return null;
+  const fecha = new Date(valor);
+  return Number.isNaN(fecha.getTime()) ? null : fecha.toISOString();
+};
+
+/** Clave local YYYY-MM-DD o null. */
+const aClaveDia = (valor) => {
+  const fecha = new Date(valor);
+  return Number.isNaN(fecha.getTime()) ? null : claveDiaLocal(fecha);
+};
+
+const ordenarTurnos = (turnos = []) =>
+  [...(Array.isArray(turnos) ? turnos : [])].sort((a, b) => {
+    const indexA = Number(a?.Index);
+    const indexB = Number(b?.Index);
+
+    if (Number.isFinite(indexA) && Number.isFinite(indexB) && indexA !== indexB) {
+      return indexA - indexB;
+    }
+
+    return (
+      (new Date(a?.Inicio_main).getTime() || 0) -
+      (new Date(b?.Inicio_main).getTime() || 0)
+    );
+  });
+
+const ordenarPayloads = (payloads = []) =>
+  [...(Array.isArray(payloads) ? payloads : [])].sort((a, b) => {
+    const indexA = Number(a?.index);
+    const indexB = Number(b?.index);
+
+    if (Number.isFinite(indexA) && Number.isFinite(indexB) && indexA !== indexB) {
+      return indexA - indexB;
+    }
+
+    return (
+      (new Date(a?.inicioMain).getTime() || 0) -
+      (new Date(b?.inicioMain).getTime() || 0)
+    );
+  });
+
+/** Payload del planner -> body de PUT /shifts/consolidation/:id. */
+const payloadActualizacionTurno = (payload = {}) => ({
+  index: payload.index,
+  idPrograma: payload.idPrograma,
+  eventId: payload.eventId,
+  tipo: payload.tipo,
+  color: payload.color,
+  observacion: payload.observacion,
+  idSchema: payload.idSchema,
+  inicioMain: aIso(payload.inicioMain) ?? payload.inicioMain,
+  out:
+    payload.out === "------"
+      ? "------"
+      : aIso(payload.out) ?? payload.out,
+  estadoConsolidacion: "Pendiente",
+  observacionConsolidacion: "",
+});
 
 /** Las notas pueden venir como arreglo o dentro de un objeto paginado. */
 const extraerLista = (data) => {
@@ -74,6 +137,8 @@ export const usePlannerData = ({
   fechaPlaner,
   auxiliar,
   showRight,
+  modoConsolidacion = false,
+  incluirBalancer = true,
 }) => {
   /* DATOS */
   const [programs, setPrograms] = useState([]);
@@ -241,7 +306,10 @@ export const usePlannerData = ({
       cargarRecurso(
         "programmers",
         (signal) =>
-          programmerApi.getAll({ params: { fecha: fechaPlaner }, signal }),
+          programmerApi.getAll({
+            params: { fecha: fechaPlaner, soloAprobados: true },
+            signal,
+          }),
         setProgrammers,
         "Error al cargar los eventos programados"
       ),
@@ -328,6 +396,7 @@ export const usePlannerData = ({
   const rangoOut = rango?.out ?? "";
 
   const cargarTurnosDia = useCallback(() => {
+    if (!incluirBalancer) return Promise.resolve(null);
     if (!rangoIn || !rangoOut) return Promise.resolve(null);
 
     return cargarRecurso(
@@ -340,7 +409,7 @@ export const usePlannerData = ({
       setShiftsDay,
       "Error al cargar los turnos del periodo"
     );
-  }, [cargarRecurso, rangoIn, rangoOut]);
+  }, [cargarRecurso, rangoIn, rangoOut, incluirBalancer]);
 
   /* REFRESCO AGRUPADO DE TURNOS */
 
@@ -439,8 +508,8 @@ export const usePlannerData = ({
       setSubstitutions,
       "Error al cargar las sustituciones"
     );
-    cargarProjections();
-  }, [cargarRecurso, cargarProjections]);
+    if (incluirBalancer) cargarProjections();
+  }, [cargarRecurso, cargarProjections, incluirBalancer]);
 
   /* EFECTOS */
 
@@ -474,23 +543,249 @@ export const usePlannerData = ({
     cargarProgrammers();
   }, [cargarProgrammers, showRight]);
 
+  // Si otro usuario crea, aprueba o modifica un requerimiento, el panel
+  // lateral del planificador se actualiza sin cerrarlo.
+  const recargarProgrammersRealtime = useCallback(() => {
+    cargarProgrammers();
+  }, [cargarProgrammers]);
+
+  useRealtimeEvent("programmer:changed", recargarProgrammersRealtime);
+
   // Sin reglas no hay rango: se evita la consulta con parámetros vacíos.
   useEffect(() => {
+    if (!incluirBalancer) {
+      setShiftsDay([]);
+      return;
+    }
+
     if (!rangoIn || !rangoOut) {
       setShiftsDay([]);
       return;
     }
 
     cargarTurnosDia();
-  }, [cargarTurnosDia, rangoIn, rangoOut]);
+  }, [cargarTurnosDia, rangoIn, rangoOut, incluirBalancer]);
+
+  /* MOTOR DE ACTUALIZACIÓN SIN DUPLICAR EL TURNO PROGRAMADO */
+
+  const obtenerTurnosPorFechas = useCallback(async (userId, fechas = []) => {
+    const dias = new Map();
+
+    (Array.isArray(fechas) ? fechas : []).forEach((fecha) => {
+      const clave = aClaveDia(fecha);
+      if (!clave) return;
+
+      const dia = new Date(fecha);
+      dia.setHours(0, 0, 0, 0);
+      dias.set(clave, dia);
+    });
+
+    const listas = await Promise.all(
+      [...dias.values()].map((dia) =>
+        shiftsApi.getDayKey({
+          params: { daykey: isoInicioDiaLocal(dia) },
+        })
+      )
+    );
+
+    return listas
+      .flat()
+      .filter(
+        (turno) =>
+          String(turno?.ID_user ?? "").trim() === String(userId ?? "").trim()
+      );
+  }, []);
+
+  /**
+   * Calcula cuántos turnos se actualizan, eliminan y crean para una
+   * programación deseada. Los existentes son la base y se reutilizan primero.
+   */
+  const planificarActualizacionExistentes = useCallback(
+    async (
+      payloads = [],
+      { userId = iduser, fechas = [fechaPlaner] } = {}
+    ) => {
+      const lista = Array.isArray(payloads) ? payloads : [];
+
+      const fechasUnicas = [
+        ...(Array.isArray(fechas) ? fechas : [fechaPlaner]),
+        ...lista.map((payload) => payload?.fechaClave),
+      ];
+
+      try {
+        const existentes = await obtenerTurnosPorFechas(userId, fechasUnicas);
+        const grupos = new Map();
+
+        const crearGrupo = (clave) => {
+          if (!clave) return null;
+          if (!grupos.has(clave)) {
+            grupos.set(clave, { clave, existentes: [], deseados: [] });
+          }
+          return grupos.get(clave);
+        };
+
+        existentes.forEach((turno) => {
+          const grupo = crearGrupo(aClaveDia(turno?.Fecha_clave));
+          if (grupo) grupo.existentes.push(turno);
+        });
+
+        lista.forEach((payload) => {
+          const grupo = crearGrupo(aClaveDia(payload?.fechaClave));
+          if (grupo) grupo.deseados.push(payload);
+        });
+
+        const porFecha = [...grupos.values()]
+          .map((grupo) => {
+            const actuales = ordenarTurnos(grupo.existentes);
+            const deseados = ordenarPayloads(grupo.deseados);
+            const comparables = Math.min(actuales.length, deseados.length);
+
+            return {
+              clave: grupo.clave,
+              existentes: actuales,
+              deseados,
+              actualizaciones: comparables,
+              eliminaciones: Math.max(actuales.length - deseados.length, 0),
+              creaciones: Math.max(deseados.length - actuales.length, 0),
+            };
+          })
+          .filter(
+            (grupo) => grupo.existentes.length > 0 || grupo.deseados.length > 0
+          );
+
+        const resumen = porFecha.reduce(
+          (total, grupo) => {
+            total.actualizaciones += grupo.actualizaciones;
+            total.eliminaciones += grupo.eliminaciones;
+            total.creaciones += grupo.creaciones;
+            return total;
+          },
+          { actualizaciones: 0, eliminaciones: 0, creaciones: 0 }
+        );
+
+        return { ...resumen, porFecha };
+      } catch (error) {
+        console.error("Error al planificar la actualización de turnos:", error);
+        toast.error(
+          error?.message || "No se pudo preparar la actualización de turnos"
+        );
+        return null;
+      }
+    },
+    [iduser, fechaPlaner, obtenerTurnosPorFechas]
+  );
+
+  /**
+   * Aplica la programación deseada sobre los turnos existentes:
+   * actualiza primero, elimina sobrantes y crea únicamente los adicionales.
+   */
+  const actualizarTurnosExistentes = useCallback(
+    async (
+      payloads = [],
+      { userId = iduser, fechas = [fechaPlaner], confirmarCreacion = false } = {}
+    ) => {
+      const plan = await planificarActualizacionExistentes(payloads, {
+        userId,
+        fechas,
+      });
+
+      if (!plan) return null;
+
+      if (plan.creaciones > 0 && !confirmarCreacion) {
+        return { requiereConfirmacion: true, plan };
+      }
+
+      let actualizados = 0;
+      let eliminados = 0;
+      let creados = 0;
+
+      try {
+        for (const grupo of plan.porFecha) {
+          const comparables = Math.min(
+            grupo.existentes.length,
+            grupo.deseados.length
+          );
+
+          for (let indice = 0; indice < comparables; indice += 1) {
+            const turno = grupo.existentes[indice];
+            const payload = grupo.deseados[indice];
+
+            await shiftsApi.updateConsolidation(
+              turno._id,
+              payloadActualizacionTurno(payload)
+            );
+            actualizados += 1;
+          }
+
+          for (
+            let indice = comparables;
+            indice < grupo.existentes.length;
+            indice += 1
+          ) {
+            await shiftsApi.remove(grupo.existentes[indice]._id);
+            eliminados += 1;
+          }
+
+          for (
+            let indice = comparables;
+            indice < grupo.deseados.length;
+            indice += 1
+          ) {
+            await shiftsApi.create(grupo.deseados[indice]);
+            creados += 1;
+          }
+        }
+
+        await Promise.all([
+          recargarTurnos(),
+          cargarTurnosDia(),
+          cargarProgrammers(),
+        ]);
+
+        return { actualizados, eliminados, creados };
+      } catch (error) {
+        console.error("Error al actualizar los turnos programados:", error);
+        toast.error(
+          error?.message || "No se pudieron actualizar los turnos programados"
+        );
+
+        try {
+          await Promise.all([
+            recargarTurnos(),
+            cargarTurnosDia(),
+            cargarProgrammers(),
+          ]);
+        } catch (refrescoError) {
+          console.error("Error al refrescar tras la actualización:", refrescoError);
+        }
+
+        return null;
+      }
+    },
+    [
+      iduser,
+      fechaPlaner,
+      planificarActualizacionExistentes,
+      recargarTurnos,
+      cargarTurnosDia,
+      cargarProgrammers,
+    ]
+  );
 
   /* ESCRITURAS */
 
   const guardarTurno = useCallback(
     async (payload) => {
+      if (modoConsolidacion) {
+        toast.error(
+          "No se pueden crear turnos nuevos desde la consolidación. Actualice los turnos programados."
+        );
+        return false;
+      }
+
       try {
         await shiftsApi.create(payload);
-        recargarTurnos();
+        await Promise.all([recargarTurnos(), cargarProgrammers()]);
         return true;
       } catch (error) {
         console.error("Error al guardar el turno:", error);
@@ -498,7 +793,7 @@ export const usePlannerData = ({
         return false;
       }
     },
-    [recargarTurnos]
+    [recargarTurnos, cargarProgrammers, modoConsolidacion]
   );
 
   const guardarStackGuardado = useCallback(async (payload) => {
@@ -516,7 +811,11 @@ export const usePlannerData = ({
     async (userId, fechaIso) => {
       try {
         await shiftsApi.update({ ids: userId, fch: fechaIso });
-        await Promise.all([recargarTurnos(), cargarTurnosDia()]);
+        await Promise.all([
+          recargarTurnos(),
+          cargarTurnosDia(),
+          cargarProgrammers(),
+        ]);
         return true;
       } catch (error) {
         console.error("Error al limpiar los turnos:", error);
@@ -524,14 +823,18 @@ export const usePlannerData = ({
         return false;
       }
     },
-    [recargarTurnos, cargarTurnosDia]
+    [recargarTurnos, cargarTurnosDia, cargarProgrammers]
   );
 
   const eliminarTurno = useCallback(
     async (id) => {
       try {
         await shiftsApi.remove(id);
-        await Promise.all([recargarTurnos(), cargarTurnosDia()]);
+        await Promise.all([
+          recargarTurnos(),
+          cargarTurnosDia(),
+          cargarProgrammers(),
+        ]);
         return true;
       } catch (error) {
         console.error("Error al eliminar el turno:", error);
@@ -539,7 +842,7 @@ export const usePlannerData = ({
         return false;
       }
     },
-    [recargarTurnos, cargarTurnosDia]
+    [recargarTurnos, cargarTurnosDia, cargarProgrammers]
   );
 
   /**
@@ -555,7 +858,11 @@ export const usePlannerData = ({
         for (const payload of lista) {
           await shiftsApi.create(payload);
         }
-        await Promise.all([recargarTurnos(), cargarTurnosDia()]);
+        await Promise.all([
+          recargarTurnos(),
+          cargarTurnosDia(),
+          cargarProgrammers(),
+        ]);
         return true;
       } catch (error) {
         console.error("Error al guardar el stack de turnos:", error);
@@ -563,7 +870,7 @@ export const usePlannerData = ({
         return false;
       }
     },
-    [recargarTurnos, cargarTurnosDia]
+    [recargarTurnos, cargarTurnosDia, cargarProgrammers]
   );
 
   /**
@@ -575,6 +882,15 @@ export const usePlannerData = ({
     async (payloads = [], { userId = iduser, fecha = fechaPlaner } = {}) => {
       const lista = Array.isArray(payloads) ? payloads : [];
 
+      if (modoConsolidacion) {
+        const resultado = await actualizarTurnosExistentes(lista, {
+          userId,
+          fechas: [fecha],
+        });
+
+        return Boolean(resultado && !resultado.requiereConfirmacion);
+      }
+
       try {
         await shiftsApi.update({
           ids: userId,
@@ -585,7 +901,11 @@ export const usePlannerData = ({
           await shiftsApi.create(payload);
         }
 
-        await Promise.all([recargarTurnos(), cargarTurnosDia()]);
+        await Promise.all([
+          recargarTurnos(),
+          cargarTurnosDia(),
+          cargarProgrammers(),
+        ]);
         return true;
       } catch (error) {
         console.error("Error al reemplazar los turnos del día:", error);
@@ -597,7 +917,11 @@ export const usePlannerData = ({
             ids: userId,
             fch: new Date(fecha).toISOString(),
           });
-          await Promise.all([recargarTurnos(), cargarTurnosDia()]);
+          await Promise.all([
+            recargarTurnos(),
+            cargarTurnosDia(),
+            cargarProgrammers(),
+          ]);
         } catch (limpiezaError) {
           console.error("Error al limpiar el stack a medias:", limpiezaError);
         }
@@ -605,7 +929,7 @@ export const usePlannerData = ({
         return false;
       }
     },
-    [iduser, fechaPlaner, recargarTurnos, cargarTurnosDia]
+    [iduser, fechaPlaner, recargarTurnos, cargarTurnosDia, cargarProgrammers, modoConsolidacion, actualizarTurnosExistentes]
   );
 
   /**
@@ -616,6 +940,15 @@ export const usePlannerData = ({
   const reemplazarTurnosDeFechas = useCallback(
     async (payloads = [], { userId = iduser, fechas = [fechaPlaner] } = {}) => {
       const lista = Array.isArray(payloads) ? payloads : [];
+
+      if (modoConsolidacion) {
+        const resultado = await actualizarTurnosExistentes(lista, {
+          userId,
+          fechas,
+        });
+
+        return Boolean(resultado && !resultado.requiereConfirmacion);
+      }
 
       const aIso = (valor) => {
         const fecha = new Date(valor);
@@ -640,7 +973,11 @@ export const usePlannerData = ({
           await shiftsApi.create(payload);
         }
 
-        await Promise.all([recargarTurnos(), cargarTurnosDia()]);
+        await Promise.all([
+          recargarTurnos(),
+          cargarTurnosDia(),
+          cargarProgrammers(),
+        ]);
         return true;
       } catch (error) {
         console.error("Error al reemplazar los turnos de las fechas:", error);
@@ -651,7 +988,11 @@ export const usePlannerData = ({
           for (const fch of fechasUnicas) {
             await shiftsApi.update({ ids: userId, fch });
           }
-          await Promise.all([recargarTurnos(), cargarTurnosDia()]);
+          await Promise.all([
+            recargarTurnos(),
+            cargarTurnosDia(),
+            cargarProgrammers(),
+          ]);
         } catch (limpiezaError) {
           console.error("Error al limpiar el stack a medias:", limpiezaError);
         }
@@ -659,7 +1000,7 @@ export const usePlannerData = ({
         return false;
       }
     },
-    [iduser, fechaPlaner, recargarTurnos, cargarTurnosDia]
+    [iduser, fechaPlaner, recargarTurnos, cargarTurnosDia, cargarProgrammers, modoConsolidacion, actualizarTurnosExistentes]
   );
 
   /** Trae las filas de un stack guardado sin tocar los turnos del día. */
@@ -689,6 +1030,74 @@ export const usePlannerData = ({
       }
     },
     [cargarCompensatorios]
+  );
+
+  const crearDescanso = useCallback(
+    async (payload) => {
+      try {
+        await breaksApi.create(payload);
+        await cargarBreaks();
+        return true;
+      } catch (error) {
+        console.error("Error al registrar el descanso:", error);
+        toast.error(error?.message || "Error al registrar el descanso");
+        return false;
+      }
+    },
+    [cargarBreaks]
+  );
+
+  /** Actualiza un turno existente conservando su _id y su fecha. */
+  const actualizarTurnoExistente = useCallback(
+    async (id, payload) => {
+      try {
+        await shiftsApi.updateConsolidation(id, payload);
+        await Promise.all([recargarTurnos(), cargarTurnosDia()]);
+        return true;
+      } catch (error) {
+        console.error("Error al actualizar el turno programado:", error);
+        toast.error(error?.message || "No se pudo actualizar el turno programado");
+        return false;
+      }
+    },
+    [recargarTurnos, cargarTurnosDia]
+  );
+
+  const consolidarTurnos = useCallback(
+    async (updates = []) => {
+      const lista = Array.isArray(updates) ? updates : [];
+      if (lista.length === 0) return { actualizados: 0, fallidos: [] };
+
+      try {
+        const respuesta = await shiftsApi.consolidateBulk(lista);
+        await Promise.all([recargarTurnos(), cargarTurnosDia()]);
+        return respuesta;
+      } catch (error) {
+        console.error("Error al consolidar los turnos:", error);
+        toast.error(error?.message || "No se pudieron consolidar los turnos");
+        return null;
+      }
+    },
+    [recargarTurnos, cargarTurnosDia]
+  );
+
+  /** Marca como Pendiente los turnos indicados y limpia la auditoría. */
+  const marcarDiaPendiente = useCallback(
+    async (ids = []) => {
+      const lista = [...new Set((Array.isArray(ids) ? ids : []).filter(Boolean))];
+      if (lista.length === 0) return true;
+
+      return Boolean(
+        await consolidarTurnos(
+          lista.map((id) => ({
+            id,
+            estadoConsolidacion: "Pendiente",
+            observacionConsolidacion: "",
+          }))
+        )
+      );
+    },
+    [consolidarTurnos]
   );
 
   /** Trae el stack corto de un nombre y lo deja como stack actual. */
@@ -784,6 +1193,12 @@ export const usePlannerData = ({
     limpiarTurnos,
     eliminarTurno,
     crearCompensatorio,
+    crearDescanso,
+    actualizarTurnoExistente,
+    consolidarTurnos,
+    marcarDiaPendiente,
+    planificarActualizacionExistentes,
+    actualizarTurnosExistentes,
     cargarStackCorto,
     obtenerStackGuardado,
     renombrarStackGuardado,

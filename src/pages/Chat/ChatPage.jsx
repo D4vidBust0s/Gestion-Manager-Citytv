@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import styled, { css } from 'styled-components';
 import { Toaster, toast } from "react-hot-toast";
 import axios from 'axios';
@@ -76,8 +76,10 @@ export default function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
+  // Listado de usuarios del sistema: se recarga cuando cambia un perfil
+  const cargarUsuarios = useCallback(() => {
     if (!userId) return;
+
     axios.get("http://localhost:3000/api/auth/users")
       .then(response => {
         const otrosUsuarios = response.data.filter(u => String(u._id || u.id) !== String(userId));
@@ -87,6 +89,35 @@ export default function ChatPage() {
         console.error("Error al cargar usuarios del sistema:", err);
       });
   }, [userId]);
+
+  useEffect(() => {
+    cargarUsuarios();
+  }, [cargarUsuarios]);
+
+  // Al guardar el perfil (Top), las fotos del chat se actualizan al instante.
+  // Se vuelve a consultar la lista: el servidor es la única fuente de verdad.
+  useEffect(() => {
+    const alActualizarPerfil = () => cargarUsuarios();
+
+    window.addEventListener("userProfileUpdated", alActualizarPerfil);
+    return () => window.removeEventListener("userProfileUpdated", alActualizarPerfil);
+  }, [cargarUsuarios]);
+
+  // Cambios de perfil hechos desde OTRA sesión (socket compartido del chat)
+  useEffect(() => {
+    if (!socket) return undefined;
+
+    const alActualizarUsuario = (usuario) => {
+      if (!usuario?.id) return;
+
+      setUsuariosSistema(prev => prev.map(u =>
+        String(u._id || u.id) === String(usuario.id) ? { ...u, ...usuario } : u
+      ));
+    };
+
+    socket.on("usuario_actualizado", alActualizarUsuario);
+    return () => socket.off("usuario_actualizado", alActualizarUsuario);
+  }, [socket]);
 
   const obtenerNombreRemitente = (remitenteObj, currentUserId) => {
     if (!remitenteObj) return "Compañero";

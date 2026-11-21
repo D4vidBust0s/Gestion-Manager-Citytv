@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import Swal from 'sweetalert2'
 import { useChat } from '../../context/ChatContext'
+import { useRequirements } from '../../context/RequirementsProvider'
 import styled from 'styled-components'
 
 /* Estilos */
@@ -25,6 +26,7 @@ import reports from '../../assets/reports.svg'
 import tools from '../../assets/tools.svg'
 import mobil from '../../assets/mobil.svg'
 import tools2 from '../../assets/tools2.svg'
+import inventario from '../../assets/inventario.svg'
 
 function Sidebar({ onLogout, collapsed = false, onToggleCollapsed }) {
   const location = useLocation();
@@ -32,6 +34,9 @@ function Sidebar({ onLogout, collapsed = false, onToggleCollapsed }) {
   
   // Extraemos totalNoLeidos, limpiarContadorGlobal y cerrarSesionSocket del contexto corporativo de chat
   const { totalNoLeidos, limpiarContadorGlobal, cerrarSesionSocket } = useChat(); 
+
+  // Contador compartido de requerimientos: el provider lo actualiza en tiempo real
+  const { totalRequerimientos, totalPendientes } = useRequirements();
 
   // Manejo de acordeón con auto-colapso exclusivo
   const toggleMenu = (menuName) => {
@@ -60,8 +65,10 @@ function Sidebar({ onLogout, collapsed = false, onToggleCollapsed }) {
   // Apertura contextual inteligente del acordeón según la ruta actual
   useEffect(() => {
     const path = location.pathname;
-    if (path === '/programmer') {
+    if (path === '/programmer' || path === '/consolidate' || path === '/requirements') {
       setActiveMenu('journal');
+    } else if (path.startsWith('/activos')) {
+      setActiveMenu('activos');
     } else if (
       ['/permissions', '/breaks', '/incapacity', '/recess', '/licenses', '/cv', '/register', '/notes'].some(
         (p) => path.startsWith(p)
@@ -186,7 +193,7 @@ function Sidebar({ onLogout, collapsed = false, onToggleCollapsed }) {
               onClick={() => handleGroupClick('journal')}
             >
               <img src={sun} alt="journal" className="list__img" />
-              <span className={`nav__link ${['/programmer'].includes(location.pathname) ? 'nav__link--active' : ''}`}>
+              <span className={`nav__link ${['/programmer', '/consolidate', '/requirements'].includes(location.pathname) ? 'nav__link--active' : ''}`}>
                 Journal
               </span>
               <img src={arrow} alt="item1" className="list__arrow" />
@@ -195,15 +202,29 @@ function Sidebar({ onLogout, collapsed = false, onToggleCollapsed }) {
             <ul className={`list__show ${activeMenu === 'journal' ? 'list__show--open' : ''}`}>
 
               <li className="list__inside">
-                <a href="#" className="nav__link nav__link--inside" onClick={(e) => e.preventDefault()}>
+                <Link
+                  to="/consolidate"
+                  className={`nav__link nav__link--inside ${isPathActive('/consolidate') ? 'nav__link--active' : ''}`}
+                >
                   Consolidate
-                </a>
+                </Link>
               </li>
 
               <li className="list__inside">
-                <a href="#" className="nav__link nav__link--inside" onClick={(e) => e.preventDefault()}>
+                <Link
+                  to="/requirements"
+                  className={`nav__link nav__link--inside ${isPathActive('/requirements') ? 'nav__link--active' : ''}`}
+                >
                   Requirements
-                </a>
+                  {totalRequerimientos > 0 && (
+                    <RequirementBadge
+                      title={`${totalRequerimientos} requerimientos registrados · ${totalPendientes} pendientes`}
+                      aria-label={`${totalRequerimientos} requerimientos registrados, ${totalPendientes} pendientes`}
+                    >
+                      {totalRequerimientos}
+                    </RequirementBadge>
+                  )}
+                </Link>
               </li>
 
               <li className="list__inside">
@@ -519,6 +540,58 @@ function Sidebar({ onLogout, collapsed = false, onToggleCollapsed }) {
             </ul>
           </li>
 
+          {/* ACTIVOS */}
+          <li className="list__item list__item--click">
+            <div
+              className={`list__buttom list__buttom--click ${activeMenu === 'activos' ? 'arrow' : ''}`}
+              onClick={() => handleGroupClick('activos')}
+            >
+              <img src={inventario} alt="inventario" className="list__img" />
+              <span className={`nav__link ${isPathActive('/activos') ? 'nav__link--active' : ''}`}>
+                Activos
+              </span>
+              <img src={arrow} alt="item1" className="list__arrow" />
+            </div>
+
+            <ul className={`list__show ${activeMenu === 'activos' ? 'list__show--open' : ''}`}>
+              <li className="list__inside">
+                <Link
+                  to="/activos"
+                  className={`nav__link nav__link--inside ${location.pathname === '/activos' ? 'nav__link--active' : ''}`}
+                >
+                  Inventario
+                </Link>
+              </li>
+
+              <li className="list__inside">
+                <Link
+                  to="/activos/nuevo"
+                  className={`nav__link nav__link--inside ${isPathActive('/activos/nuevo') ? 'nav__link--active' : ''}`}
+                >
+                  Nuevo equipo
+                </Link>
+              </li>
+
+              <li className="list__inside">
+                <Link
+                  to="/activos/mantenimientos"
+                  className={`nav__link nav__link--inside ${isPathActive('/activos/mantenimientos') ? 'nav__link--active' : ''}`}
+                >
+                  Mantenimientos
+                </Link>
+              </li>
+
+              <li className="list__inside">
+                <Link
+                  to="/activos/monitoreo"
+                  className={`nav__link nav__link--inside ${isPathActive('/activos/monitoreo') ? 'nav__link--active' : ''}`}
+                >
+                  Monitoreo
+                </Link>
+              </li>
+            </ul>
+          </li>
+
           {/* APP MOBIL */}
           <li className="list__item list__item--click">
             <div
@@ -579,6 +652,25 @@ const ToolBadge = styled.span`
   border-radius: 10px;
   font-weight: bold;
   margin-left: 8px;
+`;
+
+/* Contador de requerimientos del menú Journal */
+const RequirementBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  margin-left: 8px;
+  border-radius: 999px;
+  background-color: #EB464B;
+  color: #FFFFFF;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+  box-shadow: 0 2px 5px rgba(235, 70, 75, 0.35);
 `;
 
 Sidebar.propTypes = {

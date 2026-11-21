@@ -8,6 +8,10 @@
     "build": "node scripts/build.mjs",
     "build:vite": "vite build",
     "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "test:programmer": "node --test src/pages/Programmer/programmerPermissions.test.js src/pages/Programmer/programmerInheritance.test.js src/pages/Programmer/programmerTime.test.js src/pages/Programmer/programmerEquipment.test.js src/pages/Programmer/programmerStatus.test.js",
+    "test:requirements": "node --test src/pages/Requirements/requirementsYears.test.js",
+    "test:equipment": "node --test src/Components/Equipment/equipmentCatalogFilters.test.js",
+    "test:activos": "node --test src/pages/Activos/activosView.test.js",
     "preview": "vite preview"
   },
   "dependencies": {

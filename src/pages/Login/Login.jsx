@@ -2,9 +2,10 @@ import { useState, useRef } from "react";
 import PropTypes from "prop-types";
 import "./Login.css";
 import axios from "axios";
-import { Toaster, toast } from "react-hot-toast";
+import Swal from "sweetalert2";
 import GM from "../../assets/GM.png"
-import logoGM from "../../assets/Final.jpg"
+import logoGM from "../../assets/Final.png"
+import { usuarioPermitido } from "../../config/access";
 
 export default function Login({ onLoginSuccess }) {
   const [showForm, setShowForm] = useState(false);
@@ -17,7 +18,12 @@ export default function Login({ onLoginSuccess }) {
     const password = passwordRef.current.value.trim();
 
     if (!usuario || !password) {
-      toast.error("Por favor completa todos los campos");
+      Swal.fire({
+        icon: "warning",
+        title: "Campos incompletos",
+        text: "Por favor completa todos los campos",
+        confirmButtonColor: "#890000",
+      });
       return;
     }
 
@@ -27,23 +33,47 @@ export default function Login({ onLoginSuccess }) {
         password,
       });
 
-      toast.success("¡Bienvenido al sistema!");
-      localStorage.setItem("userAuth", JSON.stringify(response.data.user));
-      
+      const user = response.data?.user;
+
+      // Puerta de GM Citytv: el almacén trabaja en GM-Activos, no aquí.
+      if (!usuarioPermitido(user)) {
+        await Swal.fire({
+          icon: "error",
+          title: "Acceso restringido",
+          text: `El rol ${user?.rol || "de esta cuenta"} no tiene acceso a GM Citytv. El almacén trabaja en GM-Activos.`,
+          confirmButtonColor: "#890000",
+        });
+        return;
+      }
+
+      localStorage.setItem("userAuth", JSON.stringify(user));
+
+      const nombre = [user?.nombres, user?.apellidos].filter(Boolean).join(" ");
+
+      await Swal.fire({
+        icon: "success",
+        title: "¡Bienvenido a GM Citytv!",
+        text: nombre ? `Hola, ${nombre}` : undefined,
+        timer: 1600,
+        timerProgressBar: true,
+        showConfirmButton: false,
+      });
+
       // Llamamos a la función que cambia el estado global en App.jsx
-      setTimeout(() => {
-        onLoginSuccess();
-      }, 1000);
+      onLoginSuccess();
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.message || "Credenciales inválidas");
+      Swal.fire({
+        icon: "error",
+        title: "No se pudo iniciar sesión",
+        text: error.response?.data?.message || "Credenciales inválidas",
+        confirmButtonColor: "#890000",
+      });
     }
   };
 
   return (
     <div className="login-container">
-      <Toaster />
-      
       {/* SECCIÓN SUPERIOR: BIENVENIDA */}
       <div className={`welcome-section ${showForm ? "hidden" : "visible"}`}>
         <div className="welcome-logo-box">

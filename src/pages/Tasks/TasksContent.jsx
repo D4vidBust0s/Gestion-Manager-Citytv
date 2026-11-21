@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
@@ -14,6 +14,8 @@ import {
   textoPreviewRecordatorio,
 } from '../../utils/taskReminders';
 import './TasksContent.css';
+import TaskAttachments from './TaskAttachments';
+import TaskDetailModal from './TaskDetailModal';
 
 const RECORDATORIO_INICIAL = {
   esRecordatorio: false,
@@ -50,13 +52,18 @@ const renderBadgeRecordatorio = (task) => {
 export default function TasksContent() {
   const [tasks, setTasks] = useState([]);
   const [filterCategory, setFilterCategory] = useState("Todas");
+  const [filterPriority, setFilterPriority] = useState("Todas");
   const [selectedDate, setSelectedDate] = useState(""); 
   const [showCalendarDropdown, setShowCalendarDropdown] = useState(false); 
+  const [calendarPos, setCalendarPos] = useState(null);
+  const calendarWrapperRef = useRef(null);
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date()); 
   
   const [showModal, setShowModal] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  // Nota abierta en la modal de detalle (doble clic en el listado)
+  const [detalleTask, setDetalleTask] = useState(null);
 
   // Lista de categorías almacenada en localStorage o con valores por defecto
   const [categories, setCategories] = useState(() => {
@@ -73,6 +80,7 @@ export default function TasksContent() {
     prioridad: 'Media',
     categoria: categories[0] || 'General',
     fechaVencimiento: '',
+    adjuntos: [],
     ...RECORDATORIO_INICIAL
   });
 
@@ -120,6 +128,7 @@ export default function TasksContent() {
       prioridad: 'Media',
       categoria: categories[0] || 'General',
       fechaVencimiento: '',
+    adjuntos: [],
       ...RECORDATORIO_INICIAL
     });
     setShowCategoryManager(false);
@@ -136,6 +145,7 @@ export default function TasksContent() {
       prioridad: task.prioridad || 'Media',
       categoria: task.categoria || (categories[0] || 'General'),
       fechaVencimiento: task.fechaVencimiento ? getLocalDateString(task.fechaVencimiento) : '',
+      adjuntos: Array.isArray(task.adjuntos) ? task.adjuntos : [],
       esRecordatorio: Boolean(task.esRecordatorio),
       recordatorioDias: normalizarDias(task.recordatorioDias),
       recordatorioHoras: horasRecordatorio.length
@@ -300,6 +310,7 @@ export default function TasksContent() {
         prioridad: 'Media',
         categoria: categories[0] || 'General',
         fechaVencimiento: '',
+    adjuntos: [],
         ...RECORDATORIO_INICIAL
       });
       setEditingTaskId(null);
@@ -344,6 +355,50 @@ export default function TasksContent() {
         }
       }
     });
+  };
+
+  /*
+   * Elimina un adjunto de la nota desde la modal de detalle.
+   * Se conserva el resto de la nota: el PUT solo envía la lista de adjuntos.
+   */
+  const handleDeleteAdjunto = async (tarea, indice) => {
+    const adjunto = (tarea?.adjuntos || [])[indice];
+    if (!adjunto) return;
+
+    const confirmacion = await Swal.fire({
+      title: '¿Eliminar el adjunto?',
+      text: `"${adjunto.nombre}" se quitará de la nota.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#EB464B',
+      cancelButtonColor: '#00094B',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+      footer: '<h6>Notas personales</h6>',
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    const nuevos = (tarea.adjuntos || []).filter((_, posicion) => posicion !== indice);
+
+    try {
+      const { data } = await axios.put(
+        `http://localhost:3000/api/tasks/${tarea._id}`,
+        { adjuntos: nuevos }
+      );
+
+      const actualizados = Array.isArray(data?.adjuntos) ? data.adjuntos : nuevos;
+
+      setDetalleTask((prev) =>
+        prev && prev._id === tarea._id ? { ...prev, adjuntos: actualizados } : prev
+      );
+
+      toast.success('Adjunto eliminado');
+      fetchTasks();
+    } catch {
+      toast.error('No se pudo eliminar el adjunto');
+    }
   };
 
   const getLocalDateString = (dateInput) => {
@@ -399,6 +454,50 @@ export default function TasksContent() {
     setShowCalendarDropdown(false);
   };
 
+  /*
+   * El calendario se posiciona en coordenadas de ventana (position: fixed).
+   * Antes vivía dentro de la sección con scroll y el borde inferior lo cortaba.
+   * Si no hay espacio debajo, se abre hacia arriba.
+   */
+  const toggleCalendar = () => {
+    if (showCalendarDropdown) {
+      setShowCalendarDropdown(false);
+      return;
+    }
+
+    const rect = calendarWrapperRef.current?.getBoundingClientRect();
+
+    if (rect) {
+      const altoCalendario = 330;
+      const espacioAbajo = window.innerHeight - rect.bottom;
+      const abrirArriba = espacioAbajo < altoCalendario && rect.top > altoCalendario;
+
+      setCalendarPos({
+        top: abrirArriba
+          ? Math.max(8, rect.top - altoCalendario - 8)
+          : rect.bottom + 8,
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - 300)),
+      });
+    }
+
+    setShowCalendarDropdown(true);
+  };
+
+  // Con scroll o al redimensionar, el calendario flotante se cierra
+  useEffect(() => {
+    if (!showCalendarDropdown) return undefined;
+
+    const cerrar = () => setShowCalendarDropdown(false);
+
+    window.addEventListener('scroll', cerrar, true);
+    window.addEventListener('resize', cerrar);
+
+    return () => {
+      window.removeEventListener('scroll', cerrar, true);
+      window.removeEventListener('resize', cerrar);
+    };
+  }, [showCalendarDropdown]);
+
   const totalTareas = tasks.length;
   const completadas = tasks.filter(t => t.completada).length;
   const pendientes = tasks.filter(t => !t.completada).length;
@@ -413,6 +512,8 @@ export default function TasksContent() {
       if (taskDateOnly !== selectedDate) return false;
     }
 
+    if (filterPriority !== "Todas" && task.prioridad !== filterPriority) return false;
+
     if (filterCategory === "Todas") return true;
     if (filterCategory === "Pendientes") return !task.completada;
     if (filterCategory === "Completadas") return task.completada;
@@ -422,21 +523,6 @@ export default function TasksContent() {
   return (
     <div className="tasks-wrapper">
       <div className="tasks-main-container">
-
-        {/* Cabecera Hero */}
-        <div className="tasks-hero-banner">
-          <div className="hero-text">
-            <h2>Mi Panel Privado de Tareas</h2>
-            <p>
-              Gestión personal para {currentUser ? `${currentUser.nombres} ${currentUser.apellidos}` : 'Usuario'}. Espacio 100% aislado.
-            </p>
-          </div>
-          <div className="hero-badge-container">
-            <button className="btn-add-task" onClick={handleOpenCreateModal}>
-              + Nueva Tarea
-            </button>
-          </div>
-        </div>
 
         {/* Tarjetas de Métricas */}
         <div className="tasks-cards-grid">
@@ -490,13 +576,13 @@ export default function TasksContent() {
           <div className="tasks-section-header">
             <h3>Lista Personal de Pendientes</h3>
             
-            <div className="tasks-controls-right" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div className="tasks-controls-right" style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
               
               {/* Mini-Calendar Interactivo */}
-              <div className="custom-calendar-wrapper" style={{ position: 'relative' }}>
+              <div className="custom-calendar-wrapper" style={{ position: 'relative' }} ref={calendarWrapperRef}>
                 <div 
                   className={`calendar-trigger-btn ${selectedDate ? 'active-filter-date' : ''}`}
-                  onClick={() => setShowCalendarDropdown(!showCalendarDropdown)}
+                  onClick={toggleCalendar}
                   title="Seleccionar fecha para filtrar"
                 >
                   <span>📅 {selectedDate ? selectedDate.split('-').reverse().join('/') : 'Filtrar por fecha'}</span>
@@ -513,7 +599,10 @@ export default function TasksContent() {
                 )}
 
                 {showCalendarDropdown && (
-                  <div className="calendar-dropdown-card">
+                  <div
+                    className="calendar-dropdown-card"
+                    style={calendarPos ? { position: 'fixed', top: calendarPos.top, left: calendarPos.left, right: 'auto' } : undefined}
+                  >
                     <div className="calendar-header-nav">
                       <button type="button" onClick={handlePrevMonth}>◀</button>
                       <span className="calendar-month-title">{monthNames[month]} {year}</span>
@@ -553,6 +642,22 @@ export default function TasksContent() {
                 )}
               </div>
 
+              {/* Filtro por prioridad */}
+              <div className={`priority-filter ${filterPriority !== 'Todas' ? 'priority-filter--active' : ''}`}>
+                <span className="priority-filter-label">Prioridad:</span>
+                <select
+                  className={`priority-filter-select priority-filter-select--${filterPriority.toLowerCase()}`}
+                  value={filterPriority}
+                  onChange={(e) => setFilterPriority(e.target.value)}
+                  title="Filtrar tareas por prioridad"
+                >
+                  <option value="Todas">Todas</option>
+                  <option value="Alta">Alta</option>
+                  <option value="Media">Media</option>
+                  <option value="Baja">Baja</option>
+                </select>
+              </div>
+
               {/* Botones de Filtro dinámicos */}
               <div className="tasks-filter-bar">
                 {["Todas", "Pendientes", "Completadas", ...categories].map((cat) => (
@@ -565,6 +670,10 @@ export default function TasksContent() {
                   </button>
                 ))}
               </div>
+
+              <button className="btn-add-task" onClick={handleOpenCreateModal}>
+                + Nueva Tarea
+              </button>
             </div>
           </div>
 
@@ -585,12 +694,19 @@ export default function TasksContent() {
               <tbody>
                 {filteredTasks.length > 0 ? (
                   filteredTasks.map((task) => (
-                    <tr key={task._id} className={task.completada ? 'row-completed-green' : ''}>
+                                        <tr
+                      key={task._id}
+                      className={`${task.completada ? 'row-completed-green' : ''} task-row`}
+                      onDoubleClick={() => setDetalleTask(task)}
+                      title="Doble clic para ver la nota completa"
+                    >
                       <td style={{ textAlign: 'center' }}>
                         <input
                           type="checkbox"
                           checked={task.completada}
                           onChange={() => toggleTaskStatus(task._id, task.completada)}
+                          onClick={(evento) => evento.stopPropagation()}
+                          onDoubleClick={(evento) => evento.stopPropagation()}
                           className="task-checkbox"
                         />
                       </td>
@@ -599,6 +715,11 @@ export default function TasksContent() {
                           {task.titulo}
                         </span>
                         {task.descripcion && <p className="task-desc">{task.descripcion}</p>}
+                        {Array.isArray(task.adjuntos) && task.adjuntos.length > 0 && (
+                          <span className="task-adjuntos-badge" title={`${task.adjuntos.length} adjunto(s)`}>
+                            📎 {task.adjuntos.length}
+                          </span>
+                        )}
                       </td>
                       <td>
                         <span className={`badge-priority priority-${task.prioridad.toLowerCase()}`}>
@@ -615,10 +736,20 @@ export default function TasksContent() {
                         {renderBadgeRecordatorio(task)}
                       </td>
                       <td style={{ textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <button className="btn-edit" onClick={() => handleOpenEditModal(task)} title="Editar tarea">
+                        <button
+                          className="btn-edit"
+                          onClick={() => handleOpenEditModal(task)}
+                          onDoubleClick={(evento) => evento.stopPropagation()}
+                          title="Editar tarea"
+                        >
                           ✏️
                         </button>
-                        <button className="btn-delete" onClick={() => deleteTask(task._id)} title="Eliminar tarea">
+                        <button
+                          className="btn-delete"
+                          onClick={() => deleteTask(task._id)}
+                          onDoubleClick={(evento) => evento.stopPropagation()}
+                          title="Eliminar tarea"
+                        >
                           🗑️
                         </button>
                       </td>
@@ -664,6 +795,11 @@ export default function TasksContent() {
                   placeholder="Detalles adicionales..."
                 />
               </div>
+
+              <TaskAttachments
+                adjuntos={formData.adjuntos}
+                onChange={(adjuntos) => setFormData((prev) => ({ ...prev, adjuntos }))}
+              />
 
               <div className="form-row">
                 <div className="form-group">
@@ -827,6 +963,18 @@ export default function TasksContent() {
             </form>
           </div>
         </div>
+      )}
+
+      {detalleTask && (
+        <TaskDetailModal
+          tarea={detalleTask}
+          onClose={() => setDetalleTask(null)}
+          onDeleteAdjunto={handleDeleteAdjunto}
+          onEdit={(tarea) => {
+            setDetalleTask(null);
+            handleOpenEditModal(tarea);
+          }}
+        />
       )}
     </div>
   );

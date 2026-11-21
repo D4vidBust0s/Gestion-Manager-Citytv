@@ -1,19 +1,16 @@
-/* ESTILOS */
+import BaseOperations2 from '../../Components/Body-Section/Bases/BaseOperations2'
+import ProgrammerContent from './ProgrammerContent'
 
-/* COMPONENTS */
-import BaseOperations1 from '../../Components/Body-Section/Bases/BaseOperations1'
-import ProgrammerContent from '../../pages/Programmer/ProgrammerContent'
-
-/* IMAGENES */
-import poster from '../../assets/calendar-programmer.jpg'
-
-export default function programmer() {
-
+/**
+ * Requerimientos manuales (Journal → Programmer).
+ *
+ * El mismo registro se usa como requerimiento y como evento de ModalPlanner1
+ * mientras no está desarrollado el sistema de Requirements.
+ */
+export default function Programmer() {
   return (
-   <>
-      <div className='mainContainer'>
-       <BaseOperations1 titulo="Programmer"  urlposter={poster}  content = {<ProgrammerContent/>}/>
+    <div className='mainContainer'>
+      <BaseOperations2 titulo="Programmer" content={<ProgrammerContent />} />
     </div>
-   </>
   )
 }

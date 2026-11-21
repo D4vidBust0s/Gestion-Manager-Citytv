@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import PropTypes from 'prop-types';
 import { useLocation } from 'react-router-dom';
 import menu from '../../../assets/menu.svg';
-import defaultAvatar from '../../../assets/Ana-Brenda.jpg';
+import defaultAvatar from '../../../assets/avatar.webp';
 import { useUserActivity, DEFAULT_IDLE_TIMEOUT_MS } from '../../../hooks/useUserActivity';
 import PlannerStatus from './PlannerStatus/PlannerStatus';
 import EvaluationPeriod from './EvaluationPeriod/EvaluationPeriod';
@@ -94,6 +94,11 @@ function Top({ sidebarCollapsed = false, onToggleSidebar, idleTimeoutMs = DEFAUL
       
       // Actualizar localStorage
       localStorage.setItem("userAuth", JSON.stringify(response.data.user));
+
+      // Avisar al resto de la interfaz (chat y demás listados) que el perfil cambió
+      window.dispatchEvent(
+        new CustomEvent("userProfileUpdated", { detail: response.data.user })
+      );
       
       // Actualizar estado en pantalla
       setUserData({

@@ -13,13 +13,14 @@
 
 .containerBase{
     position: relative;
-    height: 75vh;
-    width: 90%;
-    background: #ffffff;
+    height: 78vh;
+    width: 95%;
+    background: #FFFFFF;
     box-shadow: -.5rem .5rem 1rem #8a8787;
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-top: -1%;
 
     .title{
         position: absolute;
